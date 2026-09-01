@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="185.037" height="45.5" viewBox="0 0 185.037 45.5">
+  <g id="Group_2" data-name="Group 2" transform="translate(-970.963 -440)">
+    <g id="Group_1" data-name="Group 1" transform="translate(18 81)">
+      <path id="Path_1" data-name="Path 1" d="M1020.371,682H1033.9l-.276-14.263-9.885-10.627s-2.02.35-2.421.986a14.884,14.884,0,0,0-.772,3.236l8.833,7.84s.245,1.168-.312,1.469a2.762,2.762,0,0,1-1.672-.078l-9.114-7.754.2-16.684s-1.009-1.442-2.231-1.442a2.464,2.464,0,0,0-1.785.618l.2,20.378,5.711,10.346Z" transform="translate(-61 -278)" fill="#ed6221" stroke="#ed6221" stroke-width="1"/>
+      <path id="Path_3" data-name="Path 3" d="M1024.008,649.621v5.6l11.758,12.469.5-6.782Z" transform="translate(-61 -278)" fill="#ed6221"/>
+      <path id="Path_4" data-name="Path 4" d="M1035.994,645.507s-3.54-4.531-7.419-3.124c-2.044.742-4.283,3.408-1.718,7.424,1.984,3.11,9.137,8.88,9.137,8.88Z" transform="translate(-61 -278)" fill="#ed6221"/>
+      <path id="Path_7" data-name="Path 7" d="M1024.75,646.453s4.5-5.478,8.375-4.071c2.044.742,4.283,3.408,1.718,7.424-1.984,3.11-8.89,8.958-8.89,8.958Z" transform="translate(-51 -278)" fill="#ed6221"/>
+      <path id="Path_6" data-name="Path 6" d="M1035.164,649.621v5.6l-11.854,12.453.172-6.969Z" transform="translate(-48.543 -278)" fill="#ed6221"/>
+      <path id="Path_5" data-name="Path 5" d="M1027.99,682h-13.525l.276-14.263,9.885-10.627s2.02.35,2.421.986a14.881,14.881,0,0,1,.772,3.236l-8.833,7.84s-.245,1.168.313,1.469a2.762,2.762,0,0,0,1.672-.078l9.114-7.754-.2-16.684s1.009-1.442,2.231-1.442a2.464,2.464,0,0,1,1.785.618l-.2,20.378-5.711,10.346Z" transform="translate(-37.732 -278)" fill="#ed6221" stroke="#ed6221" stroke-width="1"/>
+    </g>
+    <text id="Good" transform="translate(1021 467)" fill="#302c51" font-size="29" font-family="Rubik-Bold, Rubik" font-weight="700"><tspan x="0" y="0">Good</tspan></text>
+    <text id="Soul" transform="translate(1095 467)" fill="#ed6221" font-size="24" font-family="Rubik-Regular, Rubik" letter-spacing="0.09em"><tspan x="0" y="0">Soul</tspan></text>
+    <text id="DONATE_LITTLE._HELP._A_LOADT" data-name="DONATE LITTLE. HELP. A LOADT" transform="translate(1024 482)" fill="#302c51" font-size="9" font-family="Rubik-Regular, Rubik"><tspan x="0" y="0">DONATE LITTLE. HELP. A LOADT</tspan></text>
+  </g>
+</svg>

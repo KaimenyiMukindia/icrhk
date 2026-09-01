@@ -1,0 +1,3130 @@
+body:has(.cer-event-page) .page-title.page-bread-cumb {
+    display: none !important;
+}
+
+.cer-share-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+    margin-left: auto;
+    width: 100%;
+}
+
+.cer-share-label {
+    color: #44516b;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-right: 2px;
+}
+
+.cer-share-bar a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(0, 110, 172, 0.18);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    color: #006eac;
+    text-decoration: none;
+    transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.cer-share-bar a:hover,
+.cer-share-bar a:focus {
+    background: #006eac;
+    color: #fff;
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.cer-share-bar .dashicons {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+}
+
+
+
+.cer-event-shell > section {
+  padding-top: 20px;
+}
+
+.cer-primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    border: none;
+    background-color: var(--theme-color);
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.cer-primary-button:hover {
+    background-color: #d0511a;
+}
+
+.cer-event-app {
+    background: linear-gradient(180deg, #f7f9fc 0%, #ffffff 18%, #ffffff 100%);
+    color: #233047;
+    min-height: 100vh;
+}
+
+.cer-event-header {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(0, 110, 172, 0.08);
+    backdrop-filter: blur(16px);
+}
+
+.cer-event-header__inner,
+.cer-event-footer__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.cer-event-brand,
+.cer-event-brand--text {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.cer-event-brand img {
+    display: block;
+    max-height: 52px;
+    width: auto;
+}
+
+.cer-event-brand__text {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #10233f;
+}
+
+.cer-event-nav {
+    flex: 1;
+}
+
+.cer-event-nav__list,
+.cer-event-footer__list {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.cer-event-nav__list a,
+.cer-event-footer__list a {
+    color: #44516b;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.cer-event-header__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.cer-event-header__link,
+.cer-event-header__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.82rem 1.1rem;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.cer-event-header__link {
+    color: #006eac;
+    border: 1px solid rgba(0, 110, 172, 0.18);
+    background: rgba(0, 110, 172, 0.04);
+}
+
+.cer-event-header__cta {
+    color: #ffffff;
+    background: #faa41a;
+}
+
+.cer-event-main {
+    display: block;
+}
+
+.cer-event-footer {
+    border-top: 1px solid rgba(0, 110, 172, 0.08);
+    background: #ffffff;
+}
+
+.cer-event-footer__inner {
+    flex-wrap: wrap;
+}
+
+.cer-event-footer__brand {
+    display: grid;
+    gap: 0.4rem;
+    max-width: 28rem;
+}
+
+.cer-event-footer__title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #10233f;
+}
+
+.cer-event-footer__brand p,
+.cer-event-footer__copyright {
+    color: #5c667f;
+    margin: 0;
+}
+
+.cer-event-footer__nav {
+    flex: 1;
+}
+
+.cer-hero-section {
+    background: linear-gradient(180deg, rgba(2, 192, 109, 0.08) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border-radius: 32px;
+}
+
+.cer-hero-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1.75fr 1fr;
+    align-items: stretch;
+}
+
+.cer-hero-copy h1 {
+    font-size: clamp(2rem, 3vw, 3.25rem);
+    line-height: 1.05;
+    color: #1f254d;
+    margin: 1rem 0;
+}
+
+.cer-hero-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.24em;
+    font-size: 0.8rem;
+    color: #02c06d;
+}
+
+.cer-hero-text {
+    max-width: 680px;
+    color: #44475a;
+}
+
+.cer-hero-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem 1.15rem;
+    list-style: none;
+    padding: 0;
+    margin: 1.25rem 0 0;
+    color: #1f254d;
+}
+
+.cer-hero-features li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid #e8edf5;
+    background: rgba(255, 255, 255, 0.78);
+    font-weight: 600;
+}
+
+.cer-hero-features .material-symbols-outlined {
+    font-size: 1rem;
+    color: #02c06d;
+}
+
+.cer-hero-meta {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.cer-hero-meta div {
+    padding: 1rem 1.2rem;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid #e8edf5;
+}
+
+.cer-hero-meta-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #6e748d;
+    margin-bottom: 0.5rem;
+}
+
+.cer-hero-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cer-card-inner {
+    background: #ffffff;
+    border: 1px solid #e6edf8;
+    border-radius: 28px;
+    padding: 2rem;
+    width: 100%;
+    box-shadow: 0 24px 60px rgba(32, 45, 84, 0.08);
+}
+
+.cer-card-heading {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #032d5c;
+    margin-bottom: 1rem;
+}
+
+.cer-card-list {
+    list-style: disc;
+    padding-left: 1.4rem;
+    color: #4d5671;
+}
+
+.cer-info-section {
+    overflow: hidden;
+}
+
+.cer-info-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1.5fr 1fr;
+}
+
+.cer-info-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 2rem;
+    border: 1px solid #e8edf5;
+}
+
+.cer-info-card h2,
+.cer-info-card h3 {
+    color: #032d5c;
+    margin-bottom: 1rem;
+}
+
+.cer-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 0;
+    color: #515670;
+}
+
+.cer-info-list li {
+    margin-bottom: 0.85rem;
+}
+
+.cer-speakers-section {
+    text-align: center;
+}
+
+.cer-section-heading {
+    font-size: clamp(2rem, 2.7vw, 2.5rem);
+    color: #032d5c;
+    margin-bottom: 1.75rem;
+}
+
+.cer-speaker-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cer-speaker-card {
+    border-radius: 22px;
+    padding: 2rem;
+    background: #ffffff;
+    border: 1px solid #e8edf5;
+    min-height: 260px;
+}
+
+.cer-speaker-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #02c06d 0%, #18bec2 100%);
+    margin-bottom: 1.25rem;
+}
+
+.cer-speaker-card h4 {
+    font-size: 1.05rem;
+    color: #032d5c;
+    margin-bottom: 0.45rem;
+}
+
+.cer-speaker-card p {
+    color: #5c667f;
+    line-height: 1.8;
+}
+
+.cer-registration-section {
+    overflow: hidden;
+}
+
+.cer-registration-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1.35fr 0.85fr;
+    align-items: start;
+}
+
+.cer-registration-copy h2 {
+    color: #032d5c;
+    margin-bottom: 1rem;
+}
+
+.cer-payment-summary {
+    position: sticky;
+    top: 2rem;
+}
+
+.cer-summary-card {
+    background: #f8fafc;
+    border-radius: 24px;
+    padding: 2rem;
+    border: 1px solid #e8edf5;
+}
+
+.cer-summary-card h3 {
+    margin-bottom: 1.5rem;
+    color: #032d5c;
+}
+
+.cer-summary-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.cer-summary-row span {
+    color: #8189a0;
+}
+
+.cer-summary-row strong {
+    color: #1f254d;
+}
+
+.cer-summary-note {
+    margin-top: 1.5rem;
+    color: #5c667f;
+    font-size: 0.95rem;
+}
+
+.cer-sponsorship-section {
+    overflow: hidden;
+}
+
+.cer-section-header {
+    max-width: 760px;
+    margin: 0 auto 2rem;
+    text-align: center;
+}
+
+.cer-sponsor-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cer-sponsor-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 1.75rem;
+    border: 1px solid #e8edf5;
+}
+
+.cer-sponsor-card h3 {
+    margin-bottom: 0.75rem;
+    color: #032d5c;
+}
+
+.cer-sponsor-card ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+    margin: 1rem 0;
+    color: #5c667f;
+}
+
+/* Modern KAMGC layout integrated with the theme header/footer */
+.cer-event-page {
+    --cer-icrblue: #006EAC;
+    --cer-icrorange: #FAA41A;
+    --cer-surface: #FFFFFF;
+    --cer-surface-low: #F8F9FA;
+    --cer-text-main: #333333;
+    --cer-text-muted: #666666;
+    --cer-outline: #DEE2E6;
+    --cer-success: #8CC63F;
+    --cer-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+    width: 100%;
+    margin: 0;
+    background: var(--cer-surface-low);
+    color: var(--cer-text-main);
+    font-family: 'Open Sans', sans-serif;
+    line-height: 1.6;
+    overflow-x: clip;
+    box-sizing: border-box;
+}
+
+.material-symbols-outlined,
+.cer-event-badge .material-symbols-outlined,
+.cer-event-meta .material-symbols-outlined,
+.cer-event-callout-icon .material-symbols-outlined,
+.cer-event-features .material-symbols-outlined,
+.cer-sponsor-badge,
+.cer-security-pill .material-symbols-outlined,
+.cer-modal__hero-icon,
+.cer-modal__close .material-symbols-outlined,
+.cer-modal__state--success .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined', 'Material Symbols Outlined', sans-serif;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+    font-style: normal;
+    line-height: 1;
+}
+
+.cer-event-page *,
+.cer-event-page *::before,
+.cer-event-page *::after {
+    box-sizing: border-box;
+}
+
+.cer-event-shell {
+    width: 100%;
+    max-width: 1400px;
+    min-height: 100vh;
+    margin: 0 auto;
+    background: var(--cer-surface);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.04);
+    overflow-x: clip;
+}
+
+.cer-event-shell > section {
+    border-bottom: 1px solid var(--cer-outline);
+}
+
+.cer-event-hero {
+    width: 100%;
+    padding: 4rem 2.5rem 3rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.cer-event-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0 auto 2rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid rgba(250, 164, 26, 0.7);
+    border-radius: 999px;
+    background: rgba(250, 164, 26, 0.08);
+    color: var(--cer-icrorange);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.cer-event-badge .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.cer-event-hero-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(260px, 0.9fr);
+    gap: 2rem;
+    align-items: center;
+}
+
+.cer-event-hero-copy {
+    text-align: center;
+}
+
+.cer-event-hero-copy h1 {
+    margin: 0 0 1rem;
+    color: var(--cer-text-main);
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(2.25rem, 4vw, 4rem);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.04em;
+}
+
+.cer-event-hero-copy h1 span {
+    color: var(--cer-icrblue);
+}
+
+.cer-event-subtitle {
+    margin: 0 0 1.5rem;
+    color: var(--cer-text-muted);
+    font-size: clamp(1.1rem, 2vw, 1.7rem);
+    font-weight: 600;
+}
+
+.cer-event-intro {
+    max-width: 60rem;
+    margin: 0 auto 1.1rem;
+    color: var(--cer-text-muted);
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+.cer-event-features {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem 1.5rem;
+    margin: 0 0 2rem;
+    padding: 0;
+    list-style: none;
+    color: var(--cer-text-main);
+    font-weight: 600;
+}
+
+.cer-event-features li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cer-event-features .material-symbols-outlined {
+    color: var(--cer-success);
+    font-size: 1.1rem;
+}
+
+.cer-event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem 2rem;
+    margin-bottom: 1.25rem;
+    color: var(--cer-icrblue);
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.cer-event-meta div {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cer-event-meta .material-symbols-outlined {
+    font-size: 1.2rem;
+}
+
+.cer-event-convened-by {
+    margin-bottom: 2rem;
+    color: var(--cer-text-muted);
+    font-size: 1.05rem;
+}
+
+.cer-event-convened-label {
+    font-weight: 700;
+    color: var(--cer-text-main);
+}
+
+.cer-event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem 1.5rem;
+}
+
+.cer-primary-action,
+.cer-secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 56px;
+    padding: 1rem 2rem;
+    border-radius: 0;
+    border: 2px solid transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.cer-primary-action {
+    background: var(--cer-icrorange);
+    color: #ffffff;
+    box-shadow: 0 12px 24px rgba(250, 164, 26, 0.2);
+}
+
+.cer-primary-action:hover {
+    background: #e08d00;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.cer-secondary-action {
+    border-color: var(--cer-icrblue);
+    color: var(--cer-icrblue);
+    background: transparent;
+}
+
+.cer-secondary-action:hover {
+    background: var(--cer-surface-low);
+    text-decoration: none;
+}
+
+.cer-event-side-panel {
+    display: flex;
+    justify-content: center;
+}
+
+.cer-event-side-panel-inner {
+    width: 100%;
+    padding: 2rem;
+    border: 1px solid var(--cer-outline);
+    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: var(--cer-shadow);
+}
+
+.cer-panel-kicker {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--cer-icrblue);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.cer-event-side-panel-inner h2 {
+    margin: 0 0 1rem;
+    color: var(--cer-text-main);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.8rem;
+}
+
+.cer-event-side-panel-inner p {
+    margin: 0 0 1.5rem;
+    color: var(--cer-text-muted);
+}
+
+.cer-panel-list {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.cer-panel-list div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--cer-outline);
+    color: var(--cer-text-muted);
+}
+
+.cer-panel-list strong {
+    color: var(--cer-text-main);
+    text-align: right;
+}
+
+.cer-event-content {
+    padding: 4rem 2.5rem;
+}
+
+.cer-event-content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(290px, 0.8fr);
+    gap: 2rem;
+    align-items: start;
+}
+
+.cer-event-main-column,
+.cer-event-sidebar-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.cer-event-card {
+    padding: 2rem;
+    background: var(--cer-surface);
+    border: 1px solid var(--cer-outline);
+}
+
+.cer-event-card h2,
+.cer-event-card h3,
+.cer-event-card h4 {
+    margin: 0 0 1rem;
+    color: var(--cer-icrblue);
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: -0.03em;
+}
+
+.cer-event-card h2 {
+    font-size: clamp(2rem, 2vw, 2.5rem);
+}
+
+.cer-event-card h3 {
+    font-size: 2rem;
+}
+
+.cer-event-card p {
+    color: var(--cer-text-muted);
+    line-height: 1.8;
+}
+
+.cer-event-copy-stack {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.cer-event-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--cer-surface-low);
+    border: 1px solid var(--cer-outline);
+}
+
+.cer-event-callout-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--cer-icrblue);
+    margin-top: 0.1rem;
+}
+
+.cer-event-callout h4 {
+    margin-bottom: 0.5rem;
+    color: var(--cer-text-main);
+    font-size: 1.25rem;
+}
+
+.cer-event-card.cer-form-card {
+    padding-bottom: 1.5rem;
+}
+
+.cer-event-form-intro {
+    margin-bottom: 1.5rem;
+}
+
+.cer-registration-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.cer-registration-form.cer-card-selected .cer-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cer-registration-form.cer-card-selected .cer-form-grid .cer-span-2 {
+    grid-column: auto;
+}
+
+@media (max-width: 640px) {
+    .cer-registration-form.cer-card-selected .cer-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cer-payment-toggle {
+    display: flex;
+    width: 100%;
+    max-width: 28rem;
+    padding: 0.3rem;
+    background: var(--cer-surface-low);
+    border: 1px solid var(--cer-outline);
+}
+
+.cer-hosted-payment {
+    margin-top: 22px;
+    overflow: hidden;
+    position: relative;
+}
+
+.cer-hosted-payment.cer-card-ready:not(.cer-payment-loading) {
+    min-height: 84px;
+}
+
+.cer-hosted-payment.cer-card-ready:not(.cer-payment-loading)::before {
+    align-items: center;
+    color: var(--cer-text-muted);
+    content: 'Secure card checkout is ready and will load automatically after you continue.';
+    display: flex;
+    justify-content: center;
+    min-height: 84px;
+}
+
+.cer-hosted-payment.cer-card-ready iframe[src="about:blank"] {
+    display: none;
+}
+
+.cer-hosted-payment.cer-card-ready iframe:not([src]) {
+    display: none;
+}
+
+.cer-hosted-payment.cer-payment-loading::before {
+    animation: cer-payment-pulse 1.2s ease-in-out infinite;
+    color: var(--cer-text-muted);
+    content: 'Preparing secure card checkout...';
+    display: block;
+    padding: 1rem;
+    text-align: center;
+}
+
+@keyframes cer-payment-pulse {
+    50% { opacity: 0.45; }
+}
+
+.cer-registration-form.cer-payment-submitted {
+    display: none;
+}
+
+.cer-hosted-payment iframe {
+    display: block;
+    width: 100%;
+    height: 720px;
+    border: 0;
+}
+
+.cer-hosted-payment.cer-payment-complete {
+    display: none;
+}
+
+.cer-payment-toggle-btn {
+    flex: 1;
+    min-height: 48px;
+    border: none;
+    background: transparent;
+    color: var(--cer-text-muted);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.cer-payment-toggle-btn.is-active {
+    background: var(--cer-icrblue);
+    color: #ffffff;
+}
+
+.cer-payment-panel {
+    display: block;
+}
+
+.cer-payment-panel.cer-modal-hidden {
+    display: none;
+}
+
+.cer-card-panel {
+    border: 1px solid var(--cer-outline);
+    border-radius: 18px;
+    padding: 1.25rem;
+    background: rgba(0, 110, 172, 0.02);
+}
+
+.cer-card-flow-note {
+    margin: 1rem 0 0;
+    color: var(--cer-text-muted);
+    font-size: 0.92rem;
+}
+
+.cer-card-submit {
+    margin-top: 1.25rem;
+}
+
+.cer-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.cer-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.cer-field-group.cer-span-2,
+.payment-field.md\:col-span-2 {
+    grid-column: 1 / -1;
+}
+
+.cer-field-group label {
+    color: var(--cer-text-main);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.cer-field-group input,
+.cer-field-group textarea,
+.cer-field-group select {
+    width: 100%;
+    min-height: 52px;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--cer-outline);
+    background: var(--cer-surface);
+    color: var(--cer-text-main);
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.cer-field-group input:focus,
+.cer-field-group textarea:focus,
+.cer-field-group select:focus {
+    border-color: var(--cer-icrblue);
+    outline: none;
+    box-shadow: 0 0 0 1px rgba(0, 110, 172, 0.18);
+}
+
+.cer-phone-field {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--cer-outline);
+    background: var(--cer-surface);
+}
+
+.cer-phone-prefix {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    padding: 0 0.9rem;
+    background: var(--cer-surface-low);
+    border-right: 1px solid var(--cer-outline);
+    font-weight: 700;
+}
+
+.cer-phone-field input {
+    border: none !important;
+    min-height: 52px;
+}
+
+.cer-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.block {
+    display: block !important;
+}
+
+.cer-form-footnote {
+    color: var(--cer-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+.cer-primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 56px;
+    border: none;
+    background: var(--cer-icrorange);
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.cer-primary-button:hover {
+    background: #e08d00;
+}
+
+.cer-primary-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.cer-sponsor-panel {
+    padding-bottom: 1.5rem;
+}
+
+.cer-sponsor-list {
+    display: grid;
+    gap: 0.8rem;
+    margin: 1.5rem 0 1.25rem;
+    padding: 0;
+    list-style: none;
+}
+
+.cer-sponsor-item {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--cer-outline);
+    background: var(--cer-surface-low);
+    font-weight: 700;
+    color: var(--cer-text-main);
+}
+
+.cer-sponsor-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid rgba(250, 164, 26, 0.7);
+    color: var(--cer-icrorange);
+    font-size: 0.8rem;
+    font-weight: 800;
+    background: rgba(250, 164, 26, 0.06);
+}
+
+.cer-sponsorship-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 52px;
+    border: 2px solid var(--cer-icrblue);
+    color: var(--cer-icrblue);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.cer-sponsorship-link:hover {
+    background: var(--cer-surface-low);
+    text-decoration: none;
+}
+
+.cer-summary-panel {
+    position: sticky;
+    top: 2rem;
+    background: var(--cer-surface-low);
+}
+
+.cer-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--cer-outline);
+    color: var(--cer-text-muted);
+    font-weight: 600;
+}
+
+.cer-summary-row strong {
+    max-width: 60%;
+    color: var(--cer-text-main);
+    text-align: right;
+}
+
+.cer-summary-total {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-bottom: none;
+    color: var(--cer-text-main);
+}
+
+.cer-summary-total strong {
+    color: var(--cer-icrorange);
+    font-size: 1.4rem;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.cer-summary-note {
+    margin-top: 1.5rem;
+    font-size: 0.92rem;
+}
+
+.cer-security-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    color: var(--cer-success);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.cer-event-speakers,
+.cer-event-pillars {
+    padding: 4rem 2.5rem;
+}
+
+.cer-event-section-heading {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.cer-event-section-heading h2 {
+    margin: 0 0 0.7rem;
+    color: var(--cer-icrblue);
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(2.3rem, 3vw, 3rem);
+}
+
+.cer-event-section-heading-left {
+    text-align: left;
+    max-width: 48rem;
+    margin-bottom: 2rem;
+}
+
+.cer-event-section-heading-left p {
+    color: var(--cer-text-muted);
+    margin: 0;
+}
+
+.cer-event-divider {
+    width: 5.5rem;
+    height: 0.25rem;
+    margin: 0 auto;
+    background: var(--cer-icrorange);
+}
+
+.cer-speaker-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.cer-speaker-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    background: var(--cer-surface);
+    border: 1px solid var(--cer-outline);
+}
+
+.cer-speaker-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12rem;
+    height: 12rem;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    border-radius: 50%;
+    border: 4px solid var(--cer-outline);
+    background: var(--cer-surface-low);
+}
+
+.cer-speaker-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cer-speaker-avatar .material-symbols-outlined {
+    font-size: 4rem;
+    color: var(--cer-icrblue);
+}
+
+.cer-speaker-card h3 {
+    margin: 0 0 0.4rem;
+    color: var(--cer-text-main);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.8rem;
+}
+
+.cer-speaker-role {
+    margin: 0 0 0.8rem;
+    color: var(--cer-icrorange);
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.cer-speaker-card p:last-child {
+    margin: 0;
+}
+
+.cer-pillar-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.cer-pillar-card {
+    position: relative;
+    min-height: 16rem;
+    overflow: hidden;
+    background: var(--cer-surface);
+    border: 1px solid var(--cer-outline);
+    cursor: pointer;
+}
+
+.cer-pillar-front,
+.cer-pillar-back {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.5s ease;
+    padding: 1.5rem;
+}
+
+.cer-pillar-front {
+    background: var(--cer-surface);
+    transform: translateY(0);
+}
+
+.cer-pillar-back {
+    background: var(--cer-icrblue);
+    color: #ffffff;
+    transform: translateY(105%);
+}
+
+.cer-pillar-card:hover .cer-pillar-front {
+    transform: translateY(-150%);
+}
+
+.cer-pillar-card:hover .cer-pillar-back {
+    transform: translateY(0);
+}
+
+.cer-pillar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1.2rem;
+    border-radius: 50%;
+    background: var(--cer-surface-low);
+    border: 1px solid var(--cer-outline);
+    color: var(--cer-icrblue);
+}
+
+.cer-pillar-front h3 {
+    margin: 0;
+    color: var(--cer-icrblue);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    text-align: center;
+}
+
+.cer-pillar-back p {
+    margin: 0;
+    color: #ffffff;
+    text-align: center;
+    line-height: 1.7;
+}
+
+.cer-empty-state {
+    padding: 5rem 2rem;
+    text-align: center;
+}
+
+.cer-empty-state h1 {
+    margin-bottom: 1rem;
+    color: var(--cer-icrblue);
+    font-family: 'Montserrat', sans-serif;
+}
+
+.cer-empty-state p {
+    color: var(--cer-text-muted);
+}
+
+
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .cer-event-hero-inner,
+    .cer-event-content-grid {
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 1023px) {
+    .cer-event-hero,
+    .cer-event-content,
+    .cer-event-speakers,
+    .cer-event-pillars {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    .cer-event-hero-inner,
+    .cer-event-content-grid,
+    .cer-speaker-grid,
+    .cer-pillar-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cer-event-shell {
+        box-shadow: none;
+    }
+
+    .cer-summary-panel {
+        position: static;
+    }
+}
+
+@media (max-width: 767px) {
+    .cer-event-badge {
+        text-align: center;
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+    }
+
+    .cer-event-meta {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .cer-event-actions {
+        flex-direction: column;
+    }
+
+    .cer-primary-action,
+    .cer-secondary-action {
+        width: 100%;
+    }
+
+    .cer-form-grid,
+    .cer-card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cer-event-card,
+    .cer-event-side-panel-inner {
+        padding: 1.25rem;
+    }
+
+    .cer-event-hero-copy h1 {
+        font-size: 2.3rem;
+    }
+}
+
+@media print {
+    .cer-accessibility-button {
+        display: none;
+    }
+}
+
+.cer-sponsor-link {
+    display: inline-block;
+    margin-top: 1rem;
+    text-decoration: none;
+    color: #02c06d;
+    font-weight: 700;
+}
+
+.cer-whatsapp-button {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: #25d366;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 0.95rem 1.2rem;
+    box-shadow: 0 24px 55px rgba(37, 211, 102, 0.18);
+    z-index: 99;
+    text-decoration: none;
+}
+
+.cer-whatsapp-icon {
+    display: inline-flex;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.18);
+    font-weight: 700;
+}
+
+.cer-form-message {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background: #f8fafc;
+    color: #0f172a;
+    min-height: 3rem;
+}
+
+.cer-error-box {
+    padding: 1.2rem;
+    background: #fff1f0;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    border-radius: 16px;
+}
+
+@media (max-width: 1024px) {
+    .cer-hero-grid,
+    .cer-info-grid,
+    .cer-registration-grid,
+    .cer-sponsor-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cer-speaker-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cer-payment-summary {
+        position: static;
+    }
+}
+
+@media (max-width: 900px) {
+    .cer-speaker-grid,
+    .cer-sponsor-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .auto-container {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    .cer-hero-section,
+    .cer-info-card,
+    .cer-card-inner,
+    .cer-summary-card,
+    .cer-sponsor-card {
+        border-radius: 20px;
+    }
+
+    .cer-whatsapp-button {
+        right: 1rem;
+        bottom: 1rem;
+        padding: 0.85rem 1rem;
+    }
+}
+
+.cer-event-page {
+    position: relative;
+    background: linear-gradient(180deg, #f7f9fc 0%, #ffffff 18%, #ffffff 100%);
+    color: #233047;
+}
+
+.cer-top-glass-backdrop {
+    width: 100%;
+    min-height: 10rem;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: 0;
+    border-radius: 0;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+
+.cer-event-page .site-header,
+.cer-event-page .site-header nav,
+.cer-event-page .main-navigation,
+.cer-event-page .navbar {
+    position: relative;
+    z-index: 10;
+}
+
+.cer-event-shell {
+    padding: 1 0 1.5rem;
+}
+
+.cer-hero-section,
+.cer-info-section,
+.cer-speakers-section,
+.cer-pillars-section {
+    margin-bottom: 3.5rem;
+}
+
+.cer-hero-section {
+    display: grid;
+    gap: 1.25rem;
+    padding: 2rem;
+    border-radius: 32px;
+    background: radial-gradient(circle at top left, rgba(0, 110, 172, 0.12), transparent 42%), linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid rgba(0, 110, 172, 0.08);
+    box-shadow: 0 24px 70px rgba(23, 42, 69, 0.08);
+}
+
+.cer-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(250, 164, 26, 0.35);
+    color: #c97200;
+    background: rgba(250, 164, 26, 0.08);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+.cer-hero-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
+    align-items: stretch;
+}
+
+.cer-hero-copy h1 {
+    margin: 0.9rem 0 0.75rem;
+    font-size: clamp(2.4rem, 5vw, 4.6rem);
+    line-height: 0.98;
+    color: #10233f;
+    letter-spacing: -0.04em;
+}
+
+.cer-hero-subtitle {
+    margin: 0 0 1.1rem;
+    color: #006eac;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+}
+
+.cer-hero-text {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #51607a;
+    max-width: 44rem;
+}
+
+.cer-hero-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.cer-hero-meta > div,
+.cer-panel-list > div,
+.cer-inline-meta > div,
+.cer-summary-row,
+.cer-card,
+.cer-hero-panel-inner,
+.cer-sponsor-card,
+.cer-speaker-card,
+.cer-pillar-card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.cer-hero-meta > div {
+    padding: 1rem;
+    border-radius: 18px;
+}
+
+.cer-meta-label,
+.cer-panel-list span,
+.cer-inline-meta span,
+.cer-summary-row span {
+    display: block;
+    color: #6c7487;
+    font-size: 0.82rem;
+    margin-bottom: 0.35rem;
+}
+
+.cer-hero-meta strong,
+.cer-panel-list strong,
+.cer-inline-meta strong,
+.cer-summary-row strong {
+    color: #12233d;
+    font-size: 1rem;
+}
+
+.cer-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-top: 1.7rem;
+}
+
+.cer-primary-action,
+.cer-secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: 0.95rem 1.35rem;
+    border-radius: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.cer-primary-action {
+    background: #faa41a;
+    color: #ffffff;
+    box-shadow: 0 16px 34px rgba(250, 164, 26, 0.22);
+}
+
+.cer-secondary-action {
+    border: 2px solid #006eac;
+    color: #006eac;
+    background: #ffffff;
+}
+
+.cer-primary-action:hover,
+.cer-secondary-action:hover,
+.cer-sponsor-card a:hover {
+    transform: translateY(-1px);
+}
+
+.cer-hero-panel {
+    display: flex;
+}
+
+.cer-hero-panel-inner {
+    width: 100%;
+    padding: 1.7rem;
+    border-radius: 26px;
+    box-shadow: 0 24px 56px rgba(16, 35, 63, 0.08);
+}
+
+.cer-panel-kicker {
+    display: inline-flex;
+    margin-bottom: 0.8rem;
+    color: #faa41a;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.cer-hero-panel-inner h2,
+.cer-card h2,
+.cer-card h3,
+.cer-section-head h2 {
+    margin: 0 0 0.8rem;
+    color: #006eac;
+}
+
+.cer-hero-panel-inner p,
+.cer-card p,
+.cer-sponsor-card p,
+.cer-speaker-card p,
+.cer-pillar-back p {
+    color: #51607a;
+    line-height: 1.8;
+}
+
+.cer-panel-list {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1.25rem;
+}
+
+.cer-panel-list > div {
+    padding: 0.9rem 1rem;
+    border-radius: 16px;
+}
+
+.cer-info-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+}
+
+.cer-info-main,
+.cer-info-sidebar {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.cer-card {
+    border-radius: 26px;
+    padding: 1.75rem;
+    box-shadow: 0 18px 50px rgba(20, 37, 67, 0.06);
+}
+
+.cer-callout {
+    margin-top: 1.2rem;
+    padding: 1rem 1rem 1rem 1.1rem;
+    border-left: 4px solid #8cc63f;
+    background: #f6fbef;
+    border-radius: 16px;
+}
+
+.cer-callout strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #10233f;
+}
+
+.cer-inline-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.cer-form-card p {
+    margin-bottom: 1rem;
+}
+
+.cer-registration-form {
+    margin-top: 1.1rem;
+}
+
+.cer-payment-toggle {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    padding: 0.4rem;
+    border: 1px solid rgba(0, 110, 172, 0.12);
+    background: #f5f8fc;
+    border-radius: 18px;
+    margin-bottom: 1.25rem;
+}
+
+.cer-payment-toggle-btn {
+    min-height: 48px;
+    border-radius: 14px;
+    background: transparent;
+    color: #6c7487;
+    font-weight: 700;
+    transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.cer-payment-toggle-btn.is-active {
+    background: #006eac;
+    color: #ffffff;
+    box-shadow: 0 12px 26px rgba(0, 110, 172, 0.22);
+}
+
+.cer-form-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cer-span-2 {
+    grid-column: 1 / -1;
+}
+
+.cer-field-group {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.cer-field-group label {
+    font-weight: 700;
+    color: #10233f;
+}
+
+.cer-field-group input,
+.cer-field-group select,
+.cer-field-group textarea {
+    width: 100%;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 14px;
+    background: #ffffff;
+    color: #12233d;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.cer-field-group input:focus,
+.cer-field-group select:focus,
+.cer-field-group textarea:focus {
+    border-color: #006eac;
+    box-shadow: 0 0 0 4px rgba(0, 110, 172, 0.08);
+}
+
+.cer-phone-field {
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #ffffff;
+}
+
+.cer-phone-prefix {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 1rem;
+    background: #f5f7fb;
+    color: #10233f;
+    font-weight: 700;
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.cer-phone-field input {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none !important;
+}
+
+.payment-field.hidden {
+    display: none !important;
+}
+
+.payment-field.block {
+    display: block;
+}
+
+.cer-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.cer-form-footnote {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.95rem 1rem;
+    border-radius: 14px;
+    background: #f7fafd;
+    color: #51607a;
+    border: 1px solid rgba(0, 110, 172, 0.08);
+}
+
+.cer-form-message {
+    margin-top: 1rem;
+    padding: 0.95rem 1rem;
+    border-radius: 14px;
+    min-height: 3rem;
+    background: #f7fafd;
+    color: #51607a;
+}
+
+.cer-form-message-info {
+    background: #eef6fc;
+    color: #215b83;
+}
+
+.cer-form-message-success {
+    background: #eff8e6;
+    color: #4d7d13;
+}
+
+.cer-form-message-error {
+    background: #fff1f0;
+    color: #b42318;
+}
+
+.cer-summary-row {
+    padding: 1rem 1rem 0.95rem;
+    border-radius: 18px;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+
+.cer-summary-total {
+    background: linear-gradient(135deg, rgba(0, 110, 172, 0.06), rgba(250, 164, 26, 0.08));
+}
+
+.cer-summary-note {
+    margin-top: 1rem;
+    color: #51607a;
+    line-height: 1.7;
+}
+
+.cer-security-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.95rem;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    background: rgba(140, 198, 63, 0.12);
+    color: #5b8f16;
+    font-weight: 700;
+}
+
+.cer-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.cer-modal-hidden {
+    display: none !important;
+}
+
+.cer-modal__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.cer-modal__panel {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 30rem);
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 32px 80px rgba(18, 31, 54, 0.28);
+    overflow: hidden;
+}
+
+.cer-modal__panel--mpesa .cer-modal__hero {
+    background: #8cc63f;
+    color: #ffffff;
+}
+
+.cer-modal__hero,
+.cer-modal__header {
+    position: relative;
+    padding: 1.5rem;
+}
+
+.cer-modal__hero {
+    text-align: center;
+}
+
+.cer-modal__hero h3,
+.cer-modal__header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: inherit;
+}
+
+.cer-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.cer-modal__header h3 {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #006eac;
+}
+
+.cer-modal__close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+}
+
+.cer-modal__close--muted {
+    position: static;
+    color: #596579;
+}
+
+.cer-modal__hero-icon {
+    display: inline-flex;
+    margin-bottom: 0.5rem;
+    font-size: 3rem;
+    font-variation-settings: 'FILL' 1;
+}
+
+.cer-modal__body {
+    display: grid;
+    gap: 1.2rem;
+    padding: 1.75rem;
+}
+
+.cer-modal__body--centered {
+    justify-items: center;
+    text-align: center;
+}
+
+.cer-modal__body p {
+    margin: 0;
+    color: #22324c;
+}
+
+.cer-modal__summary {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.cer-modal__summary div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #56637b;
+}
+
+.cer-modal__summary strong {
+    color: #10233f;
+}
+
+.cer-modal__state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: #6a7588;
+    font-weight: 700;
+}
+
+.cer-modal__state--success {
+    color: #5b8f16;
+}
+
+.cer-modal__state--success .material-symbols-outlined {
+    font-size: 3rem;
+}
+
+.cer-modal__spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 4px solid #dee2e6;
+    border-top-color: #8cc63f;
+    animation: cer-spin 0.9s linear infinite;
+}
+
+.cer-modal__spinner--large {
+    width: 4rem;
+    height: 4rem;
+    border-top-color: #006eac;
+}
+
+@keyframes cer-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.cer-sponsor-list {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.cer-sponsor-card {
+    border-radius: 22px;
+    padding: 1.2rem;
+    box-shadow: 0 16px 40px rgba(16, 35, 63, 0.05);
+    border: 1px solid rgba(16, 35, 63, 0.06);
+}
+
+.cer-sponsor-card summary {
+    cursor: pointer;
+    list-style: none;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #10233f;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.cer-sponsor-card summary::-webkit-details-marker {
+    display: none;
+}
+
+.cer-sponsor-card summary::after {
+    content: '+';
+    color: #006eac;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.cer-sponsor-card[open] summary::after {
+    content: '−';
+}
+
+.cer-sponsor-body {
+    margin-top: 0.9rem;
+}
+
+.cer-sponsor-card h4,
+.cer-speaker-card h3,
+.cer-pillar-front h3 {
+    margin: 0 0 0.65rem;
+    color: #10233f;
+}
+
+.cer-sponsor-body ul {
+    margin: 0.9rem 0 0;
+    padding-left: 1rem;
+    color: #51607a;
+}
+
+.cer-sponsor-body a,
+.cer-sponsor-card a {
+    display: inline-flex;
+    margin-top: 0.9rem;
+    color: #006eac;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.cer-section-head {
+    text-align: center;
+    margin-bottom: 1.8rem;
+}
+
+.cer-section-head-left {
+    text-align: left;
+}
+
+.cer-divider {
+    width: 88px;
+    height: 4px;
+    margin: 0.85rem auto 0;
+    background: #faa41a;
+    border-radius: 999px;
+}
+
+.cer-section-head-left .cer-divider {
+    margin-left: 0;
+}
+
+.cer-speaker-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.cer-speaker-card {
+    padding: 1.6rem;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 18px 50px rgba(20, 37, 67, 0.06);
+}
+
+.cer-speaker-avatar {
+    width: 132px;
+    height: 132px;
+    margin: 0 auto 1rem;
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(0, 110, 172, 0.08), rgba(250, 164, 26, 0.18));
+}
+
+.cer-speaker-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cer-speaker-role {
+    color: #faa41a;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.cer-pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.cer-pillar-card {
+    position: relative;
+    min-height: 260px;
+    border-radius: 26px;
+    overflow: hidden;
+    perspective: 1200px;
+    box-shadow: 0 18px 50px rgba(20, 37, 67, 0.06);
+}
+
+.cer-pillar-front,
+.cer-pillar-back {
+    position: absolute;
+    inset: 0;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: transform 400ms ease, opacity 400ms ease;
+}
+
+.cer-pillar-front {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.cer-pillar-back {
+    background: linear-gradient(135deg, #006eac 0%, #00507d 100%);
+    color: #ffffff;
+    transform: translateY(100%);
+}
+
+.cer-pillar-card:hover .cer-pillar-front {
+    transform: translateY(-100%);
+}
+
+.cer-pillar-card:hover .cer-pillar-back {
+    transform: translateY(0);
+}
+
+.cer-pillar-icon {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 1rem;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 110, 172, 0.08);
+    color: #006eac;
+}
+
+.cer-pillar-back p {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.cer-empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    border-radius: 26px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 18px 50px rgba(20, 37, 67, 0.06);
+}
+
+.cer-empty-state h1 {
+    margin-bottom: 0.75rem;
+    color: #006eac;
+}
+
+
+
+@media (max-width: 1200px) {
+    .cer-hero-grid,
+    .cer-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cer-speaker-grid,
+    .cer-pillars-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.cer-kamgc-page {
+    background: #f5f7fa;
+    color: #1d2a39;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.cer-kamgc-shell {
+    max-width: 1280px;
+    margin: 0 auto;
+    background: #ffffff;
+    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.06);
+}
+
+.cer-kamgc-hero {
+    padding: 3rem 2.5rem 2.5rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%);
+}
+
+.cer-kamgc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(250, 164, 26, 0.6);
+    background: rgba(250, 164, 26, 0.08);
+    color: #d57c00;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.cer-kamgc-badge .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.cer-kamgc-hero-inner {
+    display: block;
+    margin-top: 2rem;
+}
+
+.cer-kamgc-hero-copy {
+    text-align: center;
+}
+
+.cer-kamgc-hero-copy h1 {
+    margin: 0 0 0.9rem;
+    color: #192838;
+    font-family: 'Montserrat', 'Open Sans', sans-serif;
+    font-size: clamp(2.5rem, 4vw, 4.5rem);
+    line-height: 1.06;
+    letter-spacing: -0.04em;
+    font-weight: 800;
+}
+
+.cer-kamgc-hero-copy h1 span {
+    color: #006eac;
+}
+
+.cer-kamgc-subtitle {
+    margin: 0 0 1.6rem;
+    color: #4d5d74;
+    font-size: clamp(1.05rem, 1.8vw, 1.4rem);
+    font-weight: 600;
+}
+
+.cer-kamgc-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.8rem 1.3rem;
+    margin-bottom: 1.25rem;
+    color: #1b2f45;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.cer-kamgc-meta-row > div {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.cer-kamgc-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(25, 40, 56, 0.2);
+}
+
+.cer-kamgc-convened-by {
+    margin: 0 0 1.25rem;
+    color: #5a6477;
+    font-size: 1.05rem;
+}
+
+.cer-kamgc-convened-by span {
+    color: #1d2a39;
+    font-weight: 800;
+}
+
+.cer-kamgc-feature-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem 1.5rem;
+    list-style: none;
+    margin: 0 0 2rem;
+    padding: 0;
+    color: #1b2f45;
+    font-weight: 700;
+}
+
+.cer-kamgc-feature-list li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.text-success {
+    color: #8cc63f !important;
+}
+
+.cer-kamgc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem 1.2rem;
+}
+
+.cer-kamgc-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 54px;
+    padding: 0.95rem 1.6rem;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cer-kamgc-button:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.cer-kamgc-button-primary {
+    background: #faa41a;
+    color: #ffffff;
+    box-shadow: 0 18px 34px rgba(250, 164, 26, 0.18);
+}
+
+.cer-kamgc-button-secondary {
+    background: transparent;
+    border: 2px solid #006eac;
+    color: #006eac;
+}
+
+.cer-kamgc-main {
+    padding: 0 2.5rem 2rem;
+}
+
+.cer-kamgc-two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+    gap: 2rem;
+}
+
+.cer-kamgc-main-column {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.cer-kamgc-sidebar-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+}
+
+.cer-kamgc-sidebar-column > * {
+    flex-shrink: 0;
+}
+
+.cer-kamgc-card,
+.cer-kamgc-sponsor-box,
+.cer-kamgc-summary-box,
+.cer-kamgc-speaker-card,
+.cer-kamgc-pillars-card {
+    background: #ffffff;
+    border: 1px solid #e7edf5;
+    border-radius: 24px;
+    box-shadow: 0 20px 45px rgba(18, 33, 53, 0.04);
+}
+
+.cer-kamgc-card {
+    padding: 2rem;
+}
+
+.cer-kamgc-card h2,
+.cer-kamgc-sponsor-box h3,
+.cer-kamgc-summary-box h3,
+.cer-kamgc-section-title h2,
+.cer-kamgc-pillar-header h2 {
+    margin: 0 0 1rem;
+    color: #10233f;
+    font-family: 'Montserrat', 'Open Sans', sans-serif;
+}
+
+.cer-kamgc-copy-stack {
+    display: grid;
+    gap: 1rem;
+}
+
+.cer-kamgc-copy-stack p,
+.cer-kamgc-callout p,
+.cer-kamgc-form-intro,
+.cer-kamgc-sponsor-box p,
+.cer-kamgc-summary-box p,
+.cer-kamgc-speaker-card p,
+.cer-kamgc-pillar-header p,
+.cer-kamgc-pillars-back p {
+    margin: 0;
+    color: #58667d;
+    line-height: 1.8;
+}
+
+.cer-kamgc-callout {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.4rem;
+    padding: 1.15rem 1.1rem;
+    border-radius: 18px;
+    background: #f7fafc;
+    border: 1px solid #edf2f8;
+}
+
+.cer-kamgc-callout-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 110, 172, 0.08);
+    color: #006eac;
+}
+
+.cer-kamgc-callout h4 {
+    margin: 0 0 0.4rem;
+    color: #10233f;
+    font-weight: 800;
+}
+
+.cer-payment-toggle {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1.2rem;
+}
+
+.cer-payment-toggle-btn {
+    min-height: 48px;
+    border: 1px solid #dfeaf4;
+    border-radius: 12px;
+    background: #f9fbfd;
+    color: #35506d;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cer-payment-toggle-btn.is-active {
+    background: #006eac;
+    border-color: #006eac;
+    color: #ffffff;
+}
+
+.cer-registration-form {
+    display: block;
+}
+
+.cer-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.1rem;
+}
+
+.cer-field-group {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.cer-field-group label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #2a3b4d;
+}
+
+.cer-field-group input,
+.cer-field-group select,
+.cer-field-group textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid #dfeaf2;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1b2f45;
+    font: inherit;
+}
+
+.cer-field-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.cer-span-2 {
+    grid-column: span 2;
+}
+
+.cer-phone-field {
+    display: flex;
+    align-items: center;
+    border: 1px solid #dfeaf2;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.cer-phone-prefix {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 62px;
+    min-height: 48px;
+    padding: 0 0.8rem;
+    background: #f4f7fa;
+    color: #1b2f45;
+    font-weight: 700;
+    border-right: 1px solid #dfeaf2;
+}
+
+.cer-phone-field input {
+    border: 0;
+    border-radius: 0;
+    min-height: 48px;
+}
+
+.cer-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.cer-primary-button {
+    margin-top: 1rem;
+    width: 100%;
+    min-height: 54px;
+    border: 0;
+    border-radius: 14px;
+    background: #faa41a;
+    color: #ffffff;
+    font-size: 0.96rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+}
+
+.cer-kamgc-sponsor-box,
+.cer-kamgc-summary-box {
+    padding: 1.5rem;
+}
+
+.cer-kamgc-sponsor-list {
+    list-style: none;
+    margin: 1rem 0 1.2rem;
+    padding: 0;
+    display: grid;
+    gap: 0.8rem;
+}
+
+.cer-kamgc-sponsor-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: #24364e;
+    font-weight: 700;
+}
+
+.cer-kamgc-sponsor-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #006eac;
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.cer-kamgc-sponsor-badge-muted {
+    background: #6b7d95;
+}
+
+.cer-kamgc-sponsor-badge-bronze {
+    background: #c67a1d;
+}
+
+.cer-kamgc-inline-button {
+    width: 100%;
+    min-height: 46px;
+    border: 1px solid #dfeaf2;
+    border-radius: 12px;
+    background: #fff;
+    color: #006eac;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.cer-kamgc-summary-box {
+    display: grid;
+    gap: 0.9rem;
+    position: sticky;
+    top: 128px;
+}
+
+.cer-kamgc-summary-row,
+.cer-kamgc-summary-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid #edf2f8;
+    color: #617085;
+}
+
+.cer-kamgc-summary-total {
+    font-weight: 800;
+    color: #10233f;
+}
+
+.cer-kamgc-summary-box strong {
+    color: #10233f;
+}
+
+.cer-kamgc-security {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    padding: 0.6rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(140, 198, 63, 0.08);
+    color: #5b8a13;
+    font-weight: 700;
+}
+
+.cer-kamgc-speakers,
+.cer-kamgc-pillars {
+    padding: 0 2.5rem 2.5rem;
+}
+
+.cer-kamgc-section-title,
+.cer-kamgc-pillar-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.cer-kamgc-divider-center {
+    width: 120px;
+    height: 4px;
+    margin: 0.8rem auto 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #006eac, #faa41a);
+}
+
+.cer-kamgc-speaker-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.cer-kamgc-speaker-card {
+    padding: 2rem 1.5rem;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.65);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.cer-kamgc-speaker-card:hover {
+    background: rgba(255, 255, 255, 0.78);
+}
+
+.cer-kamgc-speaker-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #006eac 0%, #0db7a3 100%);
+    color: #ffffff;
+}
+
+.cer-kamgc-speaker-card h3 {
+    margin: 0 0 0.3rem;
+    color: #10233f;
+    font-size: 1.25rem;
+}
+
+.cer-kamgc-speaker-role {
+    margin-bottom: 0.75rem !important;
+    color: #006eac !important;
+    font-weight: 800;
+}
+
+.cer-kamgc-pillar-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.cer-kamgc-pillars-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 250px;
+    perspective: 1000px;
+    border-radius: 20px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.cer-kamgc-pillars-front,
+.cer-kamgc-pillars-back {
+    position: absolute;
+    inset: 0;
+    padding: 1.5rem;
+    backface-visibility: hidden;
+    transition: transform 0.45s ease;
+    border-radius: 20px;
+}
+
+.cer-kamgc-pillars-front {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.cer-kamgc-pillars-back {
+    transform: rotateY(180deg);
+    background: rgba(0, 75, 130, 0.88);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+}
+
+.cer-kamgc-pillars-back p {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.cer-kamgc-pillars-card:hover .cer-kamgc-pillars-front {
+    transform: rotateY(-180deg);
+}
+
+.cer-kamgc-pillars-card:hover .cer-kamgc-pillars-back {
+    transform: rotateY(0deg);
+}
+
+.cer-kamgc-pillars-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(250, 164, 26, 0.12);
+    color: #d57c00;
+}
+
+.cer-kamgc-pillars-card h3 {
+    margin: 0;
+    color: #10233f;
+    font-size: 1.2rem;
+}
+
+.cer-kamgc-pillars-card-large {
+    grid-column: span 2;
+}
+
+@media (max-width: 1024px) {
+    .cer-kamgc-two-col,
+    .cer-kamgc-speaker-grid,
+    .cer-kamgc-pillar-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cer-kamgc-pillars-card-large {
+        grid-column: span 1;
+    }
+
+    .cer-kamgc-summary-box {
+        position: static;
+    }
+}
+
+@media (max-width: 820px) {
+    .cer-kamgc-hero,
+    .cer-kamgc-main,
+    .cer-kamgc-speakers,
+    .cer-kamgc-pillars {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .cer-kamgc-card,
+    .cer-kamgc-sponsor-box,
+    .cer-kamgc-summary-box,
+    .cer-kamgc-speaker-card {
+        border-radius: 18px;
+    }
+
+    .cer-form-grid,
+    .cer-card-grid,
+    .cer-payment-toggle {
+        grid-template-columns: 1fr;
+    }
+
+    .cer-span-2 {
+        grid-column: auto;
+    }
+
+    .cer-kamgc-meta-row {
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .cer-kamgc-divider {
+        display: none;
+    }
+}
+
+/* =====================================================================
+   KITENGE background + glassmorphism layer
+   Additive only — no existing rule above this point is modified.
+   Layer 1: full-page background image + dark tint (legibility overlay),
+            applied to <body> so it sits behind everything on the page.
+   Layer 2: glassmorphism applied to the event page's content containers
+            (main shell, hero/main sections, cards, sidebar boxes,
+            header/footer), which previously had solid/opaque backgrounds.
+   ===================================================================== */
+
+/* Layer 1: background image  */
+body:has(.cer-event-page) {
+    background-image:
+        url(../../../../uploads/2026/08/2000px-by-2000px.png);
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+/* Let the background image show through the plugin's stacked page wrappers
+   instead of their previous solid/opaque backgrounds */
+.cer-event-page,
+.cer-event-shell,
+.cer-kamgc-page,
+.cer-kamgc-shell {
+    background: transparent;
+    box-shadow: none;
+}
+
+/* Widen the shell so glass panels cover far more of the viewport, leaving much less bg exposed on the sides */
+.cer-kamgc-shell {
+    width: 94%;
+    max-width: 1840px;
+}
+
+/* Outer speaker/pillar sections no longer add their own side padding so their card matches hero/main width exactly */
+.cer-kamgc-speakers,
+.cer-kamgc-pillars {
+    padding: 0;
+}
+
+/* Layer 2: glassmorphism on the visible content containers */
+.cer-kamgc-hero,
+.cer-kamgc-main,
+.cer-kamgc-card,
+.cer-kamgc-sponsor-box,
+.cer-kamgc-summary-box,
+.cer-kamgc-speakers-card,
+.cer-kamgc-pillars-card-wrapper,
+.cer-empty-state,
+.cer-event-header,
+.cer-event-footer {
+    background: rgba(255, 255, 255, 0.42);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 24px;
+    box-shadow: 0 10px 36px 0 rgba(0, 0, 0, 0.12);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.cer-kamgc-hero,
+.cer-kamgc-main,
+.cer-kamgc-speakers,
+.cer-kamgc-pillars {
+    margin: 1rem;
+}
+
+.cer-kamgc-hero:hover,
+.cer-kamgc-card:hover,
+.cer-kamgc-sponsor-box:hover,
+.cer-kamgc-summary-box:hover,
+.cer-kamgc-speakers-card:hover,
+.cer-kamgc-pillars-card-wrapper:hover {
+    background-color: rgba(255, 255, 255, 0.52);
+    box-shadow: 0 14px 44px 0 rgba(0, 0, 0, 0.18);
+}
+
+/* Tighten grid gaps so focus stays on the glass content rather than the bg showing through between cards */
+.cer-kamgc-two-col {
+    gap: 1.25rem;
+}
+
+.cer-kamgc-speaker-grid,
+.cer-kamgc-pillar-grid {
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .cer-kamgc-hero,
+    .cer-kamgc-main,
+    .cer-kamgc-speakers,
+    .cer-kamgc-pillars {
+        margin: 0.75rem;
+    }
+}

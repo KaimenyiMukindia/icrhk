@@ -1,0 +1,380 @@
+:root {
+  --cer-brand-900: #142C5C;
+  --cer-brand-700: #1F4E79;
+  --cer-brand-500: #1CA6A4;
+  --cer-brand-300: #91D3CC;
+  --cer-surface: #f5f7fb;
+  --cer-panel: #ffffff;
+  --cer-border: #dfe5ee;
+  --cer-text: #1e2a39;
+  --cer-muted: #607089;
+  --cer-danger: #d92d20;
+  --cer-success: #0d8f5f;
+  --cer-warning: #d97706;
+}
+
+.cer-admin-shell {
+  max-width: 100%;
+  padding-right: 24px;
+}
+
+.cer-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+  margin: 0 0 28px;
+}
+
+/* Only hides the banner on event-specific pages */
+body:has(.cer-event-page) .page-title.page-bread-cumb {
+    display: none !important;
+}
+
+.cer-metric-card {
+  background: linear-gradient(135deg, #ffffff, #f6f9ff);
+  border: 1px solid var(--cer-border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 10px 20px rgba(20, 44, 92, 0.06);
+}
+
+.cer-metric-card .label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cer-muted);
+  margin-bottom: 12px;
+}
+
+.cer-metric-card .value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--cer-brand-900);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.cer-metric-card .trend {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--cer-success);
+}
+
+.cer-quick-links,
+.cer-panel-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.cer-dashboard-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.cer-panel {
+  background: var(--cer-panel);
+  border: 1px solid var(--cer-border);
+  border-radius: 16px;
+  box-shadow: 0 10px 20px rgba(18, 32, 56, 0.05);
+  overflow: hidden;
+}
+
+.cer-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, #fbfdff 0%, #f6f9ff 100%);
+  border-bottom: 1px solid var(--cer-border);
+  padding: 16px 20px;
+}
+
+.cer-panel .panel-header h2,
+.cer-panel .panel-header h3 {
+  margin: 0;
+  color: var(--cer-brand-900);
+}
+
+.cer-panel .panel-body {
+  padding: 20px;
+}
+
+.cer-quick-links a,
+.cer-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  background: rgba(28,166,164,0.08);
+  border: 1px solid rgba(28,166,164,0.25);
+  color: var(--cer-brand-700);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+
+.cer-small-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cer-small-table th,
+.cer-small-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--cer-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.cer-small-table th {
+  color: var(--cer-brand-700);
+  background: #f8fafc;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cer-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.cer-status-draft { background: #eef2ff; color: #4f46e5; }
+.cer-status-published { background: #dcfce7; color: #166534; }
+.cer-status-closed { background: #fee2e2; color: #991b1b; }
+.cer-status-cancelled { background: #f3f4f6; color: #4b5563; }
+.cer-status-pending { background: #fef3c7; color: #92400e; }
+.cer-status-confirmed { background: #dcfce7; color: #166534; }
+.cer-status-paid { background: #d1fae5; color: #065f46; }
+.cer-status-cancelled-reg { background: #f3f4f6; color: #4b5563; }
+
+.cer-table-wrap {
+  overflow-x: auto;
+}
+
+.cer-events-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.cer-events-table th,
+.cer-events-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--cer-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.cer-events-table th {
+  background: #f8fafc;
+  color: var(--cer-brand-700);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.cer-events-table tbody tr:hover {
+  background: #f8fbff;
+}
+
+.cer-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: bottom;
+  margin: 0 0 18px;
+  width: 100%;
+}
+
+.cer-filter-bar .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.cer-filter-bar label {
+  font-size: 12px;
+  color: var(--cer-muted);
+  font-weight: 600;
+}
+
+.cer-filter-bar input,
+.cer-filter-bar select,
+.cer-filter-bar .button,
+.cer-admin-shell input,
+.cer-admin-shell select,
+.cer-admin-shell button {
+  border-radius: 10px;
+}
+.cer-filter-bar > .field:nth-child(3) {
+  flex-grow: 1;
+}
+.cer-admin-shell .button-primary,
+.cer-admin-shell .button.action,
+.cer-admin-shell .button.secondary {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.cer-admin-shell .button-primary {
+  background: var(--cer-brand-900);
+  color: #fff;
+  border-color: var(--cer-brand-900);
+}
+
+.cer-admin-shell .button-secondary {
+  background: #fff;
+  border-color: var(--cer-border);
+}
+
+/* Removes the tick/checkmark from the toggle */
+.cer-toggle-compact input[type="checkbox"]::before {
+  content: none !important;
+  display: none !important;
+}
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-field label {
+  display: none;
+  visibility: visible;
+  opacity: 1;
+}
+
+.cer-toggle {
+  visibility: visible;
+  opacity: 1;
+  display: inline-flex;
+  border: 2px solid green;
+}
+
+.cer-toggle {
+  visibility: visible;
+  opacity: 1;
+  display: inline-flex;
+  border: 2px solid green;
+}
+
+.cer-toggle {
+  visibility: visible;
+  opacity: 1;
+  display: inline-flex;
+  border: 2px solid green;
+}
+
+.cer-toggle {
+  visibility: visible;
+  opacity: 1;
+  display: inline-flex;
+  border: 2px solid green;
+}
+
+
+
+.cer-accessibility-button {
+    display: none !important;
+}
+
+.cer-admin-shell .page-title-action {
+  background: var(--cer-brand-700);
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+@media (max-width: 1180px) {
+  .cer-dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 782px) {
+  .cer-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cer-admin-shell {
+    padding-right: 0;
+  }
+}
