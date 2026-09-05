@@ -400,3 +400,176 @@
         }
     });
 })(document);
+
+/* ==========================================================================
+   CER MOTION — pillar expand + scroll reveal
+   --------------------------------------------------------------------------
+   Deliberately dependency-free. This page already loads four idle animation
+   libraries via the theme (TweenMax/GSAP 2, wow.js — enqueued but never
+   initialised, appear.js, and three separate copies of animate.css) on top of
+   71 scripts and 81 stylesheets. Adding a fifth was not defensible, and the
+   primary benchmark (summit.health.go.ke) ships no animation library at all —
+   just hand-rolled keyframes on cubic-bezier(.4,0,.2,1).
+   ========================================================================== */
+(function (document, window) {
+    'use strict';
+
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* Opt in to the reveal only once JS is confirmed running AND the observer
+       exists. The CSS that hides .cer-reveal is gated on this class, so if this
+       line never executes the content simply stays visible. */
+    var canReveal = !reduceMotion && ('IntersectionObserver' in window);
+    if (canReveal) {
+        document.documentElement.classList.add('cer-js');
+    }
+
+    /* --- Pillar cards: click + keyboard expand ---------------------------
+       Replaces the previous CSS-:hover-only 3D flip, which left the pillar
+       descriptions unreachable on any touch device. */
+    var pillarButtons = document.querySelectorAll('.cer-kamgc-pillars-front');
+
+    Array.prototype.forEach.call(pillarButtons, function (button) {
+        button.addEventListener('click', function () {
+            var card = button.closest('.cer-kamgc-pillars-card');
+            if (!card) {
+                return;
+            }
+            var isOpen = card.classList.toggle('is-open');
+            button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    });
+
+    /* --- Scroll reveal ---------------------------------------------------
+       Applied to card CONTENTS only, never to the glass containers: animating
+       transform/opacity on an element that also carries backdrop-filter forces
+       the blur to recomposite every frame and Safari drops it outright. */
+    var revealTargets = document.querySelectorAll('.cer-reveal');
+
+    if (!revealTargets.length) {
+        return;
+    }
+
+    if (!canReveal) {
+        Array.prototype.forEach.call(revealTargets, function (el) {
+            el.classList.add('is-visible');
+        });
+        return;
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    Array.prototype.forEach.call(revealTargets, function (el) {
+        observer.observe(el);
+    });
+})(document, window);
+
+/* ==========================================================================
+   ANIMATE ON SCROLL
+   --------------------------------------------------------------------------
+   Tags section contents with .cer-reveal and staggers them in as they enter
+   the viewport. Done from JS rather than the template so no markup changes,
+   and so nothing is ever hidden when JS is unavailable — the CSS that hides
+   .cer-reveal is gated on html.cer-js, which is only set below.
+   ========================================================================== */
+(function (document, window) {
+    'use strict';
+
+    var reduce = window.matchMedia &&
+                 window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduce || !('IntersectionObserver' in window)) {
+        return; // leave everything visible and untouched
+    }
+
+    /* Contents only — never a glass container (.cer-kamgc-hero, -main, -card,
+       -speakers-card, -pillars-card-wrapper), whose backdrop-filter would be
+       recomposited every frame and dropped by Safari. */
+    var groups = [
+        '.cer-kamgc-speaker-grid > *',
+        '.cer-kamgc-pillar-grid > *',
+        '.cer-kamgc-compact-grid > *',
+        '.cer-kamgc-partner-grid > *',
+        '.cer-kamgc-stats-grid > *',
+        '.cer-kamgc-faq-item',
+        '.cer-kamgc-section-title',
+        '.cer-kamgc-pillar-header'
+    ];
+
+    var tagged = [];
+
+    groups.forEach(function (selector) {
+        var nodes = document.querySelectorAll(selector);
+        Array.prototype.forEach.call(nodes, function (el, i) {
+            if (el.classList.contains('cer-reveal')) {
+                return;
+            }
+            el.classList.add('cer-reveal');
+            el.style.setProperty('--cer-reveal-delay', Math.min(i, 6) * 60 + 'ms');
+            tagged.push(el);
+        });
+    });
+
+    if (!tagged.length) {
+        return;
+    }
+
+    document.documentElement.classList.add('cer-js');
+
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    tagged.forEach(function (el) {
+        // Anything already on screen at load reveals immediately, so the page
+        // at rest is never a set of blank panels.
+        var r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0) {
+            el.classList.add('is-visible');
+        } else {
+            observer.observe(el);
+        }
+    });
+
+    /* Safety net.
+       An entrance animation must never be the reason someone cannot read the
+       page. If the observer misses an element — fast scrolling, a throttled
+       background tab, a browser quirk — reveal whatever is still hidden after
+       a few seconds and stop observing. Measured without this: 16 of 19
+       elements were still at opacity 0 after scrolling the whole page. */
+    function revealAll() {
+        tagged.forEach(function (el) {
+            if (!el.classList.contains('is-visible')) {
+                el.classList.add('is-visible');
+            }
+            observer.unobserve(el);
+        });
+    }
+
+    window.setTimeout(revealAll, 3000);
+
+    // Also reveal anything the reader has already scrolled past.
+    window.addEventListener('scroll', function () {
+        tagged.forEach(function (el) {
+            if (el.classList.contains('is-visible')) {
+                return;
+            }
+            if (el.getBoundingClientRect().top < window.innerHeight) {
+                el.classList.add('is-visible');
+                observer.unobserve(el);
+            }
+        });
+    }, { passive: true });
+})(document, window);

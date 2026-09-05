@@ -212,9 +212,10 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 										</div>
 										<div class="cer-kamgc-pillar-grid">
 											<?php foreach ( $event_pillars as $index => $pillar ) : ?>
-												<div class="cer-kamgc-pillars-card<?php echo ( $index === 6 ) ? ' cer-kamgc-pillars-card-large' : ''; ?>">
-													<div class="cer-kamgc-pillars-front"><div class="cer-kamgc-pillars-icon"><span class="material-symbols-outlined"><?php echo esc_html( $pillar->icon ? $pillar->icon : 'insights' ); ?></span></div><h3><?php echo esc_html( $pillar->title ); ?></h3></div>
-													<div class="cer-kamgc-pillars-back"><p><?php echo wp_kses_post( $pillar->description ); ?></p></div>
+												<?php $pillar_panel_id = 'cer-pillar-panel-' . (int) $index; ?>
+												<div class="cer-kamgc-pillars-card cer-reveal" style="--cer-reveal-delay: <?php echo (int) ( $index * 60 ); ?>ms;">
+													<button type="button" class="cer-kamgc-pillars-front" aria-expanded="false" aria-controls="<?php echo esc_attr( $pillar_panel_id ); ?>"><div class="cer-kamgc-pillars-icon"><span class="material-symbols-outlined"><?php echo esc_html( $pillar->icon ? $pillar->icon : 'insights' ); ?></span></div><h3><?php echo esc_html( $pillar->title ); ?></h3></button>
+													<div class="cer-kamgc-pillars-back" id="<?php echo esc_attr( $pillar_panel_id ); ?>"><p><?php echo wp_kses_post( $pillar->description ); ?></p></div>
 												</div>
 											<?php endforeach; ?>
 										</div>

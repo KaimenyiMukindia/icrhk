@@ -711,7 +711,9 @@ function cer_enqueue_frontend_assets() {
 
 	if ( $should_enqueue ) {
 		wp_enqueue_style( 'dashicons' );
-		wp_enqueue_style( 'cer-event-fonts', 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap', array(), null );
+		// Plus Jakarta Sans is declared on .cer-kamgc-page but was never enqueued,
+		// so the display face silently fell back to Open Sans.
+		wp_enqueue_style( 'cer-event-fonts', 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style( 'cer-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap', array(), null );
 		wp_enqueue_style( 'cer-event-registration', CER_PLUGIN_URL . 'assets/css/cer-event.css', array( 'cer-event-fonts', 'cer-material-symbols' ), filemtime( CER_PLUGIN_DIR . 'assets/css/cer-event.css' ) );
 		wp_enqueue_script( 'cer-event-registration', CER_PLUGIN_URL . 'assets/js/cer-registration.js', array(), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-registration.js' ), true );

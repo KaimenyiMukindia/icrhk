@@ -1,3 +1,187 @@
+/* ==========================================================================
+   CER DESIGN TOKENS — single source of truth
+   --------------------------------------------------------------------------
+   Added in the cleanup pass. Values below deliberately MATCH the current
+   rendered design; this layer exists so the scattered literals throughout
+   this file can be replaced token-by-token without visual drift.
+
+   Audit that motivated this layer:
+     - 34 distinct font-sizes (incl. 10 bespoke clamp() curves), only 20
+       line-heights for 80 font-size declarations
+     - no font-weight below 600 anywhere on the page
+     - 13 distinct border-radius values, 30 distinct box-shadows
+     - 52 distinct padding declarations, 19 gap values, mixed px/rem
+     - all 24 transitions on the browser-default `ease`, 7 duration values
+     - zero prefers-reduced-motion handling
+   ========================================================================== */
+
+.cer-event-page {
+    /* --- Type scale — 8 steps, every step pairs size + leading + tracking --- */
+    --cer-fs-display: clamp(2.5rem, 5vw, 4rem);
+    --cer-lh-display: 1.05;
+    --cer-tr-display: -0.02em;
+
+    --cer-fs-h1: clamp(2rem, 4vw, 3rem);
+    --cer-lh-h1: 1.1;
+    --cer-tr-h1: -0.02em;
+
+    --cer-fs-h2: clamp(1.6rem, 2.6vw, 2.25rem);
+    --cer-lh-h2: 1.2;
+    --cer-tr-h2: -0.01em;
+
+    --cer-fs-h3: clamp(1.15rem, 1.6vw, 1.4rem);
+    --cer-lh-h3: 1.3;
+
+    --cer-fs-lead: 1.0625rem;
+    --cer-lh-lead: 1.55;
+
+    --cer-fs-body: 1rem;
+    --cer-lh-body: 1.6;
+
+    --cer-fs-sm: 0.875rem;
+    --cer-lh-sm: 1.5;
+
+    --cer-fs-xs: 0.75rem;
+    --cer-lh-xs: 1.4;
+
+    /* Weights — 400/500 were absent entirely; hierarchy needs them */
+    --cer-fw-regular: 400;
+    --cer-fw-medium: 500;
+    --cer-fw-semibold: 600;
+    --cer-fw-bold: 700;
+    --cer-fw-black: 800;
+
+    /* --- Spacing — 4px base, replaces 52 ad-hoc padding declarations --- */
+    --cer-space-1: 0.25rem;
+    --cer-space-2: 0.5rem;
+    --cer-space-3: 0.75rem;
+    --cer-space-4: 1rem;
+    --cer-space-5: 1.5rem;
+    --cer-space-6: 2rem;
+    --cer-space-7: 3rem;
+    --cer-space-8: 4rem;
+
+    /* Card padding — benchmark sites sit at 1.25–1.5rem; this page was at 2rem */
+    --cer-card-pad: 1.5rem;
+    --cer-card-pad-lg: 2rem;
+    --cer-grid-gap: 1.25rem;
+
+    /* Single horizontal inset for EVERY section. The alignment defect this
+       fixes: hero/main used margin 1rem + padding 2.5rem, speakers/pillars
+       were overridden to padding 0, and the four "additive" sections
+       (objectives, summit-structure, partners, faq) had no rule at all —
+       so cards did not share a left edge down the page. */
+    --cer-section-inset: 1rem;
+    --cer-section-gap: 1rem;
+
+    /* --- Radius — was 13 distinct values --- */
+    --cer-radius-sm: 8px;
+    --cer-radius-md: 12px;
+    --cer-radius-lg: 16px;
+    --cer-radius-xl: 24px;
+    --cer-radius-full: 999px;
+
+    /* --- Elevation — was 30 distinct shadows --- */
+    --cer-shadow-sm: 0 1px 2px rgba(16, 35, 63, 0.06);
+    --cer-shadow-md: 0 8px 24px rgba(16, 35, 63, 0.08);
+    --cer-shadow-lg: 0 10px 36px rgba(0, 0, 0, 0.12);
+
+    /* --- Motion ---------------------------------------------------------
+       Durations and easing lifted from the primary benchmark
+       (summit.health.go.ke), which ships NO animation library — all
+       hand-rolled keyframes on cubic-bezier(.4,0,.2,1) at .15s / .3s.
+       This page currently uses the browser-default `ease` for all 24
+       transitions across 7 unrelated durations. */
+    --cer-dur-micro: 150ms;   /* hover, focus, button states */
+    --cer-dur-base: 250ms;    /* accordions, toggles, expands */
+    --cer-dur-enter: 500ms;   /* scroll entrances */
+    --cer-dur-ambient: 6s;    /* hero float / gradient drift */
+
+    --cer-ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --cer-ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
+    --cer-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --cer-stagger: 60ms;
+
+    /* --- Glass ----------------------------------------------------------
+       The glass stays. Tokenised so opacity/blur can be tuned in one place
+       once a hero image sits behind it — at present the cards blur a flat
+       #f5f7fa page background, so the effect is not actually visible. */
+    --cer-glass-bg: rgba(255, 255, 255, 0.42);
+    --cer-glass-bg-hover: rgba(255, 255, 255, 0.52);
+    --cer-glass-border: rgba(255, 255, 255, 0.5);
+    --cer-glass-blur: 16px;
+}
+
+/* ==========================================================================
+   MOTION PRIMITIVES
+   Contents-only by design. Never animate transform/opacity on an element
+   that also carries backdrop-filter — the blur is recomposited every frame
+   and Safari drops or flickers it. Entrance classes below are applied to
+   card CONTENTS, never to the glass containers themselves.
+   ========================================================================== */
+
+@keyframes cer-fade-in-up {
+    from { opacity: 0; transform: translate3d(0, 16px, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes cer-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes cer-float {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50%      { transform: translate3d(0, -12px, 0); }
+}
+
+@keyframes cer-gradient-drift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+}
+
+@keyframes cer-marquee {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-50%, 0, 0); }
+}
+
+/* Scroll reveal, gated on `html.cer-js` which the script sets only once JS and
+   IntersectionObserver are both confirmed. Ungated, the pillars and speakers
+   sat at opacity:0 whenever the observer did not run and the sections rendered
+   completely empty. Content must never depend on JS to become visible. */
+html.cer-js .cer-reveal {
+    opacity: 0;
+}
+
+html.cer-js .cer-reveal.is-visible {
+    animation: cer-fade-in-up var(--cer-dur-enter) var(--cer-ease-out) both;
+    animation-delay: var(--cer-reveal-delay, 0ms);
+}
+
+/* ==========================================================================
+   REDUCED MOTION — was entirely absent across all four plugin stylesheets.
+   This site runs a UserWay accessibility widget and serves a GBV/health
+   audience; vestibular safety is not optional here.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .cer-event-page *,
+    .cer-event-page *::before,
+    .cer-event-page *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    html.cer-js .cer-reveal,
+    html.cer-js .cer-reveal.is-visible {
+        opacity: 1;
+        animation: none;
+    }
+}
+
 body:has(.cer-event-page) .page-title.page-bread-cumb {
     display: none !important;
 }
@@ -30,7 +214,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     background: rgba(255, 255, 255, 0.9);
     color: #006eac;
     text-decoration: none;
-    transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
+    transition: color var(--cer-dur-micro) var(--cer-ease-out), background-color var(--cer-dur-micro) var(--cer-ease-out), transform var(--cer-dur-micro) var(--cer-ease-out);
 }
 
 .cer-share-bar a:hover,
@@ -674,7 +858,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     font-size: 1rem;
     font-weight: 800;
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: all var(--cer-dur-base) var(--cer-ease-out);
 }
 
 .cer-primary-action {
@@ -1301,7 +1485,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: transform 0.5s ease;
+    transition: transform var(--cer-dur-enter) var(--cer-ease-out);
     padding: 1.5rem;
 }
 
@@ -1700,7 +1884,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     border-radius: 16px;
     font-weight: 700;
     text-decoration: none;
-    transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    transition: transform var(--cer-dur-micro) var(--cer-ease-out), box-shadow var(--cer-dur-micro) var(--cer-ease-out), background-color var(--cer-dur-micro) var(--cer-ease-out);
 }
 
 .cer-primary-action {
@@ -1834,7 +2018,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     background: transparent;
     color: #6c7487;
     font-weight: 700;
-    transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+    transition: background-color var(--cer-dur-micro) var(--cer-ease-out), color var(--cer-dur-micro) var(--cer-ease-out), box-shadow var(--cer-dur-micro) var(--cer-ease-out);
 }
 
 .cer-payment-toggle-btn.is-active {
@@ -1872,7 +2056,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     border-radius: 14px;
     background: #ffffff;
     color: #12233d;
-    transition: border-color 180ms ease, box-shadow 180ms ease;
+    transition: border-color var(--cer-dur-micro) var(--cer-ease-out), box-shadow var(--cer-dur-micro) var(--cer-ease-out);
 }
 
 .cer-field-group input:focus,
@@ -2305,7 +2489,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     align-items: center;
     justify-content: center;
     text-align: center;
-    transition: transform 400ms ease, opacity 400ms ease;
+    transition: transform var(--cer-dur-enter) var(--cer-ease-out), opacity var(--cer-dur-enter) var(--cer-ease-out);
 }
 
 .cer-pillar-front {
@@ -2512,7 +2696,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     text-decoration: none;
     font-weight: 800;
     letter-spacing: 0.02em;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform var(--cer-dur-base) var(--cer-ease-out), box-shadow var(--cer-dur-base) var(--cer-ease-out);
 }
 
 .cer-kamgc-button:hover {
@@ -2570,7 +2754,9 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 }
 
 .cer-kamgc-card {
-    padding: 2rem;
+    /* was 2rem — benchmark sites sit at 1.25–1.5rem; this was the single
+       biggest contributor to the "cards too large" note */
+    padding: var(--cer-card-pad);
 }
 
 .cer-kamgc-card h2,
@@ -2854,8 +3040,9 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 
 .cer-kamgc-speaker-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 300px));
+    justify-content: center;
+    gap: var(--cer-grid-gap);
 }
 
 .cer-kamgc-speaker-card {
@@ -2897,65 +3084,105 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     font-weight: 800;
 }
 
+/* SCALABILITY — capped tracks + centred, so a section holding one item reads
+   as an intentional single card rather than one stretched full-width band.
+   Live content today: 5 pillars, 3 speakers, 1 objective, 1 summit step,
+   1 FAQ, 0 partners — every grid has to survive n=1. */
 .cer-kamgc-pillar-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 340px));
+    justify-content: center;
+    gap: var(--cer-grid-gap);
 }
 
+/* PILLAR CARDS — expand-in-place, replacing the previous hover-only 3D
+   rotateY flip. Three reasons the flip had to go:
+     1. :hover with no click/focus handler meant the descriptions were
+        completely unreachable on touch devices.
+     2. A 3D transform on a child of a backdrop-filter container is the
+        classic compositing conflict — Safari drops or flickers the blur.
+     3. The brief asks for "one card with an expandable body", which is the
+        same pattern the FAQ <details> already uses successfully on this page.
+   Height is animated via grid-template-rows 0fr->1fr, which animates
+   cleanly without needing a hardcoded max-height. */
 .cer-kamgc-pillars-card {
     position: relative;
     overflow: hidden;
-    min-height: 250px;
-    perspective: 1000px;
-    border-radius: 20px;
-    background: transparent;
-    border: none;
-    box-shadow: none;
+    border-radius: var(--cer-radius-lg);
+    background: rgba(255, 255, 255, 0.72);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: var(--cer-shadow-md);
+    transition: box-shadow var(--cer-dur-micro) var(--cer-ease-out),
+                border-color var(--cer-dur-micro) var(--cer-ease-out);
 }
 
-.cer-kamgc-pillars-front,
-.cer-kamgc-pillars-back {
-    position: absolute;
-    inset: 0;
-    padding: 1.5rem;
-    backface-visibility: hidden;
-    transition: transform 0.45s ease;
-    border-radius: 20px;
+.cer-kamgc-pillars-card:hover,
+.cer-kamgc-pillars-card:focus-within {
+    box-shadow: var(--cer-shadow-lg);
+    border-color: rgba(255, 255, 255, 0.9);
 }
 
 .cer-kamgc-pillars-front {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 1rem;
-    background: rgba(255, 255, 255, 0.72);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    gap: var(--cer-space-3);
+    padding: var(--cer-card-pad);
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
 }
 
+.cer-kamgc-pillars-front:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -4px;
+    border-radius: var(--cer-radius-lg);
+}
+
+/* Collapsed -> expanded. 0fr/1fr keeps the transition height-agnostic. */
 .cer-kamgc-pillars-back {
-    transform: rotateY(180deg);
-    background: rgba(0, 75, 130, 0.88);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    color: #ffffff;
+    display: grid;
+    grid-template-rows: minmax(0, 0fr);
+    transition: grid-template-rows var(--cer-dur-base) var(--cer-ease-out);
+}
+
+.cer-kamgc-pillars-card.is-open .cer-kamgc-pillars-back {
+    grid-template-rows: minmax(0, 1fr);
+}
+
+.cer-kamgc-pillars-back > * {
+    overflow: hidden;
+    min-height: 0;
 }
 
 .cer-kamgc-pillars-back p {
-    color: rgba(255, 255, 255, 0.9) !important;
+    margin: 0;
+    padding: 0 var(--cer-card-pad) var(--cer-card-pad);
+    font-size: var(--cer-fs-sm);
+    line-height: var(--cer-lh-sm);
+    font-weight: var(--cer-fw-regular);
 }
 
-.cer-kamgc-pillars-card:hover .cer-kamgc-pillars-front {
-    transform: rotateY(-180deg);
+/* Affordance chevron, rotates on open */
+.cer-kamgc-pillars-front::after {
+    content: 'expand_more';
+    font-family: 'Material Symbols Outlined';
+    font-size: 20px;
+    line-height: 1;
+    position: absolute;
+    top: var(--cer-card-pad);
+    right: var(--cer-card-pad);
+    opacity: 0.5;
+    transition: transform var(--cer-dur-base) var(--cer-ease-out);
 }
 
-.cer-kamgc-pillars-card:hover .cer-kamgc-pillars-back {
-    transform: rotateY(0deg);
+.cer-kamgc-pillars-card.is-open .cer-kamgc-pillars-front::after {
+    transform: rotate(180deg);
 }
 
 .cer-kamgc-pillars-icon {
@@ -3067,9 +3294,17 @@ body:has(.cer-event-page) {
     max-width: 1840px;
 }
 
-/* Outer speaker/pillar sections no longer add their own side padding so their card matches hero/main width exactly */
+/* ALIGNMENT FIX — every section now shares one horizontal inset.
+   Previously: hero/main sat at margin 1rem + padding 2.5rem; speakers/pillars
+   were reset to padding 0; and objectives, summit-structure, partners and faq
+   (added later, in the "Additive sections" block) had no section-level rule at
+   all. Three different left edges down one page. */
 .cer-kamgc-speakers,
-.cer-kamgc-pillars {
+.cer-kamgc-pillars,
+.cer-kamgc-objectives,
+.cer-kamgc-summit-structure,
+.cer-kamgc-partners,
+.cer-kamgc-faq {
     padding: 0;
 }
 
@@ -3084,20 +3319,25 @@ body:has(.cer-event-page) {
 .cer-empty-state,
 .cer-event-header,
 .cer-event-footer {
-    background: rgba(255, 255, 255, 0.42);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 24px;
-    box-shadow: 0 10px 36px 0 rgba(0, 0, 0, 0.12);
-    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+    background: var(--cer-glass-bg);
+    -webkit-backdrop-filter: blur(var(--cer-glass-blur));
+    backdrop-filter: blur(var(--cer-glass-blur));
+    border: 1px solid var(--cer-glass-border);
+    border-radius: var(--cer-radius-xl);
+    box-shadow: var(--cer-shadow-lg);
+    transition: box-shadow var(--cer-dur-base) var(--cer-ease-out),
+                background-color var(--cer-dur-base) var(--cer-ease-out);
 }
 
 .cer-kamgc-hero,
 .cer-kamgc-main,
 .cer-kamgc-speakers,
-.cer-kamgc-pillars {
-    margin: 1rem;
+.cer-kamgc-pillars,
+.cer-kamgc-objectives,
+.cer-kamgc-summit-structure,
+.cer-kamgc-partners,
+.cer-kamgc-faq {
+    margin: var(--cer-section-gap) var(--cer-section-inset);
 }
 
 .cer-kamgc-hero:hover,
@@ -3106,7 +3346,7 @@ body:has(.cer-event-page) {
 .cer-kamgc-summary-box:hover,
 .cer-kamgc-speakers-card:hover,
 .cer-kamgc-pillars-card-wrapper:hover {
-    background-color: rgba(255, 255, 255, 0.52);
+    background-color: var(--cer-glass-bg-hover);
     box-shadow: 0 14px 44px 0 rgba(0, 0, 0, 0.18);
 }
 
@@ -3175,8 +3415,9 @@ body:has(.cer-event-page) {
 
 .cer-kamgc-compact-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 300px));
+    justify-content: center;
+    gap: var(--cer-grid-gap);
 }
 
 .cer-kamgc-compact-card {
@@ -3223,8 +3464,9 @@ body:has(.cer-event-page) {
 
 .cer-kamgc-partner-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 200px));
+    justify-content: center;
+    gap: var(--cer-grid-gap);
 }
 
 .cer-kamgc-partner-card {
@@ -3240,7 +3482,7 @@ body:has(.cer-event-page) {
     color: #800080;
     font-weight: 700;
     gap: 0.5rem;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color var(--cer-dur-base) var(--cer-ease-out), box-shadow var(--cer-dur-base) var(--cer-ease-out);
 }
 
 .cer-kamgc-partner-card:hover {
@@ -3287,7 +3529,7 @@ body:has(.cer-event-page) {
 
 .cer-kamgc-faq-caret {
     color: #ff8c00;
-    transition: transform 0.2s ease;
+    transition: transform var(--cer-dur-base) var(--cer-ease-out);
     flex-shrink: 0;
 }
 
@@ -3723,5 +3965,851 @@ body:has(.cer-event-page) {
     .cer-kamgc-emblem-badge {
         width: 100%;
         justify-content: flex-start;
+    }
+}
+/* ==========================================================================
+   SECTION EYEBROWS — one label per section, not "Featured leaders" everywhere
+   `.cer-kamgc-section-title::before` hard-codes `content: 'Featured leaders'`
+   and five sections use that class, so Objectives, Summit Structure, Partners
+   and the FAQ were all labelled "Featured leaders". An eyebrow is a structural
+   device: it should name the section it sits above, or not exist.
+
+   NOTE: no background scrim is added here. Production (icrhk.nyimuki.com)
+   renders the kitenge at full saturation with glass at rgba(255,255,255,.42)
+   and blur(16px) and NO body::before overlay. A scrim was tried locally and
+   desaturated the whole page away from the live look — do not reintroduce one.
+   ========================================================================== */
+
+.cer-kamgc-objectives .cer-kamgc-section-title::before {
+    content: 'What we aim to achieve';
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-section-title::before {
+    content: 'How the three days run';
+}
+
+.cer-kamgc-partners .cer-kamgc-section-title::before {
+    content: 'Convened with';
+}
+
+.cer-kamgc-faq .cer-kamgc-section-title::before {
+    content: 'Before you register';
+}
+
+.cer-kamgc-pillars .cer-kamgc-pillar-header::before {
+    content: 'Conference framework';
+}
+
+.cer-kamgc-speakers .cer-kamgc-section-title::before {
+    content: 'Featured leaders';
+}
+
+/* ==========================================================================
+   SCALE + DENSITY PASS
+   --------------------------------------------------------------------------
+   Reported: hero type and buttons too large, cards oversized, and large empty
+   gaps down the page. Measured against the client's reference composition, the
+   hero h1 ran to 4.4–4.5rem and the CTAs to a 54px min-height with 0.95rem
+   padding, which pushed the summary card and everything below it down.
+
+   Everything here is size and spacing only. No glass property is touched:
+   background, backdrop-filter, border and radius on the glass containers are
+   deliberately absent from this block.
+   ========================================================================== */
+
+/* --- Hero type: down roughly a third at the top end, and it now scales from
+       the container rather than jumping between two hard-coded clamps. ---- */
+.cer-kamgc-hero-copy h1 {
+    font-size: clamp(1.75rem, 2.9vw, 2.9rem) !important;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.7rem;
+    text-wrap: balance;
+}
+
+.cer-kamgc-hero-description {
+    font-size: clamp(0.9rem, 1vw, 1rem) !important;
+    line-height: 1.55;
+    max-width: 62ch;
+    margin-bottom: 0.9rem;
+}
+
+.cer-kamgc-hero {
+    padding: clamp(1.5rem, 2.6vw, 2.25rem) clamp(1.25rem, 2.4vw, 2rem) !important;
+}
+
+.cer-kamgc-hero-inner {
+    gap: clamp(1.25rem, 2.4vw, 2rem);
+}
+
+/* --- Buttons: relative, not fixed. 54px min-height on a 0.95rem/1.6rem pad
+       made the CTAs read as panel-sized rather than button-sized. --------- */
+.cer-kamgc-button {
+    min-height: 0 !important;
+    padding: 0.62em 1.35em !important;
+    font-size: clamp(0.85rem, 0.95vw, 0.95rem) !important;
+    gap: 0.45rem;
+    border-radius: 999px;
+}
+
+.cer-kamgc-actions {
+    gap: 0.6rem;
+    margin-top: 0.25rem;
+}
+
+/* --- Summary card: same information, less air. ------------------------- */
+.cer-kamgc-summary-metadata > div {
+    padding: 0.55rem 0.7rem;
+    gap: 0.6rem;
+}
+
+.cer-kamgc-summary-metadata small {
+    font-size: 0.68rem;
+}
+
+.cer-kamgc-summary-metadata strong {
+    font-size: 0.9rem;
+}
+
+.cer-kamgc-metadata-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+}
+
+/* --- Speaker cards: were ~430x350 for a name and two short lines. ------- */
+.cer-kamgc-speaker-card {
+    padding: 1.1rem !important;
+}
+
+.cer-kamgc-speaker-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 12px;
+    margin-bottom: 0.7rem;
+}
+
+.cer-kamgc-speaker-card h3 {
+    font-size: 1rem !important;
+    line-height: 1.25;
+    margin: 0 0 0.15rem;
+}
+
+.cer-kamgc-speaker-card .cer-kamgc-speaker-role {
+    font-size: 0.82rem !important;
+    margin: 0 0 0.3rem;
+}
+
+.cer-kamgc-speaker-card p {
+    font-size: 0.82rem !important;
+    line-height: 1.45;
+    margin: 0;
+}
+
+/* --- Section rhythm: the gaps between glass panels were doing the work
+       that padding inside them should. Tighten both ends. ---------------- */
+.cer-event-shell > section {
+    padding-top: 0 !important;
+}
+
+.cer-kamgc-hero,
+.cer-kamgc-main,
+.cer-kamgc-speakers,
+.cer-kamgc-pillars,
+.cer-kamgc-objectives,
+.cer-kamgc-summit-structure,
+.cer-kamgc-partners,
+.cer-kamgc-faq {
+    margin-block: 0.6rem !important;
+}
+
+.cer-kamgc-card {
+    padding: clamp(1.1rem, 1.8vw, 1.5rem) !important;
+}
+
+.cer-kamgc-section-title {
+    margin-bottom: 1rem;
+}
+
+.cer-kamgc-section-title h2,
+.cer-kamgc-pillar-header h2 {
+    font-size: clamp(1.15rem, 1.7vw, 1.5rem) !important;
+    margin-bottom: 0.35rem;
+}
+
+/* --- Emblem badge: sized for the hero corner, not the page. ------------ */
+.cer-kamgc-emblem-badge img {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: #231f20;
+}
+
+/* ==========================================================================
+   MOTION
+   --------------------------------------------------------------------------
+   Hard rule for this page: never animate transform or opacity on an element
+   that carries backdrop-filter. The blur is recomposited every frame and
+   Safari drops it. So nothing below targets .cer-kamgc-hero, .cer-kamgc-main,
+   .cer-kamgc-card or any other glass container — only their CONTENTS.
+
+   No animation library: this page already loads GSAP 2, wow.js (never
+   initialised), appear.js and three copies of animate.css via the theme.
+   ========================================================================== */
+
+@keyframes cer-rise {
+    from { opacity: 0; transform: translate3d(0, 14px, 0); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes cer-emblem-in {
+    from { opacity: 0; transform: scale(.86) rotate(-6deg); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* Hero load sequence — staggered, runs once, contents only. */
+html.cer-js .cer-kamgc-hero-badges,
+html.cer-js .cer-kamgc-activism-badge,
+html.cer-js .cer-kamgc-hero-copy h1,
+html.cer-js .cer-kamgc-hero-description,
+html.cer-js .cer-kamgc-convened-by,
+html.cer-js .cer-kamgc-actions,
+html.cer-js .cer-kamgc-hero-summary > * {
+    animation: cer-rise var(--cer-dur-enter) var(--cer-ease-out) both;
+}
+
+html.cer-js .cer-kamgc-hero-badges      { animation-delay: 40ms; }
+html.cer-js .cer-kamgc-activism-badge   { animation-delay: 100ms; }
+html.cer-js .cer-kamgc-hero-copy h1     { animation-delay: 160ms; }
+html.cer-js .cer-kamgc-hero-description { animation-delay: 220ms; }
+html.cer-js .cer-kamgc-convened-by      { animation-delay: 280ms; }
+html.cer-js .cer-kamgc-actions          { animation-delay: 340ms; }
+
+html.cer-js .cer-kamgc-emblem-badge img {
+    animation: cer-emblem-in 620ms var(--cer-ease-spring) both;
+    animation-delay: 80ms;
+}
+
+/* Micro-interactions — 150ms, transform-safe (none of these are glass). */
+.cer-kamgc-button,
+.cer-kamgc-speaker-card,
+.cer-kamgc-compact-card,
+.cer-kamgc-partner-card {
+    transition: transform var(--cer-dur-micro) var(--cer-ease-out),
+                box-shadow var(--cer-dur-micro) var(--cer-ease-out),
+                border-color var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-kamgc-button:hover,
+.cer-kamgc-button:focus-visible {
+    transform: translateY(-2px);
+}
+
+.cer-kamgc-speaker-card:hover,
+.cer-kamgc-compact-card:hover,
+.cer-kamgc-partner-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Arrow nudge on the primary CTA. */
+.cer-kamgc-button-primary .material-symbols-outlined {
+    transition: transform var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-kamgc-button-primary:hover .material-symbols-outlined {
+    transform: translateX(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.cer-js .cer-kamgc-hero-badges,
+    html.cer-js .cer-kamgc-activism-badge,
+    html.cer-js .cer-kamgc-hero-copy h1,
+    html.cer-js .cer-kamgc-hero-description,
+    html.cer-js .cer-kamgc-convened-by,
+    html.cer-js .cer-kamgc-actions,
+    html.cer-js .cer-kamgc-hero-summary > *,
+    html.cer-js .cer-kamgc-emblem-badge img {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* ==========================================================================
+   REVIEW FIXES — buttons, borders, alignment, select, pillar tooltips
+   Nothing here touches a glass container's background, backdrop-filter,
+   border or radius.
+   ========================================================================== */
+
+/* --- 1. Register Now was unreadable on hover -------------------------------
+   `.cer-kamgc-button-primary { color:#fff }` is (0,1,0). The theme's generic
+   `a:hover { color: … }` is (0,1,1) and therefore wins, so the label went dark
+   blue on a blue fill. Pinned explicitly for every state.
+   The fill also returns to the KAMGC brand orange #FAA41A — the emblem's own
+   colour sheet and production both use orange here; the #2563eb it had drifted
+   to is a stray Tailwind blue. */
+.cer-kamgc-button-primary,
+.cer-kamgc-button-primary:link,
+.cer-kamgc-button-primary:visited,
+.cer-kamgc-button-primary:hover,
+.cer-kamgc-button-primary:focus,
+.cer-kamgc-button-primary:focus-visible,
+.cer-kamgc-button-primary:active {
+    background: #faa41a !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 22px rgba(250, 164, 26, .26);
+}
+
+.cer-kamgc-button-primary:hover,
+.cer-kamgc-button-primary:focus-visible {
+    background: #e8940c !important;
+}
+
+.cer-kamgc-button-primary .material-symbols-outlined {
+    color: #ffffff !important;
+}
+
+/* --- 2. Inner cards were competing with the glass --------------------------
+   Panels inside a glass container had their own near-white fill plus a border,
+   so they read as cards stacked on cards. Inside glass, separation should come
+   from a hairline and a whisper of tint — not a second opaque surface. */
+.cer-kamgc-card .cer-kamgc-callout,
+.cer-kamgc-sponsor-box,
+.cer-kamgc-summary-box,
+.cer-kamgc-summary-metadata > div {
+    background: rgba(255, 255, 255, .34) !important;
+    border: 1px solid rgba(255, 255, 255, .55) !important;
+    box-shadow: none !important;
+}
+
+/* --- 3. Metrics band: give the three figures real edges ------------------- */
+.cer-kamgc-stats-grid > div {
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(0, 110, 172, .16);
+    border-radius: var(--cer-radius-md);
+    background: rgba(255, 255, 255, .40);
+    border-top: 3px solid #faa41a;
+    transition: border-color var(--cer-dur-micro) var(--cer-ease-out),
+                background-color var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-kamgc-stats-grid > div:hover {
+    background: rgba(255, 255, 255, .58);
+    border-color: rgba(0, 110, 172, .34);
+    border-top-color: #faa41a;
+}
+
+.cer-kamgc-stats-grid > div strong {
+    display: block;
+    margin-bottom: .2rem;
+}
+
+/* --- 4. Objectives / Summit Structure: align from the left ---------------- */
+.cer-kamgc-objectives .cer-kamgc-compact-grid,
+.cer-kamgc-summit-structure .cer-kamgc-compact-grid {
+    justify-content: start !important;
+    justify-items: stretch;
+}
+
+/* --- 5. Ticket select: style the control itself --------------------------- */
+.cer-kamgc-card select,
+select#cer-ticket-type {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    padding: .7rem 2.4rem .7rem .9rem;
+    border: 1px solid rgba(0, 110, 172, .22);
+    border-radius: var(--cer-radius-md);
+    background-color: rgba(255, 255, 255, .72);
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%230d6ea9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .9rem center;
+    font: inherit;
+    font-size: .92rem;
+    color: var(--cer-text-main);
+    cursor: pointer;
+    transition: border-color var(--cer-dur-micro) var(--cer-ease-out),
+                box-shadow var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-kamgc-card select:focus-visible,
+select#cer-ticket-type:focus-visible {
+    outline: none;
+    border-color: #0d6ea9;
+    box-shadow: 0 0 0 3px rgba(13, 110, 169, .16);
+}
+
+/* --- 6. Pillars as tooltips, not accordions ------------------------------
+   The chevron/expand pattern is replaced with a popover on hover and focus.
+   The panel keeps its id and stays associated with the trigger, so screen
+   readers still reach the description; only the presentation changes. */
+.cer-kamgc-pillars-card {
+    overflow: visible !important;
+    position: relative;
+}
+
+.cer-kamgc-pillars-front::after {
+    content: none !important;
+}
+
+.cer-kamgc-pillars-front {
+    cursor: default;
+    padding-right: var(--cer-card-pad) !important;
+}
+
+.cer-kamgc-pillars-back {
+    display: block !important;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    transform: translate(-50%, 4px);
+    width: min(280px, 88vw);
+    z-index: 40;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    background: #14202b;
+    border-radius: var(--cer-radius-md);
+    box-shadow: 0 14px 34px rgba(9, 18, 30, .30);
+    transition: opacity var(--cer-dur-micro) var(--cer-ease-out),
+                transform var(--cer-dur-micro) var(--cer-ease-out),
+                visibility var(--cer-dur-micro);
+}
+
+.cer-kamgc-pillars-back::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border: 6px solid transparent;
+    border-top-color: #14202b;
+}
+
+.cer-kamgc-pillars-back p {
+    margin: 0;
+    padding: .7rem .85rem;
+    color: #ffffff;
+    font-size: .82rem;
+    line-height: 1.5;
+    font-weight: var(--cer-fw-regular);
+}
+
+.cer-kamgc-pillars-card:hover .cer-kamgc-pillars-back,
+.cer-kamgc-pillars-card:focus-within .cer-kamgc-pillars-back,
+.cer-kamgc-pillars-card.is-open .cer-kamgc-pillars-back {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cer-kamgc-pillars-back { transition: none; }
+}
+
+/* ==========================================================================
+   SPEAKER CARD ALIGNMENT · TOOLTIP COLOUR · SCROLL REVEAL
+   ========================================================================== */
+
+/* --- Speaker cards: equal height, one shared top edge, centred content ----
+   The three cards were sitting on a slight diagonal (tops at 210 / 214 / 216)
+   because each sized itself independently. Stretching them in the grid gives
+   one top edge and one baseline for every card. */
+.cer-kamgc-speaker-grid {
+    align-items: stretch;
+}
+
+.cer-kamgc-speaker-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+}
+
+.cer-kamgc-speaker-avatar {
+    margin-inline: auto;
+}
+
+.cer-kamgc-speaker-card h3,
+.cer-kamgc-speaker-card .cer-kamgc-speaker-role,
+.cer-kamgc-speaker-card p {
+    width: 100%;
+    text-align: center;
+}
+
+/* Role sits last and is pushed to the bottom so every card's final line shares
+   a baseline regardless of how long the name wraps. */
+.cer-kamgc-speaker-card p {
+    margin-top: auto;
+    padding-top: .5rem;
+}
+
+/* --- Tooltip: brand yellow ground, white label ---------------------------- */
+.cer-kamgc-pillars-back {
+    background: #faa41a !important;
+    box-shadow: 0 12px 28px rgba(250, 164, 26, .34) !important;
+}
+
+.cer-kamgc-pillars-back::after {
+    border-top-color: #faa41a !important;
+}
+
+.cer-kamgc-pillars-back p {
+    color: #ffffff !important;
+    font-weight: var(--cer-fw-medium);
+}
+
+/* --- Animate on scroll ---------------------------------------------------
+   Section contents rise in once as they enter the viewport. Applied to card
+   CONTENTS only — never to a glass container, because animating transform on
+   an element carrying backdrop-filter makes Safari drop the blur.
+   `.cer-reveal` is added by JS and only hides under html.cer-js, so with no JS
+   everything is visible from the start. */
+html.cer-js .cer-reveal {
+    opacity: 0;
+}
+
+html.cer-js .cer-reveal.is-visible {
+    animation: cer-rise var(--cer-dur-enter) var(--cer-ease-out) both;
+    animation-delay: var(--cer-reveal-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.cer-js .cer-reveal,
+    html.cer-js .cer-reveal.is-visible {
+        opacity: 1 !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
+/* ==========================================================================
+   RESPONSIVE PASS — 360px to 1920px
+   --------------------------------------------------------------------------
+   Measured across 360 / 390 / 430 / 768 / 1024 / 1280 / 1536 / 1920:
+   scrollWidth === clientWidth at every width, so there is no horizontal
+   overflow to fix. What follows corrects typography scale and spacing.
+   ========================================================================== */
+
+/* --- Body copy floor. The hero description computed to 14.4px on every
+       mobile width. 16px is the readable minimum, and inputs below 16px make
+       iOS Safari zoom the viewport on focus. ------------------------------ */
+@media (max-width: 767px) {
+    .cer-kamgc-hero-description,
+    .cer-kamgc-copy-stack p,
+    .cer-kamgc-card p,
+    .cer-kamgc-form-intro,
+    .cer-kamgc-sponsor-box p {
+        font-size: 1rem !important;
+        line-height: 1.6;
+    }
+
+    /* iOS zooms any focused control under 16px. */
+    .cer-kamgc-card input,
+    .cer-kamgc-card select,
+    .cer-kamgc-card textarea,
+    #cer-registration-form input,
+    #cer-registration-form select {
+        font-size: 16px !important;
+    }
+}
+
+/* --- The pale band above the hero on small screens.
+       `.cer-top-glass-backdrop` reserves min-height:10rem — 160px of empty
+       frosted panel that reads as a rendering fault on a phone. It has no
+       content, so it collapses below the desktop breakpoint. ------------- */
+@media (max-width: 1024px) {
+    .cer-top-glass-backdrop {
+        display: none !important;
+    }
+}
+
+/* --- Hero alignment. Badges sat left while the heading, description, byline
+       and CTAs were centred, so nothing shared an edge. Left-aligned
+       throughout, matching desktop. -------------------------------------- */
+@media (max-width: 767px) {
+    .cer-kamgc-hero-copy,
+    .cer-kamgc-hero-copy h1,
+    .cer-kamgc-hero-description,
+    .cer-kamgc-convened-by,
+    .cer-kamgc-actions,
+    .cer-share-bar {
+        text-align: left !important;
+        justify-content: flex-start !important;
+        margin-inline: 0 !important;
+    }
+
+    .cer-kamgc-hero-copy h1 {
+        font-size: clamp(1.6rem, 7.4vw, 2rem) !important;
+        line-height: 1.14;
+    }
+
+    .cer-kamgc-hero-badges {
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    /* Full-width CTAs are easier to hit than side-by-side pills at 360px. */
+    .cer-kamgc-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: .55rem;
+    }
+
+    .cer-kamgc-button {
+        width: 100%;
+        min-height: 46px !important;
+    }
+}
+
+/* --- Touch targets. Anything tappable clears 44px below the desktop
+       breakpoint. --------------------------------------------------------- */
+@media (max-width: 1024px) {
+    .cer-share-bar a,
+    .cer-kamgc-payment-toggle button,
+    .cer-payment-toggle-btn,
+    .cer-kamgc-faq-item summary {
+        min-height: 44px;
+    }
+
+    .cer-share-bar a {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* --- Section rhythm on small screens: the panel margins that read as
+       generous at 1440 become wasted space at 390. ----------------------- */
+@media (max-width: 767px) {
+    .cer-kamgc-hero,
+    .cer-kamgc-main,
+    .cer-kamgc-speakers,
+    .cer-kamgc-pillars,
+    .cer-kamgc-objectives,
+    .cer-kamgc-summit-structure,
+    .cer-kamgc-partners,
+    .cer-kamgc-faq {
+        margin-block: .45rem !important;
+        margin-inline: .5rem !important;
+    }
+
+    .cer-kamgc-hero {
+        padding: 1.25rem 1rem 1.5rem !important;
+    }
+
+    .cer-kamgc-card {
+        padding: 1.1rem !important;
+    }
+
+    .cer-kamgc-shell {
+        width: 100%;
+    }
+
+    /* Single column everywhere — capped tracks would otherwise leave a lone
+       centred card with dead space either side. */
+    .cer-kamgc-compact-grid,
+    .cer-kamgc-speaker-grid,
+    .cer-kamgc-pillar-grid,
+    .cer-kamgc-stats-grid {
+        grid-template-columns: 1fr !important;
+        justify-content: stretch !important;
+    }
+
+    .cer-kamgc-two-col {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* --- Summary metadata rows: label and value were not sharing a left edge
+       with the icon on narrow screens. ----------------------------------- */
+@media (max-width: 767px) {
+    .cer-kamgc-summary-metadata > div {
+        display: flex;
+        align-items: center;
+        gap: .7rem;
+    }
+
+    .cer-kamgc-summary-metadata > div > span:last-child {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+}
+
+/* --- Tooltips become inline panels below 1024px. A hover popover is not a
+       usable pattern on touch, and an absolutely-positioned one can sit off
+       the viewport edge on a narrow screen. ------------------------------ */
+@media (max-width: 1024px) {
+    .cer-kamgc-pillars-back {
+        position: static !important;
+        transform: none !important;
+        width: auto !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        margin: 0 var(--cer-card-pad) var(--cer-card-pad);
+        border-radius: var(--cer-radius-sm);
+        box-shadow: none !important;
+    }
+
+    .cer-kamgc-pillars-back::after {
+        display: none !important;
+    }
+}
+
+/* --- 2xl and up: stop the measure running away on very wide screens. ---- */
+@media (min-width: 1536px) {
+    .cer-kamgc-hero-description,
+    .cer-kamgc-copy-stack p {
+        max-width: 68ch;
+    }
+
+    .cer-kamgc-shell {
+        max-width: 1600px;
+    }
+}
+
+/* --- Hero top padding.
+   An earlier density rule zeroed `.cer-event-shell > section { padding-top }`
+   to close the gaps between panels. The hero is itself such a section, so it
+   lost its internal top padding too and the emblem badge sat hard against the
+   panel edge. Restore it on the hero only. ------------------------------- */
+.cer-event-shell > section.cer-kamgc-hero,
+.cer-kamgc-hero {
+    padding-top: clamp(1.25rem, 2.2vw, 2rem) !important;
+}
+
+/* --- Body copy floor for tablet and desktop.
+   14.4px held from 768px all the way to 1280px, which is small for running
+   text at those widths. Scale it with the viewport instead. -------------- */
+@media (min-width: 768px) {
+    .cer-kamgc-hero-description,
+    .cer-kamgc-copy-stack p,
+    .cer-kamgc-card p,
+    .cer-kamgc-form-intro {
+        font-size: clamp(0.95rem, 0.55vw + 0.72rem, 1.0625rem) !important;
+        line-height: 1.6;
+    }
+}
+
+/* ==========================================================================
+   REVIEW FIXES — hero badges, hosted payment height, speaker cards on mobile
+   ========================================================================== */
+
+/* --- 1. Hero badges: one shared left edge -------------------------------
+   The emblem badge, the convening chip and the activism chip each sat at a
+   different inset (48 / 82 / 44px) because the row centres its items. Aligned
+   to the start so all three share the heading's left edge. */
+.cer-kamgc-hero-badges {
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    margin-inline: 0 !important;
+}
+
+.cer-kamgc-hero-badges > *,
+.cer-kamgc-activism-badge {
+    margin-inline: 0 !important;
+    align-self: flex-start !important;
+}
+
+@media (max-width: 767px) {
+    .cer-kamgc-hero-badges {
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .cer-kamgc-hero-badges > *,
+    .cer-kamgc-activism-badge {
+        width: auto;
+        max-width: 100%;
+    }
+}
+
+/* --- 2. Hosted payment frame ---------------------------------------------
+   Choosing "Credit/Debit Card" grew the page by 620px on desktop and more on
+   mobile. Measured cause: #cer-hosted-payment-frame expands to 720px tall.
+   The existing rules hide the iframe while it has no src, but the checkout
+   frame itself had no height ceiling, so once a src is set it takes whatever
+   the gateway asks for and drags the whole two-column row with it.
+
+   Capped to the viewport instead of the gateway's preference, and the empty
+   state no longer reserves space at all. */
+.cer-hosted-payment {
+    max-height: min(620px, 78vh);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.cer-hosted-payment iframe {
+    height: min(620px, 78vh) !important;
+    max-height: min(620px, 78vh) !important;
+    border: 0;
+    border-radius: var(--cer-radius-md);
+}
+
+/* No src yet — reserve nothing. */
+.cer-hosted-payment iframe:not([src]),
+.cer-hosted-payment iframe[src=""],
+.cer-hosted-payment iframe[src="about:blank"] {
+    height: 0 !important;
+    min-height: 0 !important;
+    display: none !important;
+}
+
+.cer-hosted-payment.cer-modal-hidden {
+    max-height: 0;
+    margin-top: 0;
+    overflow: hidden;
+}
+
+@media (max-width: 767px) {
+    .cer-hosted-payment,
+    .cer-hosted-payment iframe {
+        max-height: min(520px, 70vh) !important;
+    }
+
+    .cer-hosted-payment iframe {
+        height: min(520px, 70vh) !important;
+    }
+}
+
+/* --- 3. Speaker cards on mobile -----------------------------------------
+   The desktop rule pushes the last line to the card bottom with margin-top
+   auto so baselines line up across a row. In a single-column stack there is
+   no row to align to, so that just inflated every card to ~285px. */
+@media (max-width: 767px) {
+    .cer-kamgc-speaker-card {
+        height: auto;
+        padding: .9rem 1rem !important;
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+        gap: .85rem;
+    }
+
+    .cer-kamgc-speaker-card p {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+
+    .cer-kamgc-speaker-avatar {
+        width: 44px !important;
+        height: 44px !important;
+        margin: 0 !important;
+        flex: none;
+    }
+
+    .cer-kamgc-speaker-card > *:not(.cer-kamgc-speaker-avatar) {
+        text-align: left !important;
+    }
+
+    /* Name, role and title stack beside the avatar. */
+    .cer-kamgc-speaker-card h3,
+    .cer-kamgc-speaker-card .cer-kamgc-speaker-role,
+    .cer-kamgc-speaker-card p {
+        width: auto;
+        margin-block: 0;
     }
 }
