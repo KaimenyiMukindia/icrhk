@@ -3044,7 +3044,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 /* Layer 1: background image  */
 body:has(.cer-event-page) {
     background-image:
-        url(../../../../uploads/2026/08/2000px-by-2000px.png);
+        url(../../../../uploads/2026/09/2000px-by-2000px.png);
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
@@ -3126,5 +3126,602 @@ body:has(.cer-event-page) {
     .cer-kamgc-speakers,
     .cer-kamgc-pillars {
         margin: 0.75rem;
+    }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Additive sections: Secondary logo, Objectives, Summit Structure,       */
+/* Partners, FAQ accordion, floating map widget. Brand accents: orange &  */
+/* #800080 purple. Does not alter existing glassmorphism rules above.     */
+/* ---------------------------------------------------------------------- */
+
+.cer-kamgc-hero {
+    position: relative;
+}
+
+.cer-kamgc-hero-secondary-logo {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.75rem;
+    z-index: 2;
+    max-width: 130px;
+}
+
+.cer-kamgc-hero-secondary-logo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+@media (max-width: 640px) {
+    .cer-kamgc-hero-secondary-logo {
+        position: static;
+        max-width: 90px;
+        margin: 0 auto 1rem;
+    }
+}
+
+.cer-kamgc-meta-row a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.cer-kamgc-section-title p {
+    color: #58667d;
+    margin: 0.4rem 0 0;
+}
+
+.cer-kamgc-compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.cer-kamgc-compact-card {
+    padding: 1.35rem;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e7edf5;
+    border-top: 3px solid #ff8c00;
+    box-shadow: 0 12px 30px rgba(18, 33, 53, 0.05);
+}
+
+.cer-kamgc-compact-card:nth-child(3n+2) {
+    border-top-color: #800080;
+}
+
+.cer-kamgc-compact-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    background: rgba(255, 140, 0, 0.12);
+    color: #ff8c00;
+}
+
+.cer-kamgc-compact-card:nth-child(3n+2) .cer-kamgc-compact-icon {
+    background: rgba(128, 0, 128, 0.12);
+    color: #800080;
+}
+
+.cer-kamgc-compact-card h3 {
+    margin: 0 0 0.4rem;
+    color: #10233f;
+    font-size: 1.05rem;
+}
+
+.cer-kamgc-compact-card p {
+    margin: 0;
+    color: #58667d;
+    line-height: 1.7;
+}
+
+.cer-kamgc-partner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.cer-kamgc-partner-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 90px;
+    padding: 1rem;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #e7edf5;
+    text-decoration: none;
+    color: #800080;
+    font-weight: 700;
+    gap: 0.5rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cer-kamgc-partner-card:hover {
+    border-color: #ff8c00;
+    box-shadow: 0 10px 26px rgba(255, 140, 0, 0.16);
+}
+
+.cer-kamgc-partner-card img {
+    max-width: 100%;
+    max-height: 60px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+.cer-kamgc-faq-accordion {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.cer-kamgc-faq-item {
+    border: 1px solid #e7edf5;
+    border-left: 3px solid #800080;
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 0.2rem 1.1rem;
+}
+
+.cer-kamgc-faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    cursor: pointer;
+    list-style: none;
+    color: #10233f;
+    font-weight: 700;
+}
+
+.cer-kamgc-faq-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.cer-kamgc-faq-caret {
+    color: #ff8c00;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.cer-kamgc-faq-item[open] .cer-kamgc-faq-caret {
+    transform: rotate(180deg);
+}
+
+.cer-kamgc-faq-answer {
+    padding: 0 0 1rem;
+    color: #58667d;
+    line-height: 1.7;
+}
+
+.cer-kamgc-map-widget {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 9999;
+}
+
+.cer-kamgc-map-toggle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #800080;
+    color: #ffffff;
+    box-shadow: 0 12px 30px rgba(128, 0, 128, 0.35);
+    cursor: pointer;
+}
+
+.cer-kamgc-map-toggle:hover {
+    background: #ff8c00;
+}
+
+.cer-kamgc-map-panel {
+    position: absolute;
+    right: 0;
+    bottom: 68px;
+    width: min(320px, calc(100vw - 2.5rem));
+    padding: 1rem;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e7edf5;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+}
+
+.cer-kamgc-map-panel[hidden] {
+    display: none;
+}
+
+.cer-kamgc-map-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    color: #10233f;
+}
+
+.cer-kamgc-map-close {
+    border: none;
+    background: transparent;
+    color: #58667d;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.cer-kamgc-map-embed {
+    width: 100%;
+    height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 0.85rem;
+}
+
+.cer-kamgc-map-embed iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.cer-kamgc-map-panel .cer-kamgc-button {
+    width: 100%;
+    min-height: 44px;
+}
+
+@media (max-width: 640px) {
+    .cer-kamgc-map-widget {
+        right: 1rem;
+        bottom: 1rem;
+    }
+}
+
+/* KAMGC reference layout refinements. The translucent glass layer above remains intact. */
+.cer-kamgc-page {
+    --kamgc-navy: #0f172a;
+    --kamgc-body: #475569;
+    --kamgc-blue: #2563eb;
+    --kamgc-blue-dark: #1d4ed8;
+    font-family: 'Plus Jakarta Sans', 'Open Sans', sans-serif;
+}
+
+.cer-kamgc-shell {
+    display: flex;
+    flex-direction: column;
+}
+
+.cer-kamgc-hero { order: 1; }
+.cer-kamgc-main { order: 2; }
+.cer-kamgc-speakers { order: 3; }
+.cer-kamgc-pillars { order: 4; }
+.cer-kamgc-objectives { order: 5; }
+.cer-kamgc-summit-structure { order: 6; }
+.cer-kamgc-partners { order: 7; }
+.cer-kamgc-faq { order: 8; }
+.cer-kamgc-map-widget { order: 9; }
+
+.cer-kamgc-hero-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
+    gap: 3rem;
+    align-items: center;
+}
+
+.cer-kamgc-hero-copy {
+    text-align: left;
+}
+
+.cer-kamgc-hero-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.cer-kamgc-emblem-badge,
+.cer-kamgc-convening-badge,
+.cer-kamgc-activism-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.66);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.cer-kamgc-emblem-badge {
+    padding: 0.45rem 0.8rem 0.45rem 0.45rem;
+    border-radius: 18px;
+}
+
+.cer-kamgc-emblem-badge img {
+    width: 68px;
+    height: 68px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.cer-kamgc-emblem-badge div {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.cer-kamgc-emblem-badge strong,
+.cer-kamgc-emblem-badge span,
+.cer-kamgc-emblem-badge small {
+    display: block;
+}
+
+.cer-kamgc-emblem-badge strong {
+    color: #581c87;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.cer-kamgc-emblem-badge span {
+    color: #b45309;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.cer-kamgc-emblem-badge small {
+    color: var(--kamgc-body);
+    font-size: 0.64rem;
+}
+
+.cer-kamgc-convening-badge,
+.cer-kamgc-activism-badge {
+    padding: 0.7rem 0.9rem;
+    border-radius: 999px;
+    color: #581c87;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.cer-kamgc-convening-badge .material-symbols-outlined {
+    color: #7e22ce;
+}
+
+.cer-kamgc-activism-badge {
+    margin-bottom: 1.15rem;
+    border-color: #fcd34d;
+    background: rgba(254, 243, 199, 0.74);
+    color: #92400e;
+}
+
+.cer-kamgc-activism-badge .material-symbols-outlined {
+    color: #d97706;
+}
+
+.cer-kamgc-hero-copy h1,
+.cer-kamgc-card h2,
+.cer-kamgc-section-title h2,
+.cer-kamgc-pillar-header h2 {
+    color: var(--kamgc-navy);
+    letter-spacing: -0.02em;
+}
+
+.cer-kamgc-hero-copy h1 {
+    font-size: clamp(2.35rem, 4.2vw, 4.4rem);
+}
+
+.cer-kamgc-hero-copy h1 span {
+    color: var(--kamgc-blue);
+}
+
+.cer-kamgc-hero-description,
+.cer-kamgc-copy-stack p,
+.cer-kamgc-form-intro,
+.cer-kamgc-sponsor-box p,
+.cer-kamgc-summary-box p,
+.cer-kamgc-speaker-card p,
+.cer-kamgc-section-title p,
+.cer-kamgc-pillar-header p {
+    color: var(--kamgc-body);
+}
+
+.cer-kamgc-hero-description {
+    max-width: 44rem;
+    margin: 0 0 1.25rem;
+    font-size: 1rem;
+    line-height: 1.75;
+}
+
+.cer-kamgc-hero-summary {
+    position: static;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.58);
+}
+
+.cer-kamgc-hero-summary h3,
+.cer-kamgc-summary-box h3 {
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    color: var(--kamgc-body);
+    font-size: 0.72rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.cer-kamgc-summary-metadata {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.cer-kamgc-summary-metadata > div {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.48);
+}
+
+.cer-kamgc-summary-metadata > div > span:last-child {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.cer-kamgc-summary-metadata small {
+    color: #94a3b8;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.cer-kamgc-summary-metadata strong {
+    color: var(--kamgc-navy);
+    font-size: 0.82rem;
+}
+
+.cer-kamgc-summary-metadata a {
+    color: var(--kamgc-blue-dark);
+}
+
+.cer-kamgc-metadata-icon,
+.cer-kamgc-heading-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--kamgc-blue);
+}
+
+.cer-kamgc-heading-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.cer-kamgc-heading-with-icon h2 {
+    margin: 0;
+}
+
+.cer-kamgc-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.cer-kamgc-stats-grid > div {
+    padding: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 14px;
+    background: rgba(248, 250, 252, 0.52);
+}
+
+.cer-kamgc-stats-grid strong,
+.cer-kamgc-stats-grid span {
+    display: block;
+}
+
+.cer-kamgc-stats-grid strong {
+    margin-bottom: 0.25rem;
+    color: var(--kamgc-blue-dark);
+    font-size: 1.35rem;
+}
+
+.cer-kamgc-stats-grid span {
+    color: var(--kamgc-body);
+    font-size: 0.68rem;
+    line-height: 1.45;
+}
+
+.cer-kamgc-button-primary,
+.cer-primary-button {
+    background: var(--kamgc-blue);
+    box-shadow: 0 14px 30px rgba(37, 99, 235, 0.2);
+}
+
+.cer-kamgc-button-primary:hover,
+.cer-primary-button:hover,
+.cer-payment-toggle-btn.is-active {
+    background: var(--kamgc-blue-dark);
+}
+
+.cer-kamgc-button-secondary {
+    border-color: var(--kamgc-blue);
+    color: var(--kamgc-blue-dark);
+}
+
+.cer-kamgc-section-title::before,
+.cer-kamgc-pillar-header::before {
+    content: 'Featured leaders';
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--kamgc-blue-dark);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+.cer-kamgc-pillar-header::before {
+    content: 'Framework';
+    color: #b45309;
+}
+
+.cer-kamgc-main > .cer-kamgc-two-col > .cer-kamgc-main-column > .cer-kamgc-card:nth-child(2) h2::before {
+    content: 'Registration portal';
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--kamgc-blue-dark);
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+@media (max-width: 1024px) {
+    .cer-kamgc-hero-inner {
+        grid-template-columns: 1fr;
+    }
+
+    .cer-kamgc-hero-copy {
+        text-align: center;
+    }
+
+    .cer-kamgc-hero-badges,
+    .cer-kamgc-actions {
+        justify-content: center;
+    }
+
+    .cer-kamgc-hero-description {
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .cer-kamgc-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cer-kamgc-emblem-badge {
+        width: 100%;
+        justify-content: flex-start;
     }
 }

@@ -5,7 +5,11 @@
         tickets: 'deleted_tickets',
         speakers: 'deleted_speakers',
         sponsors: 'deleted_sponsors',
-        pillars: 'deleted_pillars'
+        pillars: 'deleted_pillars',
+        objectives: 'deleted_objectives',
+        summit: 'deleted_summit',
+        partners: 'deleted_partners',
+        faqs: 'deleted_faqs'
     };
 
     function getNextIndex(container) {
@@ -52,32 +56,34 @@
         }
 
         if ('speakers' === type) {
-            row = '<div class="cer-repeater-row" data-row-index="' + index + '">' +
+            row = '<div class="cer-repeater-row cer-speaker-row" data-row-index="' + index + '">' +
                 '<input type="hidden" name="speakers[' + index + '][id]" value="" />' +
-                '<div class="cer-field">' +
-                    '<label>Speaker Name</label>' +
-                    '<input type="text" name="speakers[' + index + '][name]" value="" placeholder="Enter speaker\'s full name" />' +
-                '</div>' +
-                '<div class="cer-field">' +
-                    '<label>Role / Organization</label>' +
-                    '<input type="text" name="speakers[' + index + '][role]" value="" placeholder="e.g. Human Rights Advocate" />' +
-                '</div>' +
-                '<div class="cer-field cer-full">' +
-                    '<label>Short Bio</label>' +
-                    '<textarea name="speakers[' + index + '][bio]" placeholder="Short bio or profile summary"></textarea>' +
-                '</div>' +
-                '<div class="cer-field cer-full">' +
-                    '<label>Photo</label>' +
+                '<div class="cer-speaker-photo-col">' +
                     '<input type="hidden" name="speakers[' + index + '][photo_id]" id="speaker-photo-' + index + '" value="" />' +
-                    '<div id="speaker-photo-preview-' + index + '" style="margin-bottom: 8px; min-height: 30px;"></div>' +
-                    '<button type="button" class="button cer-media-select" data-target="speaker-photo-' + index + '" data-preview="speaker-photo-preview-' + index + '">Select Photo</button>' +
+                    '<div id="speaker-photo-preview-' + index + '" class="cer-speaker-photo-thumb"></div>' +
                 '</div>' +
-                '<div class="cer-field cer-full">' +
-                    '<label class="cer-toggle"><input type="checkbox" name="speakers[' + index + '][is_visible]" value="1" checked /></label>' +
+                '<div class="cer-speaker-fields-col">' +
+                    '<div class="cer-field">' +
+                        '<label>Speaker Name</label>' +
+                        '<input type="text" name="speakers[' + index + '][name]" value="" placeholder="Enter speaker\'s full name" />' +
+                    '</div>' +
+                    '<div class="cer-field">' +
+                        '<label>Role / Organization</label>' +
+                        '<input type="text" name="speakers[' + index + '][role]" value="" placeholder="e.g. Human Rights Advocate" />' +
+                    '</div>' +
+                    '<div class="cer-field cer-speaker-field-full">' +
+                        '<label>Short Bio</label>' +
+                        '<textarea name="speakers[' + index + '][bio]" placeholder="Short bio or profile summary"></textarea>' +
+                    '</div>' +
+                    '<div class="cer-field cer-speaker-field-full">' +
+                        '<label class="cer-toggle"><input type="checkbox" name="speakers[' + index + '][is_visible]" value="1" checked /></label>' +
+                    '</div>' +
                 '</div>' +
-                '<div class="cer-repeater-actions">' +
+                '<div class="cer-speaker-actions-col">' +
                     '<span class="cer-row-handle">Speaker #'+ (index + 1) +'</span>' +
-                    '<button type="button" class="button cer-remove-row">Remove</button>' +
+                    '<button type="button" class="button button-small cer-media-select" data-target="speaker-photo-' + index + '" data-preview="speaker-photo-preview-' + index + '">Select Photo</button>' +
+                    '<button type="button" class="button button-small cer-media-clear" data-target="speaker-photo-' + index + '" data-preview="speaker-photo-preview-' + index + '">Remove Photo</button>' +
+                    '<button type="button" class="button button-small cer-remove-row">Remove Speaker</button>' +
                 '</div>' +
             '</div>';
         }
@@ -131,6 +137,106 @@
                 '</div>' +
                 '<div class="cer-repeater-actions">' +
                     '<span class="cer-row-handle">Pillar #'+ (index + 1) +'</span>' +
+                    '<button type="button" class="button cer-remove-row">Remove</button>' +
+                '</div>' +
+            '</div>';
+        }
+
+        if ('objectives' === type) {
+            row = '<div class="cer-repeater-row" data-row-index="' + index + '">' +
+                '<input type="hidden" name="objectives[' + index + '][id]" value="" />' +
+                '<div class="cer-field">' +
+                    '<label>Objective Title</label>' +
+                    '<input type="text" name="objectives[' + index + '][title]" value="" placeholder="Strengthen Coordination" />' +
+                '</div>' +
+                '<div class="cer-field">' +
+                    '<label>Icon / Symbol</label>' +
+                    '<input type="text" name="objectives[' + index + '][icon]" value="" placeholder="flag" />' +
+                '</div>' +
+                '<div class="cer-field cer-full">' +
+                    '<label>Description</label>' +
+                    '<textarea name="objectives[' + index + '][description]" placeholder="Describe this objective."></textarea>' +
+                '</div>' +
+                '<div class="cer-field cer-full">' +
+                    '<label class="cer-toggle"><input type="checkbox" name="objectives[' + index + '][is_visible]" value="1" checked /></label>' +
+                '</div>' +
+                '<div class="cer-repeater-actions">' +
+                    '<span class="cer-row-handle">Objective #'+ (index + 1) +'</span>' +
+                    '<button type="button" class="button cer-remove-row">Remove</button>' +
+                '</div>' +
+            '</div>';
+        }
+
+        if ('summit' === type) {
+            row = '<div class="cer-repeater-row" data-row-index="' + index + '">' +
+                '<input type="hidden" name="summit[' + index + '][id]" value="" />' +
+                '<div class="cer-field">' +
+                    '<label>Structure Title</label>' +
+                    '<input type="text" name="summit[' + index + '][title]" value="" placeholder="Day 1: Plenary Sessions" />' +
+                '</div>' +
+                '<div class="cer-field">' +
+                    '<label>Icon / Symbol</label>' +
+                    '<input type="text" name="summit[' + index + '][icon]" value="" placeholder="event_note" />' +
+                '</div>' +
+                '<div class="cer-field cer-full">' +
+                    '<label>Description</label>' +
+                    '<textarea name="summit[' + index + '][description]" placeholder="Describe this part of the summit structure."></textarea>' +
+                '</div>' +
+                '<div class="cer-field cer-full">' +
+                    '<label class="cer-toggle"><input type="checkbox" name="summit[' + index + '][is_visible]" value="1" checked /></label>' +
+                '</div>' +
+                '<div class="cer-repeater-actions">' +
+                    '<span class="cer-row-handle">Item #'+ (index + 1) +'</span>' +
+                    '<button type="button" class="button cer-remove-row">Remove</button>' +
+                '</div>' +
+            '</div>';
+        }
+
+        if ('partners' === type) {
+            row = '<div class="cer-repeater-row cer-speaker-row" data-row-index="' + index + '">' +
+                '<input type="hidden" name="partners[' + index + '][id]" value="" />' +
+                '<div class="cer-speaker-photo-col">' +
+                    '<input type="hidden" name="partners[' + index + '][logo_id]" id="partner-logo-' + index + '" value="" />' +
+                    '<div id="partner-logo-preview-' + index + '" class="cer-speaker-photo-thumb"></div>' +
+                '</div>' +
+                '<div class="cer-speaker-fields-col">' +
+                    '<div class="cer-field">' +
+                        '<label>Partner Name</label>' +
+                        '<input type="text" name="partners[' + index + '][name]" value="" placeholder="Ministry of Health" />' +
+                    '</div>' +
+                    '<div class="cer-field">' +
+                        '<label>Website Link</label>' +
+                        '<input type="url" name="partners[' + index + '][link_url]" value="" placeholder="https://example.org" />' +
+                    '</div>' +
+                    '<div class="cer-field cer-speaker-field-full">' +
+                        '<label class="cer-toggle"><input type="checkbox" name="partners[' + index + '][is_visible]" value="1" checked /></label>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="cer-speaker-actions-col">' +
+                    '<span class="cer-row-handle">Partner #'+ (index + 1) +'</span>' +
+                    '<button type="button" class="button button-small cer-media-select" data-target="partner-logo-' + index + '" data-preview="partner-logo-preview-' + index + '">Select Logo</button>' +
+                    '<button type="button" class="button button-small cer-media-clear" data-target="partner-logo-' + index + '" data-preview="partner-logo-preview-' + index + '">Remove Logo</button>' +
+                    '<button type="button" class="button button-small cer-remove-row">Remove Partner</button>' +
+                '</div>' +
+            '</div>';
+        }
+
+        if ('faqs' === type) {
+            row = '<div class="cer-repeater-row cer-single-col" data-row-index="' + index + '">' +
+                '<input type="hidden" name="faqs[' + index + '][id]" value="" />' +
+                '<div class="cer-field cer-full">' +
+                    '<label>Question</label>' +
+                    '<input type="text" name="faqs[' + index + '][question]" value="" placeholder="How do I register?" />' +
+                '</div>' +
+                '<div class="cer-field cer-full">' +
+                    '<label>Answer</label>' +
+                    '<textarea name="faqs[' + index + '][answer]" placeholder="Provide the answer to this question."></textarea>' +
+                '</div>' +
+                '<div class="cer-field cer-full">' +
+                    '<label class="cer-toggle"><input type="checkbox" name="faqs[' + index + '][is_visible]" value="1" checked /></label>' +
+                '</div>' +
+                '<div class="cer-repeater-actions">' +
+                    '<span class="cer-row-handle">Question #'+ (index + 1) +'</span>' +
                     '<button type="button" class="button cer-remove-row">Remove</button>' +
                 '</div>' +
             '</div>';
@@ -244,6 +350,57 @@
 
         if (preview) {
             $('#' + preview).html('');
+        }
+    });
+
+    function mapEmbedUrlFromQuery(query) {
+        return 'https://www.google.com/maps?q=' + encodeURIComponent(query) + '&output=embed';
+    }
+
+    function mapLinkFromQuery(query) {
+        return 'https://www.google.com/maps?q=' + encodeURIComponent(query);
+    }
+
+    $('#cer-open-map-search').on('click', function () {
+        var $modal = $('#cer-map-modal');
+        var initialQuery = $('#location-address').val() || $('#location-link').val() || '';
+        $('#cer-map-search-input').val(initialQuery);
+        if (initialQuery) {
+            $('#cer-map-embed').attr('src', mapEmbedUrlFromQuery(initialQuery));
+        }
+        $modal.attr('hidden', false);
+    });
+
+    $('#cer-close-map-search').on('click', function () {
+        $('#cer-map-modal').attr('hidden', true);
+    });
+
+    $('#cer-map-modal .cer-map-modal-backdrop').on('click', function () {
+        $('#cer-map-modal').attr('hidden', true);
+    });
+
+    $('#cer-map-search-go').on('click', function () {
+        var query = $('#cer-map-search-input').val().trim();
+        if (!query) {
+            return;
+        }
+        $('#cer-map-embed').attr('src', mapEmbedUrlFromQuery(query));
+    });
+
+    $('#cer-map-use-location').on('click', function () {
+        var query = $('#cer-map-search-input').val().trim();
+        if (query) {
+            $('#location-link').val(mapLinkFromQuery(query));
+            $('#location-address').val(query);
+        }
+        $('#cer-map-modal').attr('hidden', true);
+    });
+
+    $('#cer-use-coordinates').on('click', function () {
+        var lat = $('#location-lat').val().trim();
+        var lng = $('#location-lng').val().trim();
+        if (lat && lng) {
+            $('#location-link').val('https://www.google.com/maps?q=' + encodeURIComponent(lat + ',' + lng));
         }
     });
 

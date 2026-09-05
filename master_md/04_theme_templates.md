@@ -46,3 +46,9 @@ The page rendered the live title, date, venue, ticket selection, and form fields
 - [x] The thematic pillars section and slug-based event route were added.
 - [x] Event records and related rows use versioned WordPress object caching; event saves increment the cache namespace.
 - [x] The registration page is now aligned with the Laravel payment initiation bridge and redirect flow.
+
+## Public Access Rules
+
+- The public renderer loads only published events, including slug routes and query-string lookup.
+- Unpublished events use the administrator-only preview URL created by the Events list. It requires an authenticated `manage_options` user and an event-specific nonce.
+- The registration form remains dynamic for published events, but its submitted ticket price is only a display value: WordPress reloads the selected ticket and uses its stored price before creating the registration.

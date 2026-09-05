@@ -131,18 +131,11 @@ final class PesaPalService implements PaymentGatewayInterface
         }
 
         $requestedAmount = (float) ($payload['amount'] ?? 0);
-        $safeAmount = (float) env('PESAPAL_TEST_AMOUNT', 1.00);
-        $amount = strtolower((string) env('PESAPAL_ENV', 'live')) === 'sandbox'
-            ? 1.00
-            : ($requestedAmount > 0 ? min($requestedAmount, $safeAmount) : $safeAmount);
-
-        if ($requestedAmount > 0 && $amount < $requestedAmount) {
-            logger()->warning('PesaPal order amount reduced to safe test limit to satisfy merchant restrictions.', [
-                'requested_amount' => $requestedAmount,
-                'safe_amount' => $amount,
-                'payment_method' => $payload['payment_method'] ?? 'unknown',
-            ]);
+        if ($requestedAmount <= 0) {
+            return ['ok' => false, 'message' => 'A positive payment amount is required.'];
         }
+        $isSandbox = strtolower((string) env('PESAPAL_ENV', 'live')) === 'sandbox';
+        $amount = $isSandbox ? (float) env('PESAPAL_TEST_AMOUNT', 1.00) : $requestedAmount;
 
         $billingAddress = [
             'email_address' => (string) ($payload['email'] ?? ''),

@@ -373,3 +373,30 @@
     }
 
 })(document, window);
+
+(function (document) {
+    var toggle = document.getElementById('cer-map-toggle');
+    var panel = document.getElementById('cer-map-panel');
+    var closeBtn = document.getElementById('cer-map-close');
+
+    if (!toggle || !panel) {
+        return;
+    }
+
+    toggle.addEventListener('click', function () {
+        panel.hidden = !panel.hidden;
+    });
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+            panel.hidden = true;
+        });
+    }
+
+    document.addEventListener('click', function (event) {
+        var widget = document.getElementById('cer-map-widget');
+        if (widget && !widget.contains(event.target)) {
+            panel.hidden = true;
+        }
+    });
+})(document);

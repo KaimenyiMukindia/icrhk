@@ -124,7 +124,18 @@ function cer_handle_ticket_download(): void {
 
 function cer_handle_ticket_request(): void {
 	if ( isset( $_REQUEST['cer_process_ticket'] ) ) {
-		cer_send_ticket_for_registration( absint( wp_unslash( $_REQUEST['cer_process_ticket'] ) ) );
+		$registration_id = absint( wp_unslash( $_REQUEST['cer_process_ticket'] ) );
+		$nonce = isset( $_REQUEST['cer_ticket_nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['cer_ticket_nonce'] ) ) : '';
+		$timestamp = isset( $_SERVER['HTTP_X_CER_TICKET_TIMESTAMP'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_CER_TICKET_TIMESTAMP'] ) ) : '';
+		$signature = isset( $_SERVER['HTTP_X_CER_TICKET_SIGNATURE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_CER_TICKET_SIGNATURE'] ) ) : '';
+		$callback_secret = defined( 'CER_TICKET_CALLBACK_SECRET' ) ? CER_TICKET_CALLBACK_SECRET : getenv( 'CER_TICKET_CALLBACK_SECRET' );
+		$service_request_valid = $callback_secret && ctype_digit( $timestamp ) && abs( time() - (int) $timestamp ) <= 300 && hash_equals( hash_hmac( 'sha256', $registration_id . '|' . $timestamp, $callback_secret ), $signature );
+		$admin_request_valid = current_user_can( 'manage_options' ) && wp_verify_nonce( $nonce, 'cer_process_ticket_' . $registration_id );
+		if ( ! $service_request_valid && ! $admin_request_valid ) {
+			wp_die( esc_html__( 'You are not authorized to process this ticket.', 'custom-event-registration' ), 403 );
+		}
+
+		cer_send_ticket_for_registration( $registration_id );
 		status_header( 204 );
 		exit;
 	}

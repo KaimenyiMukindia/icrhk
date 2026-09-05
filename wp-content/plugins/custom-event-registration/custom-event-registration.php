@@ -206,12 +206,24 @@ function cer_maybe_ensure_event_schema() {
 	global $wpdb;
 	$registrations_table = $wpdb->prefix . 'evt_registrations';
 	$events_table = $wpdb->prefix . 'evt_events';
-	if ( '4' === get_option( 'cer_schema_version', '' ) ) {
+	if ( '6' === get_option( 'cer_schema_version', '' ) ) {
+		return;
+	}
+
+	if ( '5' === get_option( 'cer_schema_version', '' ) ) {
 		cer_add_column_if_missing( $events_table, 'meta_title', 'VARCHAR(255) NULL', 'slug' );
 		cer_add_column_if_missing( $events_table, 'meta_description', 'TEXT NULL', 'meta_title' );
 		cer_add_column_if_missing( $events_table, 'meta_keywords', 'TEXT NULL', 'meta_description' );
 		cer_add_column_if_missing( $registrations_table, 'ticket_generated_at', 'DATETIME NULL', 'updated_at' );
 		cer_add_column_if_missing( $registrations_table, 'ticket_sent_at', 'DATETIME NULL', 'ticket_generated_at' );
+		cer_add_column_if_missing( $registrations_table, 'full_name_search_hash', 'CHAR(64) NULL', 'full_name' );
+		cer_add_column_if_missing( $registrations_table, 'email_search_hash', 'CHAR(64) NULL', 'email' );
+		cer_add_column_if_missing( $registrations_table, 'phone_search_hash', 'CHAR(64) NULL', 'phone' );
+		cer_add_index_if_missing( $registrations_table, 'full_name_search_hash', 'full_name_search_hash' );
+		cer_add_index_if_missing( $registrations_table, 'email_search_hash', 'email_search_hash' );
+		cer_add_index_if_missing( $registrations_table, 'phone_search_hash', 'phone_search_hash' );
+		cer_install_event_schema();
+		update_option( 'cer_schema_version', '6', false );
 		return;
 	}
 
@@ -227,6 +239,12 @@ function cer_maybe_ensure_event_schema() {
 	cer_add_column_if_missing( $registrations_table, 'confirmed_amount', 'DECIMAL(10,2) NULL', 'amount' );
 	cer_add_column_if_missing( $registrations_table, 'ticket_generated_at', 'DATETIME NULL', 'updated_at' );
 	cer_add_column_if_missing( $registrations_table, 'ticket_sent_at', 'DATETIME NULL', 'ticket_generated_at' );
+	cer_add_column_if_missing( $registrations_table, 'full_name_search_hash', 'CHAR(64) NULL', 'full_name' );
+	cer_add_column_if_missing( $registrations_table, 'email_search_hash', 'CHAR(64) NULL', 'email' );
+	cer_add_column_if_missing( $registrations_table, 'phone_search_hash', 'CHAR(64) NULL', 'phone' );
+	cer_add_index_if_missing( $registrations_table, 'full_name_search_hash', 'full_name_search_hash' );
+	cer_add_index_if_missing( $registrations_table, 'email_search_hash', 'email_search_hash' );
+	cer_add_index_if_missing( $registrations_table, 'phone_search_hash', 'phone_search_hash' );
 	$wpdb->query( "ALTER TABLE {$registrations_table} MODIFY full_name VARCHAR(512) NOT NULL, MODIFY email VARCHAR(512) NOT NULL, MODIFY phone VARCHAR(256) NOT NULL, MODIFY notes LONGTEXT NULL" );
 	$rows = $wpdb->get_results( "SELECT id, user_access_key, full_name, email, phone, notes FROM {$registrations_table}", ARRAY_A );
 	foreach ( $rows as $row ) {
@@ -238,6 +256,9 @@ function cer_maybe_ensure_event_schema() {
 			if ( isset( $row[ $field ] ) && '' !== $row[ $field ] && 0 !== strpos( $row[ $field ], 'cer:v1:' ) ) {
 				$update[ $field ] = cer_encrypt_pii( $row[ $field ] );
 			}
+			if ( in_array( $field, array( 'full_name', 'email', 'phone' ), true ) && isset( $row[ $field ] ) && '' !== $row[ $field ] ) {
+				$update[ $field . '_search_hash' ] = cer_registration_search_hash( cer_decrypt_pii( $row[ $field ] ) );
+			}
 		}
 		if ( $update ) {
 			$wpdb->update( $registrations_table, $update, array( 'id' => (int) $row['id'] ) );
@@ -248,7 +269,7 @@ function cer_maybe_ensure_event_schema() {
 	if ( ! $wpdb->get_var( $wpdb->prepare( "SHOW INDEX FROM {$registrations_table} WHERE Key_name = %s", 'user_access_key' ) ) ) {
 		$wpdb->query( "ALTER TABLE {$registrations_table} ADD UNIQUE KEY user_access_key (user_access_key)" );
 	}
-	update_option( 'cer_schema_version', '4', false );
+	update_option( 'cer_schema_version', '6', false );
 	cer_add_column_if_missing( $events_table, 'meta_title', 'VARCHAR(255) NULL', 'slug' );
 	cer_add_column_if_missing( $events_table, 'meta_description', 'TEXT NULL', 'meta_title' );
 	cer_add_column_if_missing( $events_table, 'meta_keywords', 'TEXT NULL', 'meta_description' );
@@ -302,8 +323,14 @@ function cer_maybe_render_clean_event_url() {
 	}
 
 	global $wpdb;
-	$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_events WHERE slug = %s LIMIT 1", $event_slug ) );
+	$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_events WHERE slug = %s AND status = %s LIMIT 1", $event_slug, 'published' ) );
 	if ( ! $event ) {
+		global $wp_query;
+		if ( isset( $wp_query ) ) {
+			$wp_query->set_404();
+		}
+		status_header( 404 );
+		nocache_headers();
 		return;
 	}
 
@@ -472,6 +499,70 @@ function cer_install_event_schema() {
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
 	) $charset_collate;";
 
+	$objectives_table = $wpdb->prefix . 'evt_objectives';
+	$summit_structure_table = $wpdb->prefix . 'evt_summit_structure';
+	$partners_table = $wpdb->prefix . 'evt_partners';
+	$faqs_table = $wpdb->prefix . 'evt_faqs';
+
+	$sql_objectives = "CREATE TABLE IF NOT EXISTS $objectives_table (
+		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		event_id BIGINT(20) UNSIGNED NOT NULL,
+		title VARCHAR(255) NOT NULL,
+		description LONGTEXT,
+		icon VARCHAR(255),
+		is_visible TINYINT(1) NOT NULL DEFAULT 1,
+		order_index INT UNSIGNED DEFAULT 0,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY event_id (event_id),
+		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
+	) $charset_collate;";
+
+	$sql_summit_structure = "CREATE TABLE IF NOT EXISTS $summit_structure_table (
+		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		event_id BIGINT(20) UNSIGNED NOT NULL,
+		title VARCHAR(255) NOT NULL,
+		description LONGTEXT,
+		icon VARCHAR(255),
+		is_visible TINYINT(1) NOT NULL DEFAULT 1,
+		order_index INT UNSIGNED DEFAULT 0,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY event_id (event_id),
+		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
+	) $charset_collate;";
+
+	$sql_partners = "CREATE TABLE IF NOT EXISTS $partners_table (
+		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		event_id BIGINT(20) UNSIGNED NOT NULL,
+		name VARCHAR(255) NOT NULL,
+		logo_id BIGINT(20) UNSIGNED,
+		link_url VARCHAR(255),
+		is_visible TINYINT(1) NOT NULL DEFAULT 1,
+		order_index INT UNSIGNED DEFAULT 0,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY event_id (event_id),
+		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
+	) $charset_collate;";
+
+	$sql_faqs = "CREATE TABLE IF NOT EXISTS $faqs_table (
+		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+		event_id BIGINT(20) UNSIGNED NOT NULL,
+		question VARCHAR(255) NOT NULL,
+		answer LONGTEXT,
+		is_visible TINYINT(1) NOT NULL DEFAULT 1,
+		order_index INT UNSIGNED DEFAULT 0,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		PRIMARY KEY (id),
+		KEY event_id (event_id),
+		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
+	) $charset_collate;";
+
 	$sql_registrations = "CREATE TABLE IF NOT EXISTS $registrations_table (
 		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 		registration_uuid VARCHAR(64) NOT NULL,
@@ -482,9 +573,12 @@ function cer_install_event_schema() {
 		user_id BIGINT(20) UNSIGNED,
 		user_access_key VARCHAR(64) NOT NULL,
 		full_name VARCHAR(255) NOT NULL,
+		full_name_search_hash CHAR(64) NULL,
 		payer_name VARCHAR(512) NULL,
 		email VARCHAR(255) NOT NULL,
+		email_search_hash CHAR(64) NULL,
 		phone VARCHAR(50) NOT NULL,
+		phone_search_hash CHAR(64) NULL,
 		ticket_type VARCHAR(100),
 		payment_method VARCHAR(50) NOT NULL,
 		amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -506,6 +600,9 @@ function cer_install_event_schema() {
 		KEY status (status),
 		KEY payment_method (payment_method),
 		KEY event_status_created (event_id, status, created_at),
+		KEY full_name_search_hash (full_name_search_hash),
+		KEY email_search_hash (email_search_hash),
+		KEY phone_search_hash (phone_search_hash),
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE SET NULL,
 		FOREIGN KEY (ticket_type_id) REFERENCES $ticket_types_table(id) ON DELETE SET NULL
 	) $charset_collate;";
@@ -516,6 +613,10 @@ function cer_install_event_schema() {
 	dbDelta( $sql_speakers );
 	dbDelta( $sql_sponsorships );
 	dbDelta( $sql_pillars );
+	dbDelta( $sql_objectives );
+	dbDelta( $sql_summit_structure );
+	dbDelta( $sql_partners );
+	dbDelta( $sql_faqs );
 	dbDelta( $sql_registrations );
 
 	cer_add_column_if_missing( $events_table, 'subtitle', 'VARCHAR(255) NULL', 'name' );
@@ -550,6 +651,27 @@ function cer_install_event_schema() {
 	cer_add_column_if_missing( $speakers_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'photo_id' );
 	cer_add_column_if_missing( $sponsorships_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'cta_url' );
 	cer_add_column_if_missing( $pillars_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'icon' );
+	cer_add_column_if_missing( $events_table, 'secondary_logo_id', 'BIGINT(20) UNSIGNED NULL', 'featured_image_id' );
+	cer_add_column_if_missing( $events_table, 'objectives_heading', 'VARCHAR(255) NULL', 'secondary_logo_id' );
+	cer_add_column_if_missing( $events_table, 'objectives_intro', 'LONGTEXT NULL', 'objectives_heading' );
+	cer_add_column_if_missing( $events_table, 'show_objectives', 'TINYINT(1) NOT NULL DEFAULT 1', 'objectives_intro' );
+	cer_add_column_if_missing( $events_table, 'summit_structure_heading', 'VARCHAR(255) NULL', 'show_objectives' );
+	cer_add_column_if_missing( $events_table, 'summit_structure_intro', 'LONGTEXT NULL', 'summit_structure_heading' );
+	cer_add_column_if_missing( $events_table, 'show_summit_structure', 'TINYINT(1) NOT NULL DEFAULT 1', 'summit_structure_intro' );
+	cer_add_column_if_missing( $events_table, 'partners_heading', 'VARCHAR(255) NULL', 'show_summit_structure' );
+	cer_add_column_if_missing( $events_table, 'partners_intro', 'LONGTEXT NULL', 'partners_heading' );
+	cer_add_column_if_missing( $events_table, 'show_partners', 'TINYINT(1) NOT NULL DEFAULT 1', 'partners_intro' );
+	cer_add_column_if_missing( $events_table, 'faq_heading', 'VARCHAR(255) NULL', 'show_partners' );
+	cer_add_column_if_missing( $events_table, 'faq_intro', 'LONGTEXT NULL', 'faq_heading' );
+	cer_add_column_if_missing( $events_table, 'show_faq', 'TINYINT(1) NOT NULL DEFAULT 1', 'faq_intro' );
+	cer_add_column_if_missing( $events_table, 'location_link', 'VARCHAR(500) NULL', 'show_faq' );
+	cer_add_column_if_missing( $events_table, 'location_lat', 'VARCHAR(50) NULL', 'location_link' );
+	cer_add_column_if_missing( $events_table, 'location_lng', 'VARCHAR(50) NULL', 'location_lat' );
+	cer_add_column_if_missing( $events_table, 'location_address', 'VARCHAR(500) NULL', 'location_lng' );
+	cer_add_column_if_missing( $objectives_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'icon' );
+	cer_add_column_if_missing( $summit_structure_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'icon' );
+	cer_add_column_if_missing( $partners_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'link_url' );
+	cer_add_column_if_missing( $faqs_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'answer' );
 	cer_add_index_if_missing( $events_table, 'event_date', 'event_date' );
 	cer_add_index_if_missing( $registrations_table, 'created_at', 'created_at' );
 	cer_add_index_if_missing( $registrations_table, 'status', 'status' );
@@ -896,6 +1018,53 @@ function cer_initiate_laravel_payment( array $registration_data ): array {
 	return $decoded;
 }
 
+function cer_confirm_registration_paid( int $registration_id ): array {
+	global $wpdb;
+
+	$registrations_table = $wpdb->prefix . 'evt_registrations';
+	$events_table = $wpdb->prefix . 'evt_events';
+	$ticket_types_table = $wpdb->prefix . 'evt_ticket_types';
+	$wpdb->query( 'START TRANSACTION' );
+
+	try {
+		$registration = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$registrations_table} WHERE id = %d FOR UPDATE", $registration_id ) );
+		if ( ! $registration ) {
+			throw new Exception( 'Registration not found.' );
+		}
+		if ( 'paid' === $registration->status ) {
+			$wpdb->query( 'COMMIT' );
+			return array( 'ok' => true, 'already_paid' => true );
+		}
+
+		$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$events_table} WHERE id = %d FOR UPDATE", $registration->event_id ) );
+		$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, quantity_available, quantity_sold FROM {$ticket_types_table} WHERE id = %d AND event_id = %d FOR UPDATE", $registration->ticket_type_id, $registration->event_id ) );
+		if ( ! $event || ! $ticket ) {
+			throw new Exception( 'The event or selected ticket is no longer available.' );
+		}
+
+		$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$registrations_table} WHERE event_id = %d AND status = %s", $event->id, 'paid' ) );
+		if ( ! empty( $event->max_attendees ) && $paid_registrations >= (int) $event->max_attendees ) {
+			throw new Exception( 'This event has reached its attendance capacity.' );
+		}
+		if ( null !== $ticket->quantity_available && (int) $ticket->quantity_sold >= (int) $ticket->quantity_available ) {
+			throw new Exception( 'This ticket type is sold out.' );
+		}
+
+		$ticket_updated = $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_types_table} SET quantity_sold = quantity_sold + 1, updated_at = %s WHERE id = %d", current_time( 'mysql' ), $ticket->id ) );
+		$registration_updated = $wpdb->update( $registrations_table, array( 'status' => 'paid', 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $registration->id ), array( '%s', '%s' ), array( '%d' ) );
+		if ( false === $ticket_updated || false === $registration_updated ) {
+			throw new Exception( 'Could not confirm the registration.' );
+		}
+
+		$wpdb->query( 'COMMIT' );
+		delete_transient( 'cer_dashboard_metrics' );
+		return array( 'ok' => true, 'already_paid' => false );
+	} catch ( Exception $exception ) {
+		$wpdb->query( 'ROLLBACK' );
+		return array( 'ok' => false, 'message' => $exception->getMessage() );
+	}
+}
+
 function cer_handle_ajax_submission() {
 	$nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] ) ) : '';
 	if ( ! wp_verify_nonce( $nonce, 'cer_registration_form' ) ) {
@@ -911,7 +1080,6 @@ function cer_handle_ajax_submission() {
 	$ticket_type = sanitize_text_field( wp_unslash( $_POST['ticket_type'] ?? '' ) );
 	$payment_method = sanitize_text_field( wp_unslash( $_POST['payment_method'] ?? '' ) );
 	$notes = sanitize_textarea_field( wp_unslash( $_POST['notes'] ?? '' ) );
-	$amount = sanitize_text_field( wp_unslash( $_POST['amount'] ?? '5000' ) );
 	$event_id = absint( wp_unslash( $_POST['event_id'] ?? 0 ) );
 
 		$payment_method = in_array( $payment_method, array( 'mpesa', 'card' ), true ) ? $payment_method : '';
@@ -930,7 +1098,22 @@ function cer_handle_ajax_submission() {
 		wp_send_json_error( array( 'message' => 'Please complete all required fields.' ) );
 	}
 
-	$amount = number_format( max( 0, floatval( $amount ) ), 2, '.', '' );
+	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = %s LIMIT 1", $event_id, 'published' ) );
+	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d LIMIT 1", $ticket_type_id, $event_id ) );
+	if ( ! $event || ! $ticket ) {
+		wp_send_json_error( array( 'message' => 'The selected event or ticket is no longer available.' ) );
+	}
+
+	$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d AND status = %s", $event_id, 'paid' ) );
+	if ( ! empty( $event->max_attendees ) && $paid_registrations >= (int) $event->max_attendees ) {
+		wp_send_json_error( array( 'message' => 'This event has reached its attendance capacity.' ) );
+	}
+	if ( null !== $ticket->quantity_available && (int) $ticket->quantity_sold >= (int) $ticket->quantity_available ) {
+		wp_send_json_error( array( 'message' => 'This ticket type is sold out.' ) );
+	}
+
+	$ticket_type = (string) $ticket->name;
+	$amount = number_format( (float) $ticket->price, 2, '.', '' );
 	$registration_uuid = wp_generate_uuid4();
 	$payment_uuid = wp_generate_uuid4();
 	$registrations_table = $wpdb->prefix . 'evt_registrations';

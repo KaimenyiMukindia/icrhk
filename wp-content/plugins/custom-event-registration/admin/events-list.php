@@ -156,6 +156,9 @@ if ( ! empty( $event_ids ) && ! empty( $bulk_action ) && check_admin_referer( 'c
 								<td>
 									<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'cer-event-new', 'event_id' => $event->id ), admin_url( 'admin.php' ) ) ); ?>" class="button button-small"><?php esc_html_e( 'Edit', 'custom-event-registration' ); ?></a>
 										<a href="<?php echo esc_url( cer_get_event_public_url( $event->slug ) ); ?>" class="button button-small" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open', 'custom-event-registration' ); ?></a>
+									<?php if ( 'published' !== $event->status ) : ?>
+										<a href="<?php echo esc_url( add_query_arg( array( 'event_id' => $event->id, 'cer_event_preview' => wp_create_nonce( 'cer_event_preview_' . $event->id ) ), home_url( '/event-registration/' ) ) ); ?>" class="button button-small" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Preview', 'custom-event-registration' ); ?></a>
+									<?php endif; ?>
 										<button type="button" class="button button-small cer-share-event" data-event-title="<?php echo esc_attr( $event->name ); ?>" data-event-url="<?php echo esc_url( cer_get_event_public_url( $event->slug ) ); ?>"><span class="dashicons dashicons-share" aria-hidden="true"></span><?php esc_html_e( 'Share', 'custom-event-registration' ); ?></button>
 									<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'cer-registrations', 'event_id' => $event->id ), admin_url( 'admin.php' ) ) ); ?>" class="button button-small"><?php esc_html_e( 'View Registrations', 'custom-event-registration' ); ?></a>
 								</td>

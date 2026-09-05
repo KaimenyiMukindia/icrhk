@@ -59,11 +59,12 @@ if ( $date_end ) {
 	}
 }
 if ( $search ) {
-	$where[] = '(r.full_name LIKE %s OR r.email LIKE %s OR r.phone LIKE %s)';
-	$search_like = '%' . $wpdb->esc_like( $search ) . '%';
-	$bindings[] = $search_like;
-	$bindings[] = $search_like;
-	$bindings[] = $search_like;
+	$search_hash = cer_registration_search_hash( $search );
+	$where[] = '(r.registration_uuid = %s OR r.full_name_search_hash = %s OR r.email_search_hash = %s OR r.phone_search_hash = %s)';
+	$bindings[] = $search;
+	$bindings[] = $search_hash;
+	$bindings[] = $search_hash;
+	$bindings[] = $search_hash;
 }
 
 $where_sql = $where ? ' WHERE ' . implode( ' AND ', $where ) : '';
@@ -86,7 +87,10 @@ if ( isset( $_POST['bulk_action'] ) && isset( $_POST['registration_ids'] ) && ch
 
 	foreach ( $ids as $id ) {
 		if ( 'mark_paid' === $action ) {
-			$wpdb->update( $registrations_table, array( 'status' => 'paid', 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $id ), array( '%s', '%s' ), array( '%d' ) );
+			$result = cer_confirm_registration_paid( $id );
+			if ( empty( $result['ok'] ) ) {
+				set_transient( 'cer_registration_bulk_error', $result['message'] ?? __( 'Unable to confirm registration.', 'custom-event-registration' ), 30 );
+			}
 		} elseif ( 'mark_cancelled' === $action ) {
 			$wpdb->update( $registrations_table, array( 'status' => 'cancelled', 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $id ), array( '%s', '%s' ), array( '%d' ) );
 		} elseif ( 'delete' === $action ) {
@@ -166,7 +170,7 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 			</div>
 			<div class="field" style="min-width:260px;">
 				<label for="reg-search"><?php esc_html_e( 'Search', 'custom-event-registration' ); ?></label>
-				<input id="reg-search" type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="Search by name, email, or phone" />
+				<input id="reg-search" type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="Exact name, email, phone, or registration UUID" />
 			</div>
 			<div class="field" style="justify-content:flex-end;">
 				<input type="submit" class="button button-primary" value="<?php esc_attr_e( 'Filter', 'custom-event-registration' ); ?>" />

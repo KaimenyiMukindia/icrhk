@@ -104,32 +104,6 @@ final class PaymentController extends Controller
             return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'IPN logged without payment confirmation.']);
         }
 
-        $registration = DB::table('wp_evt_registrations')
-            ->where(function ($query) use ($paymentUuid, $trackingId): void {
-                $query->where('payment_uuid', $paymentUuid);
-                if ($trackingId !== '') {
-                    $query->orWhere('gateway_reference', $trackingId);
-                }
-            })
-            ->first();
-
-        if (! $registration) {
-            return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'Registration not found.']);
-        }
-
-        if ($registration->status === 'paid') {
-            DB::table('payment_logs')->insert([
-                'payment_uuid' => $paymentUuid ?: null,
-                'event' => 'ipn_duplicate_ignored',
-                'payload' => json_encode($payload, JSON_UNESCAPED_SLASHES),
-                'status' => 'ignored',
-                'message' => 'Duplicate confirmed IPN ignored; registration was already paid.',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'Already processed.']);
-        }
-
         $payerName = $this->firstPaymentValue($payload, ['payer_name', 'payerName', 'full_name', 'customer_name', 'customerName']);
         $receiptNumber = $this->firstPaymentValue($payload, ['receipt_number', 'receiptNumber', 'receipt']);
         $serialNumber = $this->firstPaymentValue($payload, ['serial_number', 'serialNumber', 'serial']);
@@ -137,7 +111,6 @@ final class PaymentController extends Controller
         $confirmedAmount = $this->firstPaymentValue($payload, ['amount', 'payment_amount', 'amount_paid']);
         $updates = [
             'status' => 'paid',
-            'gateway_reference' => $trackingId ?: $registration->gateway_reference,
             'updated_at' => now(),
         ];
         if ($payerName !== '') {
@@ -156,12 +129,85 @@ final class PaymentController extends Controller
         if ($confirmedAmount !== '' && is_numeric($confirmedAmount)) {
             $updates['confirmed_amount'] = (float) $confirmedAmount;
         }
-        DB::table('wp_evt_registrations')->where('id', $registration->id)->update($updates);
+        $confirmation = DB::transaction(function () use ($paymentUuid, $trackingId, $updates): array {
+            $registration = DB::table('wp_evt_registrations')
+                ->where(function ($query) use ($paymentUuid, $trackingId): void {
+                    $query->where('payment_uuid', $paymentUuid);
+                    if ($trackingId !== '') {
+                        $query->orWhere('gateway_reference', $trackingId);
+                    }
+                })
+                ->lockForUpdate()
+                ->first();
+
+            if (! $registration) {
+                return ['state' => 'missing'];
+            }
+            if ($registration->status === 'paid') {
+                return ['state' => 'duplicate'];
+            }
+
+            $event = DB::table('wp_evt_events')->where('id', $registration->event_id)->lockForUpdate()->first(['id', 'max_attendees']);
+            $ticket = DB::table('wp_evt_ticket_types')
+                ->where('id', $registration->ticket_type_id)
+                ->where('event_id', $registration->event_id)
+                ->lockForUpdate()
+                ->first(['id', 'quantity_available', 'quantity_sold']);
+            if (! $event || ! $ticket) {
+                return ['state' => 'unavailable'];
+            }
+
+            $paidCount = DB::table('wp_evt_registrations')
+                ->where('event_id', $event->id)
+                ->where('status', 'paid')
+                ->count();
+            if ($event->max_attendees !== null && $paidCount >= (int) $event->max_attendees) {
+                return ['state' => 'event_full'];
+            }
+            if ($ticket->quantity_available !== null && (int) $ticket->quantity_sold >= (int) $ticket->quantity_available) {
+                return ['state' => 'ticket_sold_out'];
+            }
+
+            DB::table('wp_evt_ticket_types')->where('id', $ticket->id)->update([
+                'quantity_sold' => DB::raw('quantity_sold + 1'),
+                'updated_at' => now(),
+            ]);
+            $registrationUpdates = $updates;
+            $registrationUpdates['gateway_reference'] = $trackingId ?: $registration->gateway_reference;
+            DB::table('wp_evt_registrations')->where('id', $registration->id)->update($registrationUpdates);
+
+            return ['state' => 'confirmed', 'registration_id' => (int) $registration->id];
+        });
+
+        if ($confirmation['state'] === 'missing') {
+            return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'Registration not found.']);
+        }
+        if ($confirmation['state'] === 'duplicate') {
+            DB::table('payment_logs')->insert([
+                'payment_uuid' => $paymentUuid ?: null,
+                'event' => 'ipn_duplicate_ignored',
+                'payload' => json_encode($payload, JSON_UNESCAPED_SLASHES),
+                'status' => 'ignored',
+                'message' => 'Duplicate confirmed IPN ignored; registration was already paid.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'Already processed.']);
+        }
+        if ($confirmation['state'] !== 'confirmed') {
+            logger()->critical('Confirmed payment could not reserve event capacity.', ['payment_uuid' => $paymentUuid, 'state' => $confirmation['state']]);
+            return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'Payment recorded for manual capacity review.']);
+        }
 
         $wordpressUrl = (string) env('WORDPRESS_URL', 'http://localhost/icrhk');
-        $ticketResponse = Http::timeout(15)->post(rtrim($wordpressUrl, '/') . '/', ['cer_process_ticket' => (int) $registration->id]);
+        $ticketTimestamp = (string) time();
+        $ticketSecret = (string) env('CER_TICKET_CALLBACK_SECRET', '');
+        $ticketResponse = Http::timeout(15)->withHeaders([
+            'X-CER-Ticket-Timestamp' => $ticketTimestamp,
+            'X-CER-Ticket-Signature' => hash_hmac('sha256', $confirmation['registration_id'] . '|' . $ticketTimestamp, $ticketSecret),
+        ])->post(rtrim($wordpressUrl, '/') . '/', ['cer_process_ticket' => $confirmation['registration_id']]);
         if (! $ticketResponse->successful()) {
-            logger()->error('WordPress ticket delivery callback failed', ['registration_id' => $registration->id, 'status' => $ticketResponse->status()]);
+            logger()->error('WordPress ticket delivery callback failed', ['registration_id' => $confirmation['registration_id'], 'status' => $ticketResponse->status()]);
         }
 
         return response()->json([

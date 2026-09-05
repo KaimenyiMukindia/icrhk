@@ -42,9 +42,22 @@ function cer_decrypt_pii( $value ): string {
 	return false === $plaintext ? '' : $plaintext;
 }
 
+function cer_registration_search_hash( $value ): string {
+	$value = strtolower( trim( (string) $value ) );
+	$value = preg_replace( '/\s+/', ' ', $value );
+	if ( '' === $value ) {
+		return '';
+	}
+
+	return hash_hmac( 'sha256', $value, hash_hkdf( 'sha256', cer_get_encryption_key(), 32, 'cer-registration-search' ) );
+}
+
 function cer_prepare_registration_row( array $row ): array {
 	foreach ( array( 'full_name', 'email', 'phone', 'notes' ) as $field ) {
 		if ( isset( $row[ $field ] ) && '' !== (string) $row[ $field ] ) {
+			if ( in_array( $field, array( 'full_name', 'email', 'phone' ), true ) ) {
+				$row[ $field . '_search_hash' ] = cer_registration_search_hash( $row[ $field ] );
+			}
 			$row[ $field ] = cer_encrypt_pii( $row[ $field ] );
 		}
 	}

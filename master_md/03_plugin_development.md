@@ -65,3 +65,11 @@ The custom event registration plugin had been installed but remained inactive. B
 - [x] Documentation updated to reflect the real persistence fix.
 - [x] Payment initiation is now routed through the Laravel engine and PesaPal gateway.
 - [x] Pillars, section visibility toggles, and clean URLs were added.
+
+## Production Hardening
+
+- Public event lookups now require `status = published`. Draft, closed, and cancelled events can only be opened through the nonce-protected administrator preview link.
+- Registration requests derive ticket identity and price from the selected database ticket row; client-submitted prices are ignored.
+- Registration PII remains encrypted. The admin list uses deterministic keyed hashes for exact name, email, phone, or registration-UUID lookup rather than SQL `LIKE` over ciphertext.
+- Paid confirmation is serialized per event and ticket to enforce event capacity and ticket inventory before incrementing `quantity_sold`.
+- Ticket delivery callbacks accept either an authenticated administrator nonce or a short-lived signed Laravel callback.
