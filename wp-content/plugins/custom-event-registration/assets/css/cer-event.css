@@ -4813,3 +4813,849 @@ html.cer-js .cer-reveal.is-visible {
         margin-block: 0;
     }
 }
+
+/* ==========================================================================
+   DESIGN-FILE PASS  —  design.html
+   --------------------------------------------------------------------------
+   Purple and orange are the only accent colours inside the page CONTENT.
+   The page chrome is untouched: kitenge ground, glass panels, their
+   backdrop-filter, borders and radii are all left exactly as they are.
+   ========================================================================== */
+
+.cer-kamgc-page {
+    --k-purple: #5A2A8C;
+    --k-purple-l: #7B4BAE;
+    --k-purple-tint: rgba(90, 42, 140, .10);
+    --k-orange: #F0761E;
+    --k-orange-l: #FFB454;
+    --k-orange-tint: rgba(240, 118, 30, .12);
+    --k-ink: #14202b;
+    --k-muted: #647082;
+}
+
+/* --- Section eyebrow + rule in brand accents ---------------------------- */
+.cer-kamgc-section-title::before,
+.cer-kamgc-pillar-header::before {
+    color: var(--k-orange) !important;
+}
+
+.cer-kamgc-divider-center {
+    background: linear-gradient(90deg, var(--k-purple), var(--k-orange)) !important;
+    height: 3px !important;
+    border-radius: 2px;
+}
+
+/* ==========================================================================
+   1. KEYNOTE SPEAKERS — minimal, per design.html
+   No card, no border, no fill. Avatar tile left, name/role/title right,
+   three evenly spaced across one row.
+   ========================================================================== */
+
+.cer-kamgc-speaker-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
+    justify-content: start !important;
+    gap: 1.75rem 2rem !important;
+    align-items: start;
+}
+
+.cer-kamgc-speaker-card {
+    display: grid !important;
+    grid-template-columns: 60px minmax(0, 1fr) !important;
+    align-items: center;
+    gap: 1rem !important;
+    background: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    height: auto !important;
+    text-align: left !important;
+    transform: none !important;
+}
+
+.cer-kamgc-speaker-card:hover {
+    background: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.cer-kamgc-speaker-avatar {
+    grid-row: span 3;
+    width: 60px !important;
+    height: 60px !important;
+    margin: 0 !important;
+    border-radius: 16px !important;
+    background: linear-gradient(140deg, var(--k-purple), var(--k-purple-l)) !important;
+    color: #fff !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.cer-kamgc-speaker-avatar .material-symbols-outlined { font-size: 26px; }
+.cer-kamgc-speaker-avatar img { border-radius: 14px; object-fit: cover; width: 100%; height: 100%; }
+
+.cer-kamgc-speaker-card h3 {
+    text-align: left !important;
+    font-size: .98rem !important;
+    font-weight: 700;
+    color: var(--k-ink) !important;
+    margin: 0 !important;
+    line-height: 1.25;
+}
+
+.cer-kamgc-speaker-card .cer-kamgc-speaker-role {
+    text-align: left !important;
+    font-size: .82rem !important;
+    font-weight: 700;
+    color: var(--k-orange) !important;
+    margin: .1rem 0 0 !important;
+}
+
+.cer-kamgc-speaker-card p {
+    text-align: left !important;
+    font-size: .82rem !important;
+    color: var(--k-muted) !important;
+    margin: .05rem 0 0 !important;
+    padding: 0 !important;
+}
+
+/* ==========================================================================
+   2. THEMATIC PILLARS — one horizontal scrolling line
+   Cards become rail items: coloured icon tile above a centred label, matching
+   design.html. Icons alternate purple / orange.
+   ========================================================================== */
+
+.cer-kamgc-pillar-grid {
+    display: flex !important;
+    grid-template-columns: none !important;
+    justify-content: flex-start !important;
+    gap: 1.25rem !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    padding: .25rem .25rem 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--k-purple) transparent;
+}
+
+.cer-kamgc-pillar-grid::-webkit-scrollbar { height: 6px; }
+.cer-kamgc-pillar-grid::-webkit-scrollbar-track { background: rgba(20,32,43,.06); border-radius: 999px; }
+.cer-kamgc-pillar-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, var(--k-purple), var(--k-orange));
+    border-radius: 999px;
+}
+
+.cer-kamgc-pillars-card {
+    flex: 0 0 180px !important;
+    scroll-snap-align: start;
+    background: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    text-align: center;
+}
+
+.cer-kamgc-pillars-card:hover,
+.cer-kamgc-pillars-card:focus-within {
+    box-shadow: none !important;
+    border: 0 !important;
+}
+
+.cer-kamgc-pillars-front {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    gap: .7rem;
+    padding: .25rem !important;
+    background: none;
+    border: 0;
+    width: 100%;
+    cursor: pointer;
+}
+
+.cer-kamgc-pillars-icon {
+    width: 62px !important;
+    height: 62px !important;
+    border-radius: 18px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: var(--k-orange-tint) !important;
+    color: var(--k-orange) !important;
+    transition: transform var(--cer-dur-micro) var(--cer-ease-out),
+                background-color var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+/* Alternate the two brand colours down the rail. */
+.cer-kamgc-pillars-card:nth-child(even) .cer-kamgc-pillars-icon {
+    background: var(--k-purple-tint) !important;
+    color: var(--k-purple) !important;
+}
+
+.cer-kamgc-pillars-card:hover .cer-kamgc-pillars-icon,
+.cer-kamgc-pillars-card:focus-within .cer-kamgc-pillars-icon {
+    transform: translateY(-3px) scale(1.04);
+}
+
+.cer-kamgc-pillars-icon .material-symbols-outlined { font-size: 28px; }
+
+.cer-kamgc-pillars-card h3 {
+    font-size: .84rem !important;
+    line-height: 1.35;
+    font-weight: 700;
+    color: var(--k-ink) !important;
+    margin: 0 !important;
+    text-align: center;
+}
+
+/* Description expands beneath the label. An absolutely-positioned tooltip
+   would be clipped by the rail's overflow-x, so it is an in-flow caption. */
+.cer-kamgc-pillars-back {
+    position: static !important;
+    transform: none !important;
+    width: auto !important;
+    background: none !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: grid !important;
+    grid-template-rows: minmax(0, 0fr);
+    transition: grid-template-rows var(--cer-dur-base) var(--cer-ease-out);
+}
+
+.cer-kamgc-pillars-back::after { display: none !important; }
+
+.cer-kamgc-pillars-card:hover .cer-kamgc-pillars-back,
+.cer-kamgc-pillars-card:focus-within .cer-kamgc-pillars-back,
+.cer-kamgc-pillars-card.is-open .cer-kamgc-pillars-back {
+    grid-template-rows: minmax(0, 1fr);
+}
+
+.cer-kamgc-pillars-back > * { overflow: hidden; min-height: 0; }
+
+.cer-kamgc-pillars-back p {
+    color: var(--k-muted) !important;
+    font-size: .76rem !important;
+    line-height: 1.45;
+    text-align: center;
+    padding: .5rem .25rem 0 !important;
+    margin: 0 !important;
+    font-weight: 400;
+}
+
+/* ==========================================================================
+   3. OUR OBJECTIVES — outlined numerals
+   Objectives are a set, not a sequence, so the numeral is a marker rather than
+   a step: large, outlined, in brand orange, with the copy beside it. Distinct
+   from both the pillar rail and the summit steps below.
+   ========================================================================== */
+
+.cer-kamgc-objectives .cer-kamgc-compact-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    justify-content: start !important;
+    gap: 1.1rem !important;
+    counter-reset: objective;
+}
+
+.cer-kamgc-objectives .cer-kamgc-compact-card {
+    counter-increment: objective;
+    position: relative;
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    align-items: start;
+    gap: 1rem;
+    padding: 1.1rem 1.2rem !important;
+    background: rgba(255, 255, 255, .40) !important;
+    border: 1px solid rgba(240, 118, 30, .28) !important;
+    border-top: 3px solid var(--k-orange) !important;
+    border-radius: 14px !important;
+    transition: border-color var(--cer-dur-micro) var(--cer-ease-out),
+                background-color var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-kamgc-objectives .cer-kamgc-compact-card:hover {
+    background: rgba(255, 255, 255, .60) !important;
+    border-color: rgba(240, 118, 30, .55) !important;
+}
+
+.cer-kamgc-objectives .cer-kamgc-compact-card::before {
+    content: counter(objective, decimal-leading-zero);
+    grid-row: span 2;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.1rem;
+    font-weight: 800;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--k-orange);
+    letter-spacing: -.04em;
+}
+
+/* The stock icon tile is redundant beside a numeral. */
+.cer-kamgc-objectives .cer-kamgc-compact-icon { display: none !important; }
+
+.cer-kamgc-objectives .cer-kamgc-compact-card h3 {
+    font-size: .98rem !important;
+    color: var(--k-ink) !important;
+    margin: 0 0 .25rem !important;
+    line-height: 1.3;
+}
+
+.cer-kamgc-objectives .cer-kamgc-compact-card p {
+    font-size: .84rem !important;
+    color: var(--k-muted) !important;
+    margin: 0 !important;
+    line-height: 1.5;
+}
+
+/* ==========================================================================
+   4. SUMMIT STRUCTURE — stepped rail
+   This one IS a sequence (the days of the convening run in order), so numbered
+   nodes on a connecting line are truthful rather than decorative. The pattern
+   follows the milestone treatment on summit.health.go.ke.
+   ========================================================================== */
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    justify-content: start !important;
+    gap: 0 !important;
+    counter-reset: step;
+    position: relative;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card {
+    counter-increment: step;
+    position: relative;
+    background: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 3.1rem 1rem 0 !important;
+    text-align: left;
+}
+
+/* Connector line between nodes. */
+.cer-kamgc-summit-structure .cer-kamgc-compact-card::after {
+    content: "";
+    position: absolute;
+    top: 21px;
+    left: calc(50% + 22px);
+    right: calc(-50% + 22px);
+    height: 2px;
+    background: linear-gradient(90deg, var(--k-purple), var(--k-orange));
+    opacity: .35;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card:last-child::after { display: none; }
+
+/* Numbered node. */
+.cer-kamgc-summit-structure .cer-kamgc-compact-card::before {
+    content: counter(step);
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--k-purple);
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    box-shadow: 0 6px 16px rgba(90, 42, 140, .30);
+    transition: transform var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card:hover::before {
+    transform: translateX(-50%) translateY(-3px);
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-icon { display: none !important; }
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card h3,
+.cer-kamgc-summit-structure .cer-kamgc-compact-card p {
+    text-align: center;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card h3 {
+    font-size: .95rem !important;
+    color: var(--k-ink) !important;
+    margin: 0 0 .3rem !important;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card p {
+    font-size: .82rem !important;
+    color: var(--k-muted) !important;
+    margin: 0 !important;
+    line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+    .cer-kamgc-summit-structure .cer-kamgc-compact-card::after { display: none; }
+    .cer-kamgc-summit-structure .cer-kamgc-compact-card {
+        padding: 3.1rem 0 1.5rem !important;
+    }
+}
+
+/* ==========================================================================
+   5. SECURE YOUR PLACE — registration, per design.html
+   Purple is the committed/active state, orange is the single primary action.
+   ========================================================================== */
+
+.cer-kamgc-card .cer-kamgc-form-intro { color: var(--k-muted) !important; }
+
+/* Payment method toggle — pill track, solid purple on the active side. */
+.cer-payment-toggle {
+    background: rgba(90, 42, 140, .07) !important;
+    border-radius: 999px !important;
+    padding: 5px !important;
+    gap: 4px !important;
+    border: 1px solid rgba(90, 42, 140, .14) !important;
+}
+
+.cer-payment-toggle-btn {
+    border-radius: 999px !important;
+    font-weight: 700 !important;
+    font-size: .85rem !important;
+    color: var(--k-muted) !important;
+    background: transparent !important;
+    transition: background-color var(--cer-dur-micro) var(--cer-ease-out),
+                color var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-payment-toggle-btn.is-active {
+    background: var(--k-purple) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(90, 42, 140, .26);
+}
+
+.cer-payment-toggle-btn:hover:not(.is-active) {
+    background: rgba(90, 42, 140, .10) !important;
+    color: var(--k-purple) !important;
+}
+
+/* Fields */
+.cer-field-group label {
+    font-size: .78rem !important;
+    font-weight: 700 !important;
+    color: var(--k-ink) !important;
+    letter-spacing: .01em;
+}
+
+.cer-registration-form input,
+.cer-registration-form select,
+.cer-kamgc-card input,
+.cer-kamgc-card select {
+    border: 1px solid rgba(90, 42, 140, .20) !important;
+    border-radius: 12px !important;
+    background-color: rgba(255, 255, 255, .70) !important;
+    transition: border-color var(--cer-dur-micro) var(--cer-ease-out),
+                box-shadow var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-registration-form input:focus,
+.cer-registration-form select:focus,
+.cer-kamgc-card input:focus,
+.cer-kamgc-card select:focus {
+    outline: none;
+    border-color: var(--k-purple) !important;
+    box-shadow: 0 0 0 3px rgba(90, 42, 140, .15) !important;
+}
+
+.cer-phone-prefix {
+    background: rgba(90, 42, 140, .08) !important;
+    border-color: rgba(90, 42, 140, .20) !important;
+    color: var(--k-purple) !important;
+    font-weight: 700;
+}
+
+/* Primary submit — the one orange action on the page. */
+.cer-primary-button,
+.cer-card-submit .cer-primary-button {
+    background: var(--k-orange) !important;
+    border-color: var(--k-orange) !important;
+    color: #ffffff !important;
+    border-radius: 999px !important;
+    box-shadow: 0 10px 24px rgba(240, 118, 30, .28) !important;
+    transition: background-color var(--cer-dur-micro) var(--cer-ease-out),
+                transform var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-primary-button:hover,
+.cer-primary-button:focus-visible {
+    background: #e0680f !important;
+    transform: translateY(-2px);
+}
+
+/* Payment summary panel */
+.cer-kamgc-summary-box h3 {
+    color: var(--k-ink) !important;
+    letter-spacing: .12em;
+}
+
+.cer-kamgc-summary-row {
+    border-bottom: 1px solid rgba(90, 42, 140, .12);
+    padding-block: .55rem;
+}
+
+.cer-kamgc-summary-row span { color: var(--k-muted) !important; }
+.cer-kamgc-summary-row strong { color: var(--k-ink) !important; }
+
+.cer-kamgc-summary-total {
+    border-top: 2px solid rgba(90, 42, 140, .18);
+    margin-top: .4rem;
+    padding-top: .8rem;
+}
+
+.cer-kamgc-summary-total strong {
+    color: var(--k-purple) !important;
+    font-size: 1.35rem !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.cer-kamgc-security {
+    background: rgba(90, 42, 140, .08) !important;
+    color: var(--k-purple) !important;
+    border-radius: 999px;
+    padding: .5rem .9rem;
+    font-weight: 700;
+    font-size: .8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+/* Sponsor tier badges */
+.cer-kamgc-sponsor-badge {
+    background: linear-gradient(140deg, var(--k-purple), var(--k-purple-l)) !important;
+    color: #fff !important;
+    border-radius: 12px !important;
+}
+
+.cer-kamgc-inline-button {
+    border: 1px solid var(--k-purple) !important;
+    color: var(--k-purple) !important;
+    border-radius: 999px !important;
+    font-weight: 700;
+    transition: background-color var(--cer-dur-micro) var(--cer-ease-out),
+                color var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-kamgc-inline-button:hover {
+    background: var(--k-purple) !important;
+    color: #fff !important;
+}
+
+/* Stats band + info callout in brand accents */
+.cer-kamgc-stats-grid > div {
+    border-top-color: var(--k-orange) !important;
+    border-color: rgba(90, 42, 140, .16) !important;
+}
+
+.cer-kamgc-stats-grid > div strong { color: var(--k-purple) !important; }
+
+.cer-kamgc-callout-icon,
+.cer-kamgc-heading-icon {
+    background: var(--k-purple-tint) !important;
+    color: var(--k-purple) !important;
+}
+
+/* FAQ accents */
+.cer-kamgc-faq-item summary { color: var(--k-ink) !important; }
+.cer-kamgc-faq-item[open] summary { color: var(--k-purple) !important; }
+.cer-kamgc-faq-caret { color: var(--k-orange) !important; }
+
+/* --- Flatten the inner items -------------------------------------------
+   The pillar and speaker items still carried their own backdrop-filter from
+   the earlier card treatment, so each sat on a frosted panel. design.html has
+   them flat — tile plus label, nothing behind.
+
+   This is the ITEM level only. The section panels around them keep their
+   glass: .cer-kamgc-hero, .cer-kamgc-main, .cer-kamgc-card,
+   .cer-kamgc-speakers-card and .cer-kamgc-pillars-card-wrapper are all
+   untouched. */
+.cer-kamgc-pillars-card,
+.cer-kamgc-speaker-card,
+.cer-kamgc-pillars-front {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+/* Objectives: a single card should not stretch the full panel width. */
+.cer-kamgc-objectives .cer-kamgc-compact-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 440px)) !important;
+}
+
+/* Pillar icons read stronger against the kitenge once the panel is gone. */
+.cer-kamgc-pillars-icon {
+    background: rgba(240, 118, 30, .18) !important;
+    box-shadow: 0 4px 14px rgba(240, 118, 30, .16);
+}
+
+.cer-kamgc-pillars-card:nth-child(even) .cer-kamgc-pillars-icon {
+    background: rgba(90, 42, 140, .16) !important;
+    box-shadow: 0 4px 14px rgba(90, 42, 140, .16);
+}
+
+/* ==========================================================================
+   CORRECTIONS — speakers spacing, pillar tooltip restored
+   ========================================================================== */
+
+/* --- Keynote Speakers, matched to design.html ---------------------------
+   Design markup:
+     .glass-card.rounded-2xl.p-6.border.border-white/80  flex items-center gap-5
+       > 64px rounded-2xl gradient tile (flex-shrink-0)
+       > div > h3 text-base leading-tight
+             > p text-xs font-bold mt-1
+             > p text-xs font-medium        (no top margin)
+
+   The previous version used a 3-row grid with the avatar spanning all three,
+   which forced the rows to equal height and pushed the name, role and title
+   far apart. Flex with a tight text stack is what the design actually does. */
+.cer-kamgc-speaker-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 1.25rem !important;            /* gap-5 */
+    padding: 1.5rem !important;          /* p-6  */
+    border-radius: 16px !important;      /* rounded-2xl */
+    background: rgba(255, 255, 255, .42) !important;
+    -webkit-backdrop-filter: blur(var(--cer-glass-blur)) !important;
+    backdrop-filter: blur(var(--cer-glass-blur)) !important;
+    border: 1px solid rgba(255, 255, 255, .80) !important;
+    box-shadow: none !important;
+    text-align: left !important;
+    height: auto !important;
+    transition: box-shadow var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-kamgc-speaker-card:hover {
+    box-shadow: 0 10px 24px rgba(20, 32, 43, .10) !important;
+}
+
+.cer-kamgc-speaker-avatar {
+    width: 64px !important;              /* w-16 */
+    height: 64px !important;
+    border-radius: 16px !important;
+    flex: 0 0 64px !important;
+    margin: 0 !important;
+    background: linear-gradient(140deg, var(--k-purple), var(--k-purple-l)) !important;
+    box-shadow: 0 4px 10px rgba(90, 42, 140, .24);
+}
+
+.cer-kamgc-speaker-avatar .material-symbols-outlined { font-size: 26px; }
+
+/* The three text lines sit in the card's flex flow, so they need to wrap in
+   their own column and stay tight against each other. */
+.cer-kamgc-speaker-card h3 {
+    font-size: 1rem !important;          /* text-base */
+    line-height: 1.2 !important;         /* leading-tight */
+    font-weight: 800 !important;
+    margin: 0 !important;
+    width: auto !important;
+}
+
+.cer-kamgc-speaker-card .cer-kamgc-speaker-role {
+    font-size: .75rem !important;        /* text-xs */
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    margin: .25rem 0 0 !important;       /* mt-1 */
+    padding: 0 !important;
+    width: auto !important;
+}
+
+.cer-kamgc-speaker-card p {
+    font-size: .75rem !important;        /* text-xs */
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;                /* no gap under the role */
+    padding: 0 !important;
+    width: auto !important;
+}
+
+/* Keep name/role/title as one block beside the avatar. */
+.cer-kamgc-speaker-card > h3,
+.cer-kamgc-speaker-card > .cer-kamgc-speaker-role,
+.cer-kamgc-speaker-card > p {
+    flex-basis: 100%;
+}
+
+.cer-kamgc-speaker-card {
+    flex-wrap: wrap;
+}
+
+.cer-kamgc-speaker-avatar { align-self: center; }
+
+/* --- Thematic Pillars: hover tooltip restored ---------------------------
+   Reverts the in-flow caption back to a popover. A scroll rail clips
+   absolutely-positioned children, so the rail carries top padding equal to the
+   tooltip's height — the popover then sits inside the scroll box and is not
+   cut off. */
+.cer-kamgc-pillar-grid {
+    padding-top: 132px !important;
+    align-items: start;
+}
+
+.cer-kamgc-pillars-back {
+    position: absolute !important;
+    left: 50% !important;
+    bottom: calc(100% + 12px) !important;
+    transform: translate(-50%, 4px) !important;
+    width: min(240px, 70vw) !important;
+    display: block !important;
+    grid-template-rows: none !important;
+    z-index: 40;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none;
+    background: var(--k-orange) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 26px rgba(240, 118, 30, .32) !important;
+    transition: opacity var(--cer-dur-micro) var(--cer-ease-out),
+                transform var(--cer-dur-micro) var(--cer-ease-out),
+                visibility var(--cer-dur-micro) !important;
+}
+
+.cer-kamgc-pillars-back::after {
+    content: "" !important;
+    display: block !important;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border: 6px solid transparent;
+    border-top-color: var(--k-orange);
+}
+
+.cer-kamgc-pillars-back > * { overflow: visible; }
+
+.cer-kamgc-pillars-back p {
+    color: #ffffff !important;
+    font-size: .78rem !important;
+    line-height: 1.45;
+    font-weight: 500;
+    padding: .7rem .85rem !important;
+    margin: 0 !important;
+    text-align: left;
+}
+
+.cer-kamgc-pillars-card:hover .cer-kamgc-pillars-back,
+.cer-kamgc-pillars-card:focus-within .cer-kamgc-pillars-back,
+.cer-kamgc-pillars-card.is-open .cer-kamgc-pillars-back {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translate(-50%, 0) !important;
+}
+
+/* Tooltips need a positioning context that is not the scroll container. */
+.cer-kamgc-pillars-card { position: relative !important; }
+
+@media (max-width: 1024px) {
+    /* Touch: no hover, so the description sits in the flow instead. */
+    .cer-kamgc-pillar-grid { padding-top: .25rem !important; }
+    .cer-kamgc-pillars-back {
+        position: static !important;
+        transform: none !important;
+        width: auto !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        background: none !important;
+        box-shadow: none !important;
+        margin-top: .4rem;
+    }
+    .cer-kamgc-pillars-back::after { display: none !important; }
+    .cer-kamgc-pillars-back p {
+        color: var(--k-muted) !important;
+        text-align: center;
+        padding: 0 !important;
+    }
+}
+
+/* --- Speakers: tight text stack -----------------------------------------
+   The renderer emits h3, .cer-kamgc-speaker-role and p as SIBLINGS of the
+   avatar — there is no wrapper div as there is in design.html. Flex-wrap made
+   each line its own full-width flex row, which is why the three lines sat 43px
+   and 36px apart instead of the design's 4px and 0.
+
+   A 2-column grid with the avatar spanning all rows, `align-content: center`
+   and `row-gap: 0` reproduces the design's nested-div stack without needing
+   the markup changed. */
+.cer-kamgc-speaker-card {
+    display: grid !important;
+    grid-template-columns: 64px minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto !important;
+    align-content: center !important;
+    justify-content: start !important;
+    column-gap: 1.25rem !important;
+    row-gap: 0 !important;
+    flex-wrap: nowrap !important;
+}
+
+.cer-kamgc-speaker-avatar {
+    grid-column: 1 !important;
+    grid-row: 1 / -1 !important;
+    align-self: center !important;
+}
+
+.cer-kamgc-speaker-card > h3 {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    flex-basis: auto !important;
+}
+
+.cer-kamgc-speaker-card > .cer-kamgc-speaker-role {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    flex-basis: auto !important;
+    margin: .25rem 0 0 !important;
+}
+
+.cer-kamgc-speaker-card > p {
+    grid-column: 2 !important;
+    grid-row: 3 !important;
+    flex-basis: auto !important;
+    margin: 0 !important;
+}
+
+/* --- Pillar rail: normal height, tooltip on top -------------------------
+   The previous revision padded the rail 132px to stop `overflow-x: auto`
+   clipping the popover. That worked but left an obvious empty band above the
+   icons.
+
+   z-index alone cannot fix this: `overflow-x: auto` forces overflow-y to
+   auto as well, so anything outside the box is clipped regardless of stacking
+   order. The scroll container itself has to go.
+
+   At desktop the five pillars fit comfortably, so the rail does not need to
+   scroll — it lays out normally with `overflow: visible`, and the tooltip
+   simply sits above everything on a high z-index. Horizontal scrolling is
+   kept below 1024px, where the description is already an in-flow caption and
+   nothing needs to escape the box. */
+@media (min-width: 1025px) {
+    .cer-kamgc-pillar-grid {
+        padding-top: .25rem !important;
+        overflow: visible !important;
+        flex-wrap: wrap;
+        justify-content: center !important;
+        row-gap: 1.5rem !important;
+    }
+
+    .cer-kamgc-pillars-card { overflow: visible !important; }
+
+    .cer-kamgc-pillars-back { z-index: 999 !important; }
+}
+
+/* The section panel must not clip the popover either. */
+.cer-kamgc-pillars,
+.cer-kamgc-pillars-card-wrapper {
+    overflow: visible !important;
+}

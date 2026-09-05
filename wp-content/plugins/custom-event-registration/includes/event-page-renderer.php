@@ -125,9 +125,31 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 								<div class="cer-kamgc-hero-inner">
 									<div class="cer-kamgc-hero-copy">
 										<div class="cer-kamgc-hero-badges">
-											<?php if ( $secondary_logo_id ) : ?>
+											<?php
+											/*
+											 * Conference emblem.
+											 *
+											 * Prefer an image chosen in the admin (Secondary Logo), but fall
+											 * back to the copy bundled with the plugin. The admin choice is a
+											 * media-library attachment ID, which is database state and does
+											 * not travel with the code — so on a fresh checkout the bundled
+											 * file is what makes the emblem appear.
+											 */
+											$cer_emblem_markup = '';
+											if ( $secondary_logo_id ) {
+												$cer_emblem_markup = wp_get_attachment_image( $secondary_logo_id, 'medium' );
+											}
+											if ( '' === $cer_emblem_markup && defined( 'CER_PLUGIN_DIR' ) && file_exists( CER_PLUGIN_DIR . 'assets/img/kamgc-emblem.png' ) ) {
+												$cer_emblem_markup = sprintf(
+													'<img src="%s" width="512" height="512" alt="%s" loading="lazy" decoding="async" />',
+													esc_url( CER_PLUGIN_URL . 'assets/img/kamgc-emblem.png' ),
+													esc_attr__( 'KAMGC — Kenya Annual Multi-Sectoral GBV Conference official emblem', 'custom-event-registration' )
+												);
+											}
+											?>
+											<?php if ( $cer_emblem_markup ) : ?>
 												<div class="cer-kamgc-emblem-badge">
-													<?php echo wp_get_attachment_image( $secondary_logo_id, 'medium' ); ?>
+													<?php echo $cer_emblem_markup; // phpcs:ignore WordPress.Security.EscapingOutput.OutputNotEscaped ?>
 													<div><strong><?php echo esc_html( $hero_badge_text ); ?></strong><span>Official Conference Emblem</span><small>KAMGC Kenya 2026</small></div>
 												</div>
 											<?php else : ?>
