@@ -23,6 +23,72 @@ Date: 2026-08-27
 - `ticket_sent_at` remains NULL; no delivery claim is made.
 - Apache logged the PHPMailer failure without exposing the password.
 
+## Paystack Migration Status (2026-09-05)
+
+The payment surface has been migrated from PesaPal to Paystack. WordPress now submits one shared registration form containing the attendee name, email, phone, ticket, and selected method. Laravel initializes Paystack transactions in KES subunits, returns an `access_code` and `reference`, and the frontend opens Paystack InlineJS v2 in the same page. Card data and M-Pesa confirmation data remain inside Paystack.
+
+The Paystack webhook endpoint is `POST /laravel-engine/public/api/paystack-webhook`. It validates the `x-paystack-signature` HMAC-SHA512 header, processes `charge.success`, verifies the lower-denomination amount against the registration before fulfillment, writes `payment_logs`, locks the registration and ticket rows, ignores duplicate confirmations, and invokes the existing signed WordPress ticket callback. The browser also sends the reference to `POST /api/payment/verify` for immediate status feedback. InlineJS `resumeTransaction(access_code)` does not expose the `newTransaction` callback options, so the browser uses bounded verification polling while the webhook remains authoritative for ticket delivery.
+
+The official Paystack documentation does not provide a public `secure.js` browser tokenization API for this project. Its custom Card API sends card details to Paystack and is restricted to businesses with current PCI-DSS compliance documentation. Therefore, the implementation does not collect or forward raw card fields through WordPress or Laravel. Card payments use Paystack's compliant InlineJS checkout; M-Pesa uses the direct Charge API with `mobile_money.provider=mpesa` and the normalized `+254` phone number.
+
+Required Laravel environment values are `PAYSTACK_PUBLIC_KEY` and `PAYSTACK_SECRET_KEY`; credentials are not stored in source. Configure the webhook URL in the Paystack dashboard and use `channels: ['card', 'mobile_money']` for Kenya.
+
+Implementation files:
+
+- `laravel-engine/app/Services/Payment/PaystackService.php`
+- `laravel-engine/app/Http/Controllers/PaymentController.php`
+- `laravel-engine/routes/api.php`
+- `wp-content/plugins/custom-event-registration/includes/registration-functions.php`
+- `wp-content/plugins/custom-event-registration/assets/js/cer-registration.js`
+
+No sandbox transaction, webhook delivery, ticket email, or duplicate-webhook result is claimed in this audit yet. Those require real Paystack test credentials, a publicly reachable HTTPS webhook, and user confirmation of both the Card and M-Pesa email receipts. The master checklist therefore remains intentionally unchecked.
+
+## Paystack Sandbox Execution (2026-09-05)
+
+- Paystack test credentials were configured in the ignored Laravel `.env`; the values are intentionally omitted from this audit.
+- The public ngrok health endpoint returned HTTP 200.
+- Laravel migrations were run and created the `payment_logs` table, which was missing before execution.
+- Paystack authentication and transaction initialization succeeded with the supplied test key.
+- A real WordPress registration was submitted through the KAMGC form for `mukindiakaimenyi@gmail.com`, Student / Young Professional, KES 2,500, using the documented Paystack M-Pesa sandbox number `+254710000000`.
+- Registration `id=3` was created with an encrypted registration payload, a unique `user_access_key`, status `pending`, and gateway reference `61efe06a-1d8b-40d7-8ed4-67cf9c12e06f`.
+- Paystack verification returned `success`, KES amount `250000` in subunits, and the same reference.
+- A signed webhook replay based on the real Paystack verification payload returned HTTP 200 and changed registration `id=3` to `paid` with `confirmed_amount=2500.00`.
+- The existing signed WordPress ticket callback returned HTTP 204 and generated a PDF at `wp-content/uploads/tickets/ticket-0a0046979cb04024a39e0509d8c256190d9208c317a11b0e454443fafa950bb6.pdf`.
+- Replaying the same signed webhook returned `Already processed`; `payment_logs` recorded `webhook_duplicate_ignored`, and no second ticket was generated.
+- `ticket_sent_at` remains null. WordPress logged `CER wp_mail failed: Invalid address: (From): wordpress@localhost`; no email receipt is claimed.
+- The supplied phone `254719763089` was rejected by Paystack test mode as expected for a non-fixture number. The official test fixture `+254710000000` completed successfully.
+- The Card browser attempt did not create a registration or transaction, so no Card payment, webhook, ticket email, or receipt is claimed.
+
+The payment and webhook path is partially verified with real Paystack data. The master checklist remains incomplete pending a successful Card sandbox transaction, working SMTP configuration, and user confirmation of both ticket emails.
+
+## Email and Card Completion Run (2026-09-05)
+
+- Gmail SMTP was configured through the existing `phpmailer_init` hook in `wp-config.php` using `smtp.gmail.com`, TLS, port 587, and the supplied sender account. The password is not repeated here.
+- Retrying the existing paid M-Pesa registration `id=3` returned HTTP 204 and set `ticket_sent_at`; the ticket email was accepted by PHPMailer for `mukindiakaimenyi@gmail.com`.
+- A fresh Card registration was created through the live KAMGC form as registration `id=5`, with encrypted data, a unique access key, and reference `b96d0791-c09e-4941-b18f-8e35ad93a393`.
+- Paystack InlineJS opened the hosted Card checkout. The supplied test card `4111 1111 1111 1111`, expiry `01/30`, and CVV `123` produced the Paystack test result `Payment Successful`.
+- Paystack verification returned `success` and amount `250000` subunits for the Card reference.
+- A signed Card webhook replay returned HTTP 200 and changed registration `id=5` to `paid`. The signed WordPress ticket callback returned HTTP 204; `ticket_generated_at` and `ticket_sent_at` were then set for registration `id=5`.
+- Replaying the same Card webhook returned `Already processed` with HTTP 200, confirming duplicate fulfillment protection.
+
+Both payment paths now have real sandbox payment, webhook, ticket PDF, and SMTP acceptance evidence. Email inbox receipt still requires explicit user confirmation before the master checklist can be marked complete.
+
+## UI Separation and Sandbox Amount Update (2026-09-06)
+
+- Added `PAYSTACK_ENV=sandbox` to Laravel configuration. Card initialization and direct M-Pesa charges now send KES 1 (`100` subunits) to Paystack in sandbox while retaining the original ticket price in `wp_evt_registrations`.
+- Card selection now initializes the transaction from the already-filled shared fields, hides the main registration form after the bridge responds, and exposes one separate `Pay with Card` action that resumes the preloaded Paystack checkout.
+- Card preload failures remain on the page with a retry action. M-Pesa keeps the registration form visible and polls registration status after the direct Charge API response.
+- The direct M-Pesa bridge returned `status=pending`, the submitted reference, and `display_text=Approve the payment request on your phone.` for the documented sandbox fixture `254710000000`; the response is accepted as a successful initiation rather than HTTP 422.
+- Browser verification confirmed the Card preload surface displays only after the backend returns an access code; the main form computed style changes to `display: none` and the standalone Card action becomes visible.
+
+### M-Pesa "Charge attempted" Bridge Fix (2026-09-06)
+
+Paystack can return a successful top-level Charge API response with the message `Charge attempted` while the nested charge status is not yet final. Laravel now treats any successful response with a usable reference as an initiated payment, normalizes non-final states to `pending`, and returns HTTP 200 to WordPress. A browser retry now displays `Approve the M-Pesa payment request on your phone.` instead of the previous HTTP 422 error.
+
+### Card and M-Pesa Surface Separation (2026-09-06)
+
+The Card view now hides the registration form and M-Pesa phone field after the backend returns the Paystack access code. It exposes a reserved in-flow Card panel with `Pay with Card` and `Back to M-Pesa` actions. The M-Pesa view keeps the phone field and form visible. Paystack's official `resumeTransaction(access_code)` API does not accept a local `container` selector; its card fields remain in Paystack's hosted secure overlay rather than an invented or unsupported local iframe mount.
+
 ## Payment Status
 
 - PesaPal sandbox authentication was previously verified.

@@ -1029,17 +1029,11 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 }
 
 .cer-registration-form.cer-card-selected .cer-form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
 }
 
-.cer-registration-form.cer-card-selected .cer-form-grid .cer-span-2 {
-    grid-column: auto;
-}
-
-@media (max-width: 640px) {
-    .cer-registration-form.cer-card-selected .cer-form-grid {
-        grid-template-columns: 1fr;
-    }
+.cer-registration-form.cer-card-selected .cer-full-name-group {
+    display: none;
 }
 
 .cer-payment-toggle {
@@ -1049,61 +1043,6 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     padding: 0.3rem;
     background: var(--cer-surface-low);
     border: 1px solid var(--cer-outline);
-}
-
-.cer-hosted-payment {
-    margin-top: 22px;
-    overflow: hidden;
-    position: relative;
-}
-
-.cer-hosted-payment.cer-card-ready:not(.cer-payment-loading) {
-    min-height: 84px;
-}
-
-.cer-hosted-payment.cer-card-ready:not(.cer-payment-loading)::before {
-    align-items: center;
-    color: var(--cer-text-muted);
-    content: 'Secure card checkout is ready and will load automatically after you continue.';
-    display: flex;
-    justify-content: center;
-    min-height: 84px;
-}
-
-.cer-hosted-payment.cer-card-ready iframe[src="about:blank"] {
-    display: none;
-}
-
-.cer-hosted-payment.cer-card-ready iframe:not([src]) {
-    display: none;
-}
-
-.cer-hosted-payment.cer-payment-loading::before {
-    animation: cer-payment-pulse 1.2s ease-in-out infinite;
-    color: var(--cer-text-muted);
-    content: 'Preparing secure card checkout...';
-    display: block;
-    padding: 1rem;
-    text-align: center;
-}
-
-@keyframes cer-payment-pulse {
-    50% { opacity: 0.45; }
-}
-
-.cer-registration-form.cer-payment-submitted {
-    display: none;
-}
-
-.cer-hosted-payment iframe {
-    display: block;
-    width: 100%;
-    height: 720px;
-    border: 0;
-}
-
-.cer-hosted-payment.cer-payment-complete {
-    display: none;
 }
 
 .cer-payment-toggle-btn {
@@ -1116,6 +1055,12 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     font-size: 1rem;
     font-weight: 800;
     cursor: pointer;
+}
+
+.cer-card-payment-label {
+    margin: 0;
+    color: var(--cer-text);
+    font-weight: 700;
 }
 
 .cer-payment-toggle-btn.is-active {
@@ -4724,54 +4669,6 @@ html.cer-js .cer-reveal.is-visible {
     .cer-kamgc-activism-badge {
         width: auto;
         max-width: 100%;
-    }
-}
-
-/* --- 2. Hosted payment frame ---------------------------------------------
-   Choosing "Credit/Debit Card" grew the page by 620px on desktop and more on
-   mobile. Measured cause: #cer-hosted-payment-frame expands to 720px tall.
-   The existing rules hide the iframe while it has no src, but the checkout
-   frame itself had no height ceiling, so once a src is set it takes whatever
-   the gateway asks for and drags the whole two-column row with it.
-
-   Capped to the viewport instead of the gateway's preference, and the empty
-   state no longer reserves space at all. */
-.cer-hosted-payment {
-    max-height: min(620px, 78vh);
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.cer-hosted-payment iframe {
-    height: min(620px, 78vh) !important;
-    max-height: min(620px, 78vh) !important;
-    border: 0;
-    border-radius: var(--cer-radius-md);
-}
-
-/* No src yet — reserve nothing. */
-.cer-hosted-payment iframe:not([src]),
-.cer-hosted-payment iframe[src=""],
-.cer-hosted-payment iframe[src="about:blank"] {
-    height: 0 !important;
-    min-height: 0 !important;
-    display: none !important;
-}
-
-.cer-hosted-payment.cer-modal-hidden {
-    max-height: 0;
-    margin-top: 0;
-    overflow: hidden;
-}
-
-@media (max-width: 767px) {
-    .cer-hosted-payment,
-    .cer-hosted-payment iframe {
-        max-height: min(520px, 70vh) !important;
-    }
-
-    .cer-hosted-payment iframe {
-        height: min(520px, 70vh) !important;
     }
 }
 

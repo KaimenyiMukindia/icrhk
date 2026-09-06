@@ -716,12 +716,13 @@ function cer_enqueue_frontend_assets() {
 		wp_enqueue_style( 'cer-event-fonts', 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style( 'cer-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap', array(), null );
 		wp_enqueue_style( 'cer-event-registration', CER_PLUGIN_URL . 'assets/css/cer-event.css', array( 'cer-event-fonts', 'cer-material-symbols' ), filemtime( CER_PLUGIN_DIR . 'assets/css/cer-event.css' ) );
-		wp_enqueue_script( 'cer-event-registration', CER_PLUGIN_URL . 'assets/js/cer-registration.js', array(), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-registration.js' ), true );
+		wp_enqueue_script( 'cer-paystack-inline', 'https://js.paystack.co/v2/inline.js', array(), null, true );
+		wp_enqueue_script( 'cer-event-registration', CER_PLUGIN_URL . 'assets/js/cer-registration.js', array( 'cer-paystack-inline' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-registration.js' ), true );
 		wp_localize_script( 'cer-event-registration', 'cerRegistrationSettings', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce'    => wp_create_nonce( 'cer_registration_form' ),
 			'currency' => 'KES',
-			'payment_status_path' => '/icrhk/laravel-engine/public/api/payment/status/',
+			'payment_verify_url' => home_url( '/laravel-engine/public/api/payment/verify' ),
 		) );
 	}
 
@@ -1085,20 +1086,23 @@ function cer_handle_ajax_submission() {
 	$event_id = absint( wp_unslash( $_POST['event_id'] ?? 0 ) );
 
 		$payment_method = in_array( $payment_method, array( 'mpesa', 'card' ), true ) ? $payment_method : '';
-		if ( 'mpesa' === $payment_method ) {
-			$phone_digits = preg_replace( '/\D+/', '', $phone );
-			if ( preg_match( '/^0?7\d{8}$/', $phone_digits ) ) {
-				$phone = '254' . ( '0' === $phone_digits[0] ? substr( $phone_digits, 1 ) : $phone_digits );
-			} elseif ( preg_match( '/^2547\d{8}$/', $phone_digits ) ) {
-				$phone = $phone_digits;
-			} else {
-				$phone = '';
-			}
+		// Phone is required for both methods; full name is only collected for M-Pesa.
+		// Card intentionally never collects a name — Paystack supplies it from the charge.
+		$phone_digits = preg_replace( '/\D+/', '', $phone );
+		if ( preg_match( '/^0?7\d{8}$/', $phone_digits ) ) {
+			$phone = '254' . ( '0' === $phone_digits[0] ? substr( $phone_digits, 1 ) : $phone_digits );
+		} elseif ( preg_match( '/^2547\d{8}$/', $phone_digits ) ) {
+			$phone = $phone_digits;
+		} else {
+			$phone = '';
 		}
 
-		if ( empty( $email ) || empty( $payment_method ) || ( 'mpesa' === $payment_method && ( empty( $full_name ) || empty( $phone ) ) ) ) {
+		if ( empty( $email ) || empty( $payment_method ) || empty( $phone ) || ( 'mpesa' === $payment_method && empty( $full_name ) ) ) {
 		wp_send_json_error( array( 'message' => 'Please complete all required fields.' ) );
 	}
+		if ( 'card' === $payment_method ) {
+			$full_name = '';
+		}
 
 	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = %s LIMIT 1", $event_id, 'published' ) );
 	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d LIMIT 1", $ticket_type_id, $event_id ) );
@@ -1161,13 +1165,14 @@ function cer_handle_ajax_submission() {
 
 		try {
 			$payment_response = cer_initiate_laravel_payment( $sync_data );
-			if ( empty( $payment_response['tracking_id'] ) || ( isset( $payment_response['status'] ) && 'failed' === $payment_response['status'] ) ) {
-				throw new Exception( ! empty( $payment_response['message'] ) ? sanitize_text_field( $payment_response['message'] ) : 'The payment gateway did not return a tracking ID.' );
+			$requires_access_code = 'card' === $payment_method;
+			if ( empty( $payment_response['reference'] ) || ( $requires_access_code && empty( $payment_response['access_code'] ) ) || ( isset( $payment_response['status'] ) && 'failed' === $payment_response['status'] ) ) {
+				throw new Exception( ! empty( $payment_response['message'] ) ? sanitize_text_field( $payment_response['message'] ) : 'The payment gateway did not return a checkout reference.' );
 			}
 			$wpdb->update(
 				$registrations_table,
 				array(
-					'gateway_reference' => ! empty( $payment_response['tracking_id'] ) ? $payment_response['tracking_id'] : '',
+					'gateway_reference' => ! empty( $payment_response['reference'] ) ? $payment_response['reference'] : '',
 					'updated_at' => current_time( 'mysql' ),
 					'status' => ! empty( $payment_response['status'] ) ? sanitize_text_field( $payment_response['status'] ) : 'awaiting_payment',
 				),
@@ -1180,9 +1185,9 @@ function cer_handle_ajax_submission() {
 				error_log( 'CER Laravel sync could not be scheduled.' );
 			}
 			wp_send_json_success( array(
-				'message' => 'Registration received. Redirecting to payment.',
-				'redirect_url' => ! empty( $payment_response['redirect_url'] ) ? esc_url_raw( $payment_response['redirect_url'] ) : '',
-				'tracking_id' => ! empty( $payment_response['tracking_id'] ) ? $payment_response['tracking_id'] : '',
+					'message' => 'Registration received. Opening secure payment checkout.',
+					'access_code' => ! empty( $payment_response['access_code'] ) ? sanitize_text_field( $payment_response['access_code'] ) : '',
+					'reference' => ! empty( $payment_response['reference'] ) ? sanitize_text_field( $payment_response['reference'] ) : '',
 			) );
 		} catch ( Exception $e ) {
 			error_log( 'CER payment initiation failed: ' . $e->getMessage() );

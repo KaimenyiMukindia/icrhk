@@ -8,5 +8,5 @@ Route::get('/health', function () {
 });
 
 Route::post('/payment/initiate', [PaymentController::class, 'initiate']);
-Route::post('/pesapal-ipn', [PaymentController::class, 'ipn']);
-Route::get('/payment/status/{trackingId}', [PaymentController::class, 'status']);
+Route::post('/paystack-webhook', [PaymentController::class, 'ipn']);
+Route::post('/payment/verify', [PaymentController::class, 'verify']);

@@ -9,31 +9,31 @@ final class RegistrationCrypto
 
     public static function encrypt(string $value): string
     {
-        if ($value === '' || str_starts_with($value, self::PREFIX)) {
+        if ($value === '' || str_starts_with($value, self::PREFIX) || ! function_exists('sodium_crypto_secretbox')) {
             return $value;
         }
 
-        $key = hash_hkdf('sha256', self::keyMaterial(), \SODIUM_CRYPTO_SECRETBOX_KEYBYTES, self::CONTEXT);
-        $nonce = random_bytes(\SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $key = hash_hkdf('sha256', self::keyMaterial(), 32, self::CONTEXT);
+        $nonce = random_bytes(24);
 
         return self::PREFIX . base64_encode($nonce . sodium_crypto_secretbox($value, $nonce, $key));
     }
 
     public static function decrypt(string $value): string
     {
-        if (! str_starts_with($value, self::PREFIX)) {
+        if (! str_starts_with($value, self::PREFIX) || ! function_exists('sodium_crypto_secretbox_open')) {
             return $value;
         }
 
         $decoded = base64_decode(substr($value, strlen(self::PREFIX)), true);
-        if ($decoded === false || strlen($decoded) <= \SODIUM_CRYPTO_SECRETBOX_NONCEBYTES) {
+        if ($decoded === false || strlen($decoded) <= 24) {
             return '';
         }
 
-        $key = hash_hkdf('sha256', self::keyMaterial(), \SODIUM_CRYPTO_SECRETBOX_KEYBYTES, self::CONTEXT);
+        $key = hash_hkdf('sha256', self::keyMaterial(), 32, self::CONTEXT);
         $plaintext = sodium_crypto_secretbox_open(
-            substr($decoded, \SODIUM_CRYPTO_SECRETBOX_NONCEBYTES),
-            substr($decoded, 0, \SODIUM_CRYPTO_SECRETBOX_NONCEBYTES),
+            substr($decoded, 24),
+            substr($decoded, 0, 24),
             $key
         );
 

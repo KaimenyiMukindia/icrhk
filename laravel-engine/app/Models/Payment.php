@@ -15,7 +15,7 @@ final class Payment extends Model
         'currency',
         'gateway',
         'status',
-        'tracking_id',
+        'reference',
         'callback_url',
         'response_payload',
     ];

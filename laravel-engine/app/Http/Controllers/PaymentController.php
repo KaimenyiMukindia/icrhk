@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Payment\PesaPalService;
+use App\Services\Payment\PaystackService;
 use App\Services\WordPress\RegistrationCrypto;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 final class PaymentController extends Controller
 {
-    public function __construct(private readonly PesaPalService $service)
+    public function __construct(private readonly PaystackService $service)
     {
     }
 
@@ -30,23 +30,33 @@ final class PaymentController extends Controller
             'ticket_type_id' => ['nullable', 'integer'],
         ]);
 
-        if ($payload['payment_method'] === 'mpesa' && (empty($payload['full_name']) || empty($payload['phone']))) {
-            return response()->json(['status' => 'failed', 'message' => 'Full name and a valid Kenyan phone number are required for M-Pesa.'], 422);
+        if ($payload['payment_method'] === 'mpesa') {
+            if (empty($payload['full_name']) || empty($payload['phone'])) {
+                return response()->json(['status' => 'failed', 'message' => 'Full name and phone number are required for M-Pesa.'], 422);
+            }
+        } elseif (empty($payload['phone'])) {
+            return response()->json(['status' => 'failed', 'message' => 'Phone number is required.'], 422);
         }
 
         $fullName = trim((string) ($payload['full_name'] ?? ''));
-        $result = $this->service->submitOrder([
+        $metadata = [
             'payment_uuid' => $payload['payment_uuid'],
             'registration_uuid' => $payload['registration_uuid'],
-            'amount' => (float) $payload['amount'],
-            'currency' => $payload['currency'] ?? 'KES',
-            'full_name' => $fullName !== '' ? $fullName : 'Card Holder',
-            'email' => $payload['email'],
-            'phone' => $payload['phone'] ?? '',
+            'event_id' => $payload['event_id'] ?? null,
+            'ticket_type_id' => $payload['ticket_type_id'] ?? null,
+            'full_name' => $fullName,
+            'phone' => $payload['phone'],
             'payment_method' => $payload['payment_method'],
-            'description' => 'Event registration payment',
-            'callback_url' => env('PESAPAL_CALLBACK_URL', ''),
-        ]);
+        ];
+        $result = $payload['payment_method'] === 'mpesa'
+            ? $this->service->chargeWithMobileMoney(
+                $payload['email'],
+                (float) $payload['amount'],
+                (string) $payload['phone'],
+                $payload['payment_uuid'],
+                $metadata
+            )
+            : $this->service->initializeTransaction($payload['email'], (float) $payload['amount'], $metadata, ['card']);
 
         if (($result['ok'] ?? false) !== true) {
             return response()->json([
@@ -58,44 +68,51 @@ final class PaymentController extends Controller
         return response()->json([
             'status' => 'pending',
             'payment_uuid' => $payload['payment_uuid'],
-            'tracking_id' => $result['tracking_id'] ?? null,
-            'redirect_url' => $result['redirect_url'] ?? null,
+            'access_code' => $result['access_code'] ?? null,
+            'reference' => $result['reference'] ?? null,
+            'display_text' => $result['display_text'] ?? null,
             'message' => 'Payment initiated successfully.',
         ], 200);
     }
 
     public function ipn(Request $request): JsonResponse
     {
-        $payload = $request->all();
-        $signature = (string) ($request->header('X-Pesapal-Signature') ?: $request->input('signature', ''));
-        $verified = $this->service->verifyIpnSignature($payload, $signature);
-
-        if (! $verified) {
+        $rawPayload = $request->getContent();
+        $signature = (string) $request->header('X-Paystack-Signature', '');
+        if (! $this->service->verifyWebhookSignature($rawPayload, $signature)) {
             return response()->json(['status' => 'invalid_signature'], 400);
         }
 
-        $paymentUuid = (string) ($payload['payment_uuid'] ?? $payload['OrderMerchantReference'] ?? $payload['id'] ?? '');
-        $trackingId = (string) ($payload['tracking_id'] ?? $payload['OrderTrackingId'] ?? '');
-        $paymentStatus = strtolower((string) ($payload['status'] ?? $payload['payment_status'] ?? $payload['OrderStatus'] ?? ''));
-
-        if ($trackingId !== '') {
-            $transaction = $this->service->getTransactionStatus($trackingId);
-            if (($transaction['ok'] ?? false) !== true) {
-                return response()->json(['status' => 'retry', 'payment_uuid' => $paymentUuid, 'message' => 'Unable to verify the transaction status.'], 503);
-            }
-
-            $paymentStatus = strtolower((string) ($transaction['status'] ?? ''));
-            $payload = array_merge($payload, (array) ($transaction['response'] ?? []));
+        $payload = $request->all();
+        if (($payload['event'] ?? '') !== 'charge.success') {
+            DB::table('payment_logs')->insert([
+                'payment_uuid' => data_get($payload, 'data.metadata.payment_uuid'),
+                'event' => (string) ($payload['event'] ?? 'paystack_event'),
+                'payload' => json_encode($payload, JSON_UNESCAPED_SLASHES),
+                'status' => 'received',
+                'message' => 'Paystack webhook received without a successful charge.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            return response()->json(['status' => 'ok']);
         }
 
-        $paidStatuses = ['paid', 'completed', 'success', 'successful'];
+        $data = (array) ($payload['data'] ?? []);
+        $metadata = (array) ($data['metadata'] ?? []);
+        $paymentUuid = (string) ($metadata['payment_uuid'] ?? '');
+        $reference = (string) ($data['reference'] ?? '');
+        $paymentStatus = strtolower((string) ($data['status'] ?? 'success'));
+        $payload = $data;
+        $payload['metadata'] = $metadata;
+
+        $paidStatuses = ['success'];
 
         DB::table('payment_logs')->insert([
             'payment_uuid' => $paymentUuid ?: null,
-            'event' => 'ipn_received',
+            'event' => 'webhook_received',
             'payload' => json_encode($payload, JSON_UNESCAPED_SLASHES),
             'status' => $paymentStatus ?: 'received',
-            'message' => 'PesaPal IPN received.',
+            'message' => 'Paystack charge.success webhook received.',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -104,11 +121,11 @@ final class PaymentController extends Controller
             return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'IPN logged without payment confirmation.']);
         }
 
-        $payerName = $this->firstPaymentValue($payload, ['payer_name', 'payerName', 'full_name', 'customer_name', 'customerName']);
-        $receiptNumber = $this->firstPaymentValue($payload, ['receipt_number', 'receiptNumber', 'receipt']);
-        $serialNumber = $this->firstPaymentValue($payload, ['serial_number', 'serialNumber', 'serial']);
-        $confirmationCode = $this->firstPaymentValue($payload, ['confirmation_code', 'confirmationCode', 'confirmation']);
-        $confirmedAmount = $this->firstPaymentValue($payload, ['amount', 'payment_amount', 'amount_paid']);
+        $payerName = trim((string) data_get($payload, 'customer.first_name', '') . ' ' . (string) data_get($payload, 'customer.last_name', ''));
+        $receiptNumber = (string) ($data['receipt_number'] ?? '');
+        $serialNumber = '';
+        $confirmationCode = (string) ($data['authorization.code'] ?? '');
+        $confirmedAmount = isset($data['amount']) ? ((float) $data['amount'] / 100) : '';
         $updates = [
             'status' => 'paid',
             'updated_at' => now(),
@@ -129,12 +146,12 @@ final class PaymentController extends Controller
         if ($confirmedAmount !== '' && is_numeric($confirmedAmount)) {
             $updates['confirmed_amount'] = (float) $confirmedAmount;
         }
-        $confirmation = DB::transaction(function () use ($paymentUuid, $trackingId, $updates): array {
+        $confirmation = DB::transaction(function () use ($paymentUuid, $reference, $confirmedAmount, $updates): array {
             $registration = DB::table('wp_evt_registrations')
-                ->where(function ($query) use ($paymentUuid, $trackingId): void {
+                ->where(function ($query) use ($paymentUuid, $reference): void {
                     $query->where('payment_uuid', $paymentUuid);
-                    if ($trackingId !== '') {
-                        $query->orWhere('gateway_reference', $trackingId);
+                    if ($reference !== '') {
+                        $query->orWhere('gateway_reference', $reference);
                     }
                 })
                 ->lockForUpdate()
@@ -145,6 +162,12 @@ final class PaymentController extends Controller
             }
             if ($registration->status === 'paid') {
                 return ['state' => 'duplicate'];
+            }
+            $expectedAmount = strtolower((string) env('PAYSTACK_ENV', 'live')) === 'sandbox'
+                ? 1.00
+                : (float) $registration->amount;
+            if ($confirmedAmount === '' || abs($expectedAmount - (float) $confirmedAmount) > 0.01) {
+                return ['state' => 'amount_mismatch'];
             }
 
             $event = DB::table('wp_evt_events')->where('id', $registration->event_id)->lockForUpdate()->first(['id', 'max_attendees']);
@@ -173,7 +196,7 @@ final class PaymentController extends Controller
                 'updated_at' => now(),
             ]);
             $registrationUpdates = $updates;
-            $registrationUpdates['gateway_reference'] = $trackingId ?: $registration->gateway_reference;
+            $registrationUpdates['gateway_reference'] = $reference ?: $registration->gateway_reference;
             DB::table('wp_evt_registrations')->where('id', $registration->id)->update($registrationUpdates);
 
             return ['state' => 'confirmed', 'registration_id' => (int) $registration->id];
@@ -185,7 +208,7 @@ final class PaymentController extends Controller
         if ($confirmation['state'] === 'duplicate') {
             DB::table('payment_logs')->insert([
                 'payment_uuid' => $paymentUuid ?: null,
-                'event' => 'ipn_duplicate_ignored',
+                'event' => 'webhook_duplicate_ignored',
                 'payload' => json_encode($payload, JSON_UNESCAPED_SLASHES),
                 'status' => 'ignored',
                 'message' => 'Duplicate confirmed IPN ignored; registration was already paid.',
@@ -213,55 +236,26 @@ final class PaymentController extends Controller
         return response()->json([
             'status' => 'ok',
             'payment_uuid' => $paymentUuid,
-            'message' => 'IPN processed.',
+            'message' => 'Paystack webhook processed.',
         ]);
     }
 
-    public function status(string $trackingId): JsonResponse
+    public function verify(Request $request): JsonResponse
     {
-        $registration = DB::table('wp_evt_registrations')
-            ->where('gateway_reference', $trackingId)
-            ->first(['status']);
-        $registrationData = $registration ? (array) $registration : [];
-
-        if (! empty($registrationData)) {
-            $registrationStatus = strtolower((string) ($registrationData['status'] ?? 'awaiting_payment'));
-            return response()->json([
-                'tracking_id' => $trackingId,
-                'status' => $registrationStatus === 'paid' ? 'paid' : 'pending',
-                'registration_status' => $registrationStatus,
-            ]);
+        $reference = (string) $request->input('reference', '');
+        if ($reference === '') {
+            return response()->json(['status' => 'failed', 'message' => 'A Paystack reference is required.'], 422);
         }
 
-        $result = $this->service->getTransactionStatus($trackingId);
+        $result = $this->service->verifyTransaction($reference);
+        if (($result['ok'] ?? false) !== true) {
+            return response()->json(['status' => 'failed', 'message' => $result['message'] ?? 'Unable to verify payment.'], 422);
+        }
 
-        $registrationStatus = (string) ($registrationData['status'] ?? 'awaiting_payment');
-
+        $registration = DB::table('wp_evt_registrations')->where('gateway_reference', $reference)->first(['status']);
         return response()->json([
-            'tracking_id' => $trackingId,
             'status' => $result['status'] ?? 'unknown',
-            'registration_status' => $registrationStatus,
-            'response' => $result['response'] ?? [],
+            'registration_status' => $registration ? $registration->status : 'awaiting_payment',
         ]);
-    }
-
-    private function firstPaymentValue(array $payload, array $keys): string
-    {
-        foreach ($keys as $key) {
-            if (isset($payload[$key]) && is_scalar($payload[$key]) && (string) $payload[$key] !== '') {
-                return (string) $payload[$key];
-            }
-        }
-
-        foreach ($payload as $value) {
-            if (is_array($value)) {
-                $nested = $this->firstPaymentValue($value, $keys);
-                if ($nested !== '') {
-                    return $nested;
-                }
-            }
-        }
-
-        return '';
     }
 }
