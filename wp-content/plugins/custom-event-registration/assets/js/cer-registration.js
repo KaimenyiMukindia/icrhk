@@ -333,6 +333,129 @@
        the others so a sticky popover never overlaps a hover tooltip. */
     var pillarButtons = document.querySelectorAll('.cer-kamgc-pillars-front');
 
+    /* --- Small-screen popover portal --------------------------------------
+       Below 1025px the description used to expand inline, which grew the card
+       and pushed the rest of the page down. It now opens as a centred popup in
+       the brand orange with its own cancel button: the panel is moved out of
+       its card into a body-level fixed host, so nothing in the document flow
+       moves and the page cannot scroll behind it. A portal is required rather
+       than `position: fixed` in place, because the pillars wrapper carries
+       backdrop-filter and so becomes the containing block for any fixed
+       descendant, and the rail's overflow-x would clip an absolute one. */
+    var smallScreen = window.matchMedia ? window.matchMedia('(max-width: 1024px)') : null;
+    var pop = null;
+    var popBody = null;
+    var backdrop = null;
+    var portalCard = null;
+    var unmountTimer = 0;
+
+    function isSmallScreen() {
+        return !smallScreen || smallScreen.matches;
+    }
+
+    function buildPop() {
+        if (pop) {
+            return;
+        }
+
+        backdrop = document.createElement('div');
+        backdrop.className = 'cer-pillar-pop-backdrop';
+        backdrop.hidden = true;
+
+        pop = document.createElement('div');
+        pop.className = 'cer-pillar-pop';
+        pop.setAttribute('role', 'dialog');
+        pop.setAttribute('aria-modal', 'true');
+        pop.hidden = true;
+
+        var cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.className = 'cer-pillar-pop-cancel';
+        cancel.setAttribute('aria-label', 'Close');
+        cancel.innerHTML = '<span class="material-symbols-outlined">close</span>';
+
+        popBody = document.createElement('div');
+        popBody.className = 'cer-pillar-pop-body';
+
+        pop.appendChild(cancel);
+        pop.appendChild(popBody);
+
+        document.body.appendChild(backdrop);
+        document.body.appendChild(pop);
+
+        cancel.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            closeAllPillars();
+        });
+
+        backdrop.addEventListener('click', function () {
+            closeAllPillars();
+        });
+    }
+
+    function portalIn(card) {
+        var panel = card.querySelector('.cer-kamgc-pillars-back');
+        if (!panel) {
+            return;
+        }
+
+        buildPop();
+        returnPanel();
+
+        window.clearTimeout(unmountTimer);
+        unmountTimer = 0;
+
+        var heading = card.querySelector('.cer-kamgc-pillars-front h3');
+        popBody.innerHTML = '';
+        if (heading) {
+            var title = document.createElement('h3');
+            title.className = 'cer-pillar-pop-title';
+            title.textContent = heading.textContent;
+            popBody.appendChild(title);
+        }
+        popBody.appendChild(panel);
+        portalCard = card;
+
+        backdrop.hidden = false;
+        pop.hidden = false;
+        document.body.classList.add('cer-pillar-pop-lock');
+        /* Next frame, so the entry transition has a start value to run from. */
+        window.requestAnimationFrame(function () {
+            backdrop.classList.add('is-visible');
+            pop.classList.add('is-visible');
+        });
+    }
+
+    /* Move the panel back to the card it came from, leaving the host's own
+       visibility alone. */
+    function returnPanel() {
+        if (!portalCard) {
+            return;
+        }
+        var panel = pop.querySelector('.cer-kamgc-pillars-back');
+        if (panel) {
+            portalCard.appendChild(panel);
+        }
+        portalCard = null;
+    }
+
+    function portalOut() {
+        if (!portalCard) {
+            return;
+        }
+
+        returnPanel();
+        pop.classList.remove('is-visible');
+        backdrop.classList.remove('is-visible');
+        document.body.classList.remove('cer-pillar-pop-lock');
+        window.clearTimeout(unmountTimer);
+        unmountTimer = window.setTimeout(function () {
+            pop.hidden = true;
+            backdrop.hidden = true;
+        }, 260);
+    }
+
     /* Single-open pillar popovers. Opening one card closes every other card;
        the open popover can be dismissed by re-clicking its trigger, pressing
        its own close button, pressing Escape, or clicking anywhere outside it. */
@@ -344,6 +467,16 @@
         var btn = card.querySelector('.cer-kamgc-pillars-front');
         if (btn) {
             btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        if (!isSmallScreen()) {
+            return;
+        }
+
+        if (isOpen) {
+            portalIn(card);
+        } else if (card === portalCard) {
+            portalOut();
         }
     }
 
@@ -374,11 +507,16 @@
         });
 
         button.addEventListener('pointerenter', function () {
+            if (isSmallScreen()) {
+                return;
+            }
             closeOtherPillars(card);
         });
     });
 
-    /* Delegated close for the popover's own × button (rendered per card). */
+    /* Delegated close for the popover's own x button (rendered per card). The
+       panel may be portalled into the sheet, so fall back to the card that
+       currently owns it. */
     document.addEventListener('click', function (event) {
         var closeBtn = event.target.closest('.cer-kamgc-pillars-close');
         if (!closeBtn) {
@@ -386,12 +524,12 @@
         }
         event.preventDefault();
         event.stopPropagation();
-        setPillarOpen(closeBtn.closest('.cer-kamgc-pillars-card'), false);
+        setPillarOpen(closeBtn.closest('.cer-kamgc-pillars-card') || portalCard, false);
     });
 
-    /* Click outside any pillar card closes the open popover. */
+    /* Click outside any pillar card (or the portalled popup) closes it. */
     document.addEventListener('click', function (event) {
-        if (!event.target.closest('.cer-kamgc-pillars-card')) {
+        if (!event.target.closest('.cer-kamgc-pillars-card, .cer-pillar-pop')) {
             closeAllPillars();
         }
     });
@@ -410,6 +548,20 @@
             }
         }
     });
+
+    /* Crossing the breakpoint with the popup open would strand the panel in
+       the body host, where the desktop tooltip rules do not reach it. */
+    if (smallScreen) {
+        var onBreakpoint = function () {
+            closeAllPillars();
+            portalOut();
+        };
+        if (smallScreen.addEventListener) {
+            smallScreen.addEventListener('change', onBreakpoint);
+        } else if (smallScreen.addListener) {
+            smallScreen.addListener(onBreakpoint);
+        }
+    }
 
     /* --- Scroll reveal ---------------------------------------------------
        Applied to card CONTENTS only, never to the glass containers: animating
