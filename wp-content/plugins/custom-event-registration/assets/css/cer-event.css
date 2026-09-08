@@ -5817,3 +5817,232 @@ html.cer-js .cer-reveal.is-visible {
         background: rgba(20, 32, 43, 0.22);
     }
 }
+
+/* ==========================================================================
+   HERO ALIGNMENT — feature bullets and share bar
+   ========================================================================== */
+
+/* --- Feature bullets. The list is the third child of the hero grid, so the
+   base centred flex-wrap rule left every row starting at a different x and,
+   on mobile, staggered the icons down the middle. Pin it to the copy column
+   and give each row a fixed icon column so the ticks share one edge. ----- */
+.cer-kamgc-hero-inner > .cer-kamgc-feature-list {
+    grid-column: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: start;
+    justify-items: start;
+    align-items: start;
+    gap: 0.85rem 2rem;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    text-align: left;
+}
+
+.cer-kamgc-hero-inner > .cer-kamgc-feature-list li {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    align-items: start;
+    gap: 0.5rem;
+    width: 100%;
+    text-align: left;
+}
+
+.cer-kamgc-hero-inner > .cer-kamgc-feature-list li .material-symbols-outlined {
+    font-size: 20px;
+    line-height: 1.45;
+}
+
+@media (max-width: 1024px) {
+    .cer-kamgc-hero-inner > .cer-kamgc-feature-list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.7rem;
+        margin-top: 1.25rem;
+    }
+}
+
+/* --- Share bar. Label and icons hold one line and share a centre line. -- */
+.cer-kamgc-hero-copy .cer-share-bar {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+    width: auto;
+}
+
+.cer-kamgc-hero-copy .cer-share-label {
+    flex: 0 0 auto;
+    margin-right: 0.25rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+@media (max-width: 400px) {
+    .cer-kamgc-hero-copy .cer-share-bar {
+        gap: 0.35rem;
+    }
+}
+
+/* --- Desktop hero: the four bullets read as one full-width row under the
+   share bar, spanning both grid columns so they run to the end of the hero.
+   Equal columns left a dead gap after the shortest bullet, so the row is
+   auto-sized and spread instead, and the row clears "Share event:" above and
+   the panel edge below without the hero grid's full row gap. ------------ */
+@media (min-width: 1025px) {
+    .cer-kamgc-hero-inner {
+        row-gap: 0.25rem;
+    }
+
+    .cer-kamgc-hero-inner > .cer-kamgc-feature-list {
+        grid-column: 1 / -1;
+        grid-auto-flow: column;
+        grid-auto-columns: max-content;
+        grid-template-columns: none;
+        justify-content: space-between;
+        gap: 0 1.5rem;
+        margin: 1rem 0 0.85rem;
+        font-size: 0.9rem;
+    }
+
+    .cer-kamgc-hero-inner > .cer-kamgc-feature-list li {
+        white-space: nowrap;
+    }
+}
+
+/* ==========================================================================
+   THEMATIC PILLARS — mobile layout
+   ========================================================================== */
+
+/* --- The rail stays a horizontal scroller on touch. It read as broken
+   because 180px cards on a 390px screen left a second card sliced flat
+   against the panel edge with no sense that it could move. Sizing cards to
+   the viewport shows a deliberate peek of the next one, and snapping makes
+   the swipe land cleanly. ------------------------------------------------ */
+@media (max-width: 1024px) {
+    .cer-kamgc-pillar-grid {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: visible;
+        scroll-snap-type: x mandatory !important;
+        scroll-padding-left: 0.25rem;
+        -webkit-overflow-scrolling: touch;
+        gap: 1rem !important;
+        padding: 0.25rem 0.25rem 1rem !important;
+        align-items: start;
+    }
+
+    .cer-kamgc-pillar-grid > .cer-kamgc-pillars-card {
+        flex: 0 0 clamp(150px, 42vw, 200px) !important;
+        scroll-snap-align: start;
+    }
+
+    /* The close button is absolutely positioned, so it escaped the collapsed
+       0fr caption and floated between the cards while everything was shut.
+       It belongs to the open state only. */
+    .cer-kamgc-pillars-close {
+        display: none !important;
+    }
+
+    .cer-kamgc-pillars-card.is-open .cer-kamgc-pillars-close {
+        display: inline-flex !important;
+    }
+
+    .cer-kamgc-pillars-front::after {
+        content: none !important;
+    }
+}
+
+/* ==========================================================================
+   OUR OBJECTIVES — card copy runs the full card width
+   ========================================================================== */
+
+/* --- The numeral spanned both rows, so the description was penned into the
+   right-hand column with an empty 54px gutter beside it — a hard indent on
+   desktop and a stranded block on mobile. The numeral now marks the title
+   row only and the description spans the card, edge to edge. ------------- */
+.cer-kamgc-objectives .cer-kamgc-compact-card {
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    gap: 0.6rem 0.75rem !important;
+    align-items: center;
+}
+
+.cer-kamgc-objectives .cer-kamgc-compact-card::before {
+    grid-row: 1 !important;
+    grid-column: 1 !important;
+    align-self: center;
+}
+
+.cer-kamgc-objectives .cer-kamgc-compact-card h3 {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    margin: 0 !important;
+    align-self: center;
+}
+
+.cer-kamgc-objectives .cer-kamgc-compact-card p {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+}
+
+/* ==========================================================================
+   SUMMIT STRUCTURE — mobile spacing
+   ========================================================================== */
+
+/* --- Two rules were stacking on each other below 768px: the original rail
+   treatment still padded each card 3.1rem at the top to clear an absolutely
+   positioned node, while the later grid treatment had already moved that node
+   into the flow. The result was ~50px of dead space above every step, plus
+   the node column holding an empty gutter beside the description. --------- */
+@media (max-width: 767px) {
+    .cer-kamgc-summit-structure .cer-kamgc-compact-grid {
+        gap: 1.25rem !important;
+    }
+
+    .cer-kamgc-summit-structure .cer-kamgc-compact-card {
+        grid-template-columns: 38px minmax(0, 1fr);
+        gap: 0.5rem 0.7rem;
+        padding: 0 !important;
+        align-items: center;
+    }
+
+    .cer-kamgc-summit-structure .cer-kamgc-compact-card::before {
+        grid-row: 1;
+        grid-column: 1;
+        width: 38px;
+        height: 38px;
+        font-size: 0.9rem;
+        align-self: center;
+    }
+
+    .cer-kamgc-summit-structure .cer-kamgc-compact-card h3 {
+        grid-column: 2;
+        grid-row: 1;
+        margin: 0 !important;
+    }
+
+    .cer-kamgc-summit-structure .cer-kamgc-compact-card h3::after {
+        margin-top: 0.35rem;
+    }
+
+    .cer-kamgc-summit-structure .cer-kamgc-compact-card p {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+}
+
+/* --- Payment toggle when it stacks. Below 820px the two tabs drop to a single
+   column, but the track kept its 999px pill radius — on a two-row box that
+   renders as a squashed ellipse with the active tab appearing to spill out of
+   its sides. Stacked, it needs rectangle geometry. ----------------------- */
+@media (max-width: 820px) {
+    .cer-payment-toggle {
+        border-radius: 14px !important;
+        padding: 6px !important;
+        gap: 6px !important;
+    }
+
+    .cer-payment-toggle-btn {
+        width: 100%;
+        border-radius: 10px !important;
+    }
+}
