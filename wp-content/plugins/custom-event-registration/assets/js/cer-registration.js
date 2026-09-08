@@ -14,8 +14,28 @@
     var btnCard = document.getElementById('btn-card');
     var submitButton = form ? form.querySelector('button[type="submit"]') : null;
     var requestInFlight = false;
+    var paystackHandler = null;
+    var supportsViewTransitions = typeof document.startViewTransition === 'function';
 
     var currency = (window.cerRegistrationSettings && window.cerRegistrationSettings.currency) || 'KES';
+
+    function runUiTransition(callback) {
+        if (supportsViewTransitions) {
+            document.startViewTransition(callback);
+            return;
+        }
+        callback();
+    }
+
+    function getPaystackHandler() {
+        if (typeof window.PaystackPop !== 'function') {
+            return null;
+        }
+        if (!paystackHandler) {
+            paystackHandler = new window.PaystackPop();
+        }
+        return paystackHandler;
+    }
 
     function safeText(text) {
         return String(text || '').trim();
@@ -127,8 +147,14 @@
 
     function pollPaymentStatus(reference) {
         var attempts = 0;
+        var verificationInFlight = false;
         var timer = window.setInterval(function () {
+            if (verificationInFlight) {
+                return;
+            }
+
             attempts += 1;
+            verificationInFlight = true;
             fetch((window.cerRegistrationSettings || {}).payment_verify_url, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reference: reference }), credentials: 'same-origin'
@@ -137,7 +163,9 @@
                     window.clearInterval(timer);
                     setMessage('Payment confirmed. Your ticket will be emailed shortly.', 'success');
                 }
-            }).catch(function () {});
+            }).catch(function () {}).finally(function () {
+                verificationInFlight = false;
+            });
             if (attempts >= 40) {
                 window.clearInterval(timer);
             }
@@ -184,12 +212,18 @@
 
         requestInFlight = true;
         updateSubmitState();
-        setMessage(method === 'card' ? 'Preparing secure card checkout...' : 'Submitting registration...', 'info');
+        runUiTransition(function () {
+            setMessage(method === 'card' ? 'Preparing secure card checkout...' : 'Submitting registration...', 'info');
+        });
 
         var formData = new FormData(form);
         formData.set('security', window.cerRegistrationSettings.nonce);
+        // Keep the existing WordPress AJAX contract as the default transport to preserve
+        // the original plugin/payment integration, while the REST endpoint remains as a
+        // compatibility fallback for future optimization work.
+        var endpoint = (window.cerRegistrationSettings && window.cerRegistrationSettings.ajax_url) || '/wp-admin/admin-ajax.php';
 
-        fetch(window.cerRegistrationSettings.ajax_url, {
+        fetch(endpoint, {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
@@ -210,17 +244,21 @@
                 }
 
                 if (method === 'mpesa') {
-                    setMessage(result.data.display_text || 'Approve the M-Pesa payment request on your phone.', 'info');
+                    runUiTransition(function () {
+                        setMessage(result.data.display_text || 'Approve the M-Pesa payment request on your phone.', 'info');
+                    });
                     pollPaymentStatus(reference);
                     return;
                 }
 
                 var accessCode = result.data.access_code || '';
-                if (!accessCode || typeof window.PaystackPop !== 'function') {
+                var popup = getPaystackHandler();
+                if (!accessCode || !popup) {
                     throw new Error('Paystack card checkout is not available.');
                 }
-                setMessage('Complete your card payment in the secure checkout.', 'info');
-                var popup = new window.PaystackPop();
+                runUiTransition(function () {
+                    setMessage('Complete your card payment in the secure checkout.', 'info');
+                });
                 popup.resumeTransaction(accessCode);
                 pollPaymentStatus(reference);
             })
@@ -289,18 +327,88 @@
 
     /* --- Pillar cards: click + keyboard expand ---------------------------
        Replaces the previous CSS-:hover-only 3D flip, which left the pillar
-       descriptions unreachable on any touch device. */
+       descriptions unreachable on any touch device.
+       Only one pillar popover may be visible at a time: opening a card closes
+       every other card, and entering a card drops the click-opened state of
+       the others so a sticky popover never overlaps a hover tooltip. */
     var pillarButtons = document.querySelectorAll('.cer-kamgc-pillars-front');
 
-    Array.prototype.forEach.call(pillarButtons, function (button) {
-        button.addEventListener('click', function () {
-            var card = button.closest('.cer-kamgc-pillars-card');
-            if (!card) {
-                return;
+    /* Single-open pillar popovers. Opening one card closes every other card;
+       the open popover can be dismissed by re-clicking its trigger, pressing
+       its own close button, pressing Escape, or clicking anywhere outside it. */
+    function setPillarOpen(card, isOpen) {
+        if (!card) {
+            return;
+        }
+        card.classList.toggle('is-open', isOpen);
+        var btn = card.querySelector('.cer-kamgc-pillars-front');
+        if (btn) {
+            btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+    }
+
+    function closeOtherPillars(exceptCard) {
+        Array.prototype.forEach.call(document.querySelectorAll('.cer-kamgc-pillars-card.is-open'), function (card) {
+            if (card !== exceptCard) {
+                setPillarOpen(card, false);
             }
-            var isOpen = card.classList.toggle('is-open');
-            button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         });
+    }
+
+    function closeAllPillars() {
+        closeOtherPillars(null);
+    }
+
+    Array.prototype.forEach.call(pillarButtons, function (button) {
+        var card = button.closest('.cer-kamgc-pillars-card');
+        if (!card) {
+            return;
+        }
+
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            var willOpen = !card.classList.contains('is-open');
+            closeOtherPillars(card);
+            setPillarOpen(card, willOpen);
+        });
+
+        button.addEventListener('pointerenter', function () {
+            closeOtherPillars(card);
+        });
+    });
+
+    /* Delegated close for the popover's own × button (rendered per card). */
+    document.addEventListener('click', function (event) {
+        var closeBtn = event.target.closest('.cer-kamgc-pillars-close');
+        if (!closeBtn) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        setPillarOpen(closeBtn.closest('.cer-kamgc-pillars-card'), false);
+    });
+
+    /* Click outside any pillar card closes the open popover. */
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('.cer-kamgc-pillars-card')) {
+            closeAllPillars();
+        }
+    });
+
+    /* Escape closes the open popover and returns focus to its trigger. */
+    document.addEventListener('keydown', function (event) {
+        if ('Escape' !== event.key && 27 !== event.keyCode) {
+            return;
+        }
+        var openCard = document.querySelector('.cer-kamgc-pillars-card.is-open');
+        if (openCard) {
+            setPillarOpen(openCard, false);
+            var btn = openCard.querySelector('.cer-kamgc-pillars-front');
+            if (btn) {
+                btn.focus();
+            }
+        }
     });
 
     /* --- Scroll reveal ---------------------------------------------------

@@ -231,6 +231,17 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     font-size: 20px;
 }
 
+.cer-share-brand-icon {
+    display: block;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.cer-share-x-icon {
+    width: 18px;
+    height: 18px;
+}
+
 
 
 .cer-event-shell > section {
@@ -3588,14 +3599,14 @@ body:has(.cer-event-page) {
 }
 
 .cer-kamgc-hero { order: 1; }
-.cer-kamgc-main { order: 2; }
+.cer-kamgc-main { order: 8; }
 .cer-kamgc-speakers { order: 3; }
 .cer-kamgc-pillars { order: 4; }
 .cer-kamgc-objectives { order: 5; }
 .cer-kamgc-summit-structure { order: 6; }
 .cer-kamgc-partners { order: 7; }
-.cer-kamgc-faq { order: 8; }
-.cer-kamgc-map-widget { order: 9; }
+.cer-kamgc-faq { order: 9; }
+.cer-kamgc-map-widget { order: 10; }
 
 .cer-kamgc-hero-inner {
     display: grid;
@@ -4288,7 +4299,9 @@ select#cer-ticket-type:focus-visible {
 /* --- 6. Pillars as tooltips, not accordions ------------------------------
    The chevron/expand pattern is replaced with a popover on hover and focus.
    The panel keeps its id and stays associated with the trigger, so screen
-   readers still reach the description; only the presentation changes. */
+   readers still reach the description; only the presentation changes.
+   DESKTOP-ONLY: below 1025px the pillars use an overlay "flip" card instead. */
+@media (min-width: 1025px) {
 .cer-kamgc-pillars-card {
     overflow: visible !important;
     position: relative;
@@ -4347,6 +4360,7 @@ select#cer-ticket-type:focus-visible {
     opacity: 1;
     visibility: visible;
     transform: translate(-50%, 0);
+}
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4623,6 +4637,11 @@ html.cer-js .cer-reveal.is-visible {
    panel edge. Restore it on the hero only. ------------------------------- */
 .cer-event-shell > section.cer-kamgc-hero,
 .cer-kamgc-hero {
+    padding-top: clamp(1.25rem, 2.2vw, 2rem) !important;
+}
+
+.cer-event-shell > section.cer-kamgc-main,
+.cer-kamgc-main {
     padding-top: clamp(1.25rem, 2.2vw, 2rem) !important;
 }
 
@@ -5402,6 +5421,9 @@ html.cer-js .cer-reveal.is-visible {
     align-items: start;
 }
 
+/* Desktop-only orange tooltip (parity popup). Below 1025px the pillars use the
+   overlay "flip" card defined in the mobile block, so this is scoped up. */
+@media (min-width: 1025px) {
 .cer-kamgc-pillars-back {
     position: absolute !important;
     left: 50% !important;
@@ -5451,6 +5473,7 @@ html.cer-js .cer-reveal.is-visible {
     opacity: 1 !important;
     visibility: visible !important;
     transform: translate(-50%, 0) !important;
+}
 }
 
 /* Tooltips need a positioning context that is not the scroll container. */
@@ -5555,4 +5578,242 @@ html.cer-js .cer-reveal.is-visible {
 .cer-kamgc-pillars,
 .cer-kamgc-pillars-card-wrapper {
     overflow: visible !important;
+}
+
+/* Final section-scoped layout corrections. */
+.cer-kamgc-objectives .cer-kamgc-compact-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 1.5rem !important;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: start;
+    gap: 1rem;
+    padding: 24px !important;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card::before {
+    position: static;
+    grid-row: span 2;
+    transform: none;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card:hover::before {
+    transform: translateY(-3px);
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card h3,
+.cer-kamgc-summit-structure .cer-kamgc-compact-card p {
+    text-align: left;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card::after {
+    display: none !important;
+}
+
+.cer-kamgc-summit-structure .cer-kamgc-compact-card h3::after {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 2px;
+    margin-top: 0.5rem;
+    background: linear-gradient(90deg, var(--k-purple), var(--k-orange));
+    opacity: 0.7;
+}
+
+@media (max-width: 767px) {
+    .cer-kamgc-objectives .cer-kamgc-compact-grid,
+    .cer-kamgc-summit-structure .cer-kamgc-compact-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+}
+
+/* Final hero action and brand-color corrections. */
+.cer-kamgc-page {
+    --kamgc-blue: #006eac;
+    --kamgc-blue-dark: #006eac;
+}
+
+.cer-kamgc-actions,
+.cer-share-bar {
+    justify-content: flex-start !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.cer-kamgc-page .cer-kamgc-button-primary,
+.cer-kamgc-page .cer-primary-button,
+.cer-kamgc-page .cer-kamgc-button-primary:hover,
+.cer-kamgc-page .cer-primary-button:hover,
+.cer-kamgc-page .cer-payment-toggle-btn.is-active {
+    background: #006eac !important;
+}
+
+.cer-kamgc-button-secondary {
+    border-color: #006eac !important;
+    color: #006eac !important;
+}
+
+/* ==========================================================================
+   FINAL UX CORRECTIONS — map widget, pillar single-open, hero summary list
+   ========================================================================== */
+
+/* --- Floating map widget: the purple toggle opens the map iframe itself,
+   not a custom card with address text and a directions button. ---------- */
+.cer-kamgc-map-panel {
+    padding: 0 !important;
+    background: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    overflow: visible;
+    width: min(340px, calc(100vw - 2.5rem));
+}
+
+.cer-kamgc-map-iframe {
+    display: block;
+    width: 100%;
+    height: 280px;
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+    background: #e7edf5;
+}
+
+.cer-kamgc-map-close {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    z-index: 2;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    background: #800080;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(128, 0, 128, 0.4);
+}
+
+.cer-kamgc-map-close:hover {
+    background: #ff8c00;
+}
+
+/* --- Hero feature bullets now live inside the Conference Summary card,
+   stacked under the metadata rows instead of centred above the CTA. ----- */
+.cer-kamgc-hero-summary .cer-kamgc-feature-list {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0.55rem;
+    margin: 1rem 0 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.cer-kamgc-hero-summary .cer-kamgc-feature-list li {
+    width: 100%;
+    align-items: flex-start;
+}
+
+.cer-kamgc-hero-summary .cer-kamgc-feature-list .material-symbols-outlined {
+    font-size: 18px;
+    line-height: 1.4;
+}
+
+/* --- Thematic pillars on touch/small screens: descriptions must start
+   collapsed and open one at a time on tap (JS manages .is-open). Earlier
+   rules forced every description visible below 1024px, which read as
+   "modals open by default" and broke the mobile layout. Selector mirrors
+   the earlier hover/focus rules so cascade order decides. -------------- */
+@media (max-width: 1024px) {
+    .cer-kamgc-pillars-back,
+    .cer-kamgc-pillars-card:hover .cer-kamgc-pillars-back,
+    .cer-kamgc-pillars-card:focus-within .cer-kamgc-pillars-back {
+        display: grid !important;
+        grid-template-rows: minmax(0, 0fr) !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        margin: 0 !important;
+        transition: grid-template-rows var(--cer-dur-base) var(--cer-ease-out) !important;
+    }
+
+    .cer-kamgc-pillars-back > * {
+        overflow: hidden !important;
+        min-height: 0 !important;
+    }
+
+    .cer-kamgc-pillars-card.is-open .cer-kamgc-pillars-back {
+        grid-template-rows: minmax(0, 1fr) !important;
+        margin: 0.4rem 0 0 !important;
+    }
+}
+
+/* --- Pillar popover close affordance ---------------------------------------
+   A small × sits inside the open popover so the click-opened tooltip is no
+   longer "stuck" on desktop. It floats top-right on the tooltip, and tucks to
+   the top-right of the inline caption on smaller screens. JS handles the
+   actual close (also re-click trigger / Escape / click-outside). ---------- */
+.cer-kamgc-pillars-back {
+    position: relative;
+}
+
+.cer-kamgc-pillars-close {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 3;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.16);
+    color: #ffffff;
+    cursor: pointer;
+    line-height: 1;
+    transition: background var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-kamgc-pillars-close .material-symbols-outlined {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.cer-kamgc-pillars-close:hover,
+.cer-kamgc-pillars-close:focus-visible {
+    background: rgba(0, 0, 0, 0.34);
+}
+
+/* Keep the tooltip/inline copy clear of the corner button. */
+.cer-kamgc-pillars-back p {
+    padding-right: 1.6rem !important;
+}
+
+/* Mobile inline caption: the popover has a light ground there, so the close
+   button switches to a muted dark chip that reads against it. */
+@media (max-width: 1024px) {
+    .cer-kamgc-pillars-close {
+        background: rgba(20, 32, 43, 0.12);
+        color: var(--k-ink);
+    }
+
+    .cer-kamgc-pillars-close:hover,
+    .cer-kamgc-pillars-close:focus-visible {
+        background: rgba(20, 32, 43, 0.22);
+    }
 }

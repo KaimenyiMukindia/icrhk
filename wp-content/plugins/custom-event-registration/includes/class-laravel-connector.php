@@ -47,9 +47,14 @@ if (!class_exists('CER_Laravel_Connector')) {
             $response = wp_remote_post(
                 esc_url_raw( $endpoint ),
                 array(
-                    'headers' => array( 'Content-Type' => 'application/json; charset=utf-8' ),
+                    'headers' => array(
+                        'Content-Type' => 'application/json; charset=utf-8',
+                        'Connection' => 'keep-alive',
+                    ),
                     'body'    => wp_json_encode( $data ),
-                    'timeout' => 10,
+                    'timeout' => 8,
+                    'connect_timeout' => 3,
+                    'httpversion' => '1.1',
                 )
             );
 

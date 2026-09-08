@@ -146,6 +146,7 @@ final class PaymentController extends Controller
         if ($confirmedAmount !== '' && is_numeric($confirmedAmount)) {
             $updates['confirmed_amount'] = (float) $confirmedAmount;
         }
+        logger()->info('IPN Processing: Starting transaction', ['payment_uuid' => $paymentUuid, 'reference' => $reference]);
         $confirmation = DB::transaction(function () use ($paymentUuid, $reference, $confirmedAmount, $updates): array {
             $registration = DB::table('wp_evt_registrations')
                 ->where(function ($query) use ($paymentUuid, $reference): void {
@@ -161,7 +162,11 @@ final class PaymentController extends Controller
                 return ['state' => 'missing'];
             }
             if ($registration->status === 'paid') {
-                return ['state' => 'duplicate'];
+                return [
+                    'state' => 'duplicate',
+                    'registration_id' => (int) $registration->id,
+                    'ticket_pending' => empty($registration->ticket_generated_at) || empty($registration->ticket_sent_at),
+                ];
             }
             $expectedAmount = strtolower((string) env('PAYSTACK_ENV', 'live')) === 'sandbox'
                 ? 1.00
@@ -202,10 +207,39 @@ final class PaymentController extends Controller
             return ['state' => 'confirmed', 'registration_id' => (int) $registration->id];
         });
 
+        logger()->info('IPN Processing: Transaction completed', ['payment_uuid' => $paymentUuid, 'confirmation_state' => $confirmation['state'] ?? 'unknown', 'registration_id' => $confirmation['registration_id'] ?? null]);
+
         if ($confirmation['state'] === 'missing') {
             return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'Registration not found.']);
         }
         if ($confirmation['state'] === 'duplicate') {
+            if (($confirmation['ticket_pending'] ?? false) === true) {
+                $wordpressUrl = (string) env('WORDPRESS_URL', 'http://localhost/icrhk');
+                $ticketTimestamp = (string) time();
+                $ticketSecret = (string) env('CER_TICKET_CALLBACK_SECRET', '');
+                $ticketResponse = Http::timeout(30)
+                    ->asForm()
+                    ->withHeaders([
+                        'X-CER-Ticket-Timestamp' => $ticketTimestamp,
+                        'X-CER-Ticket-Signature' => hash_hmac('sha256', $confirmation['registration_id'] . '|' . $ticketTimestamp, $ticketSecret),
+                    ])->post(rtrim($wordpressUrl, '/') . '/', ['cer_process_ticket' => $confirmation['registration_id']]);
+
+                $ticketState = DB::table('wp_evt_registrations')
+                    ->where('id', $confirmation['registration_id'])
+                    ->first(['ticket_generated_at', 'ticket_sent_at']);
+                if (! $ticketResponse->successful() || ! $ticketState || empty($ticketState->ticket_generated_at) || empty($ticketState->ticket_sent_at)) {
+                    $retryTimestamp = (string) time();
+                    $ticketResponse = Http::timeout(30)
+                        ->asForm()
+                        ->withHeaders([
+                            'X-CER-Ticket-Timestamp' => $retryTimestamp,
+                            'X-CER-Ticket-Signature' => hash_hmac('sha256', $confirmation['registration_id'] . '|' . $retryTimestamp, $ticketSecret),
+                        ])->post(rtrim($wordpressUrl, '/') . '/', ['cer_process_ticket' => $confirmation['registration_id']]);
+                }
+                if (! $ticketResponse->successful()) {
+                    logger()->error('WordPress ticket retry callback failed', ['registration_id' => $confirmation['registration_id'], 'status' => $ticketResponse->status()]);
+                }
+            }
             DB::table('payment_logs')->insert([
                 'payment_uuid' => $paymentUuid ?: null,
                 'event' => 'webhook_duplicate_ignored',
@@ -223,14 +257,43 @@ final class PaymentController extends Controller
         }
 
         $wordpressUrl = (string) env('WORDPRESS_URL', 'http://localhost/icrhk');
+        logger()->info('IPN Processing: Making WordPress ticket callback', ['registration_id' => $confirmation['registration_id'], 'wordpress_url' => $wordpressUrl]);
         $ticketTimestamp = (string) time();
         $ticketSecret = (string) env('CER_TICKET_CALLBACK_SECRET', '');
-        $ticketResponse = Http::timeout(15)->withHeaders([
-            'X-CER-Ticket-Timestamp' => $ticketTimestamp,
-            'X-CER-Ticket-Signature' => hash_hmac('sha256', $confirmation['registration_id'] . '|' . $ticketTimestamp, $ticketSecret),
-        ])->post(rtrim($wordpressUrl, '/') . '/', ['cer_process_ticket' => $confirmation['registration_id']]);
-        if (! $ticketResponse->successful()) {
-            logger()->error('WordPress ticket delivery callback failed', ['registration_id' => $confirmation['registration_id'], 'status' => $ticketResponse->status()]);
+        try {
+            $ticketResponse = Http::timeout(30)
+                ->asForm()
+                ->withHeaders([
+                    'X-CER-Ticket-Timestamp' => $ticketTimestamp,
+                    'X-CER-Ticket-Signature' => hash_hmac('sha256', $confirmation['registration_id'] . '|' . $ticketTimestamp, $ticketSecret),
+                ])->post(rtrim($wordpressUrl, '/') . '/', ['cer_process_ticket' => $confirmation['registration_id']]);
+            
+            logger()->info('IPN Processing: Callback response received', ['registration_id' => $confirmation['registration_id'], 'status' => $ticketResponse->status(), 'successful' => $ticketResponse->successful()]);
+        } catch (\Exception $e) {
+            logger()->error('IPN Processing: Callback exception', ['registration_id' => $confirmation['registration_id'], 'error' => $e->getMessage()]);
+            $ticketResponse = null;
+        }
+
+        $ticketState = DB::table('wp_evt_registrations')
+            ->where('id', $confirmation['registration_id'])
+            ->first(['ticket_generated_at', 'ticket_sent_at']);
+        if (! $ticketResponse || ! $ticketResponse->successful() || ! $ticketState || empty($ticketState->ticket_generated_at) || empty($ticketState->ticket_sent_at)) {
+            $retryTimestamp = (string) time();
+            try {
+                $ticketResponse = Http::timeout(30)
+                    ->asForm()
+                    ->withHeaders([
+                        'X-CER-Ticket-Timestamp' => $retryTimestamp,
+                        'X-CER-Ticket-Signature' => hash_hmac('sha256', $confirmation['registration_id'] . '|' . $retryTimestamp, $ticketSecret),
+                    ])->post(rtrim($wordpressUrl, '/') . '/', ['cer_process_ticket' => $confirmation['registration_id']]);
+                logger()->info('IPN Processing: Retry callback response received', ['registration_id' => $confirmation['registration_id'], 'status' => $ticketResponse->status()]);
+            } catch (\Exception $e) {
+                logger()->error('IPN Processing: Retry callback exception', ['registration_id' => $confirmation['registration_id'], 'error' => $e->getMessage()]);
+                $ticketResponse = null;
+            }
+        }
+        if (! $ticketResponse || ! $ticketResponse->successful()) {
+            logger()->error('WordPress ticket delivery callback failed', ['registration_id' => $confirmation['registration_id'], 'status' => $ticketResponse ? $ticketResponse->status() : 'no_response']);
         }
 
         return response()->json([
@@ -250,6 +313,25 @@ final class PaymentController extends Controller
         $result = $this->service->verifyTransaction($reference);
         if (($result['ok'] ?? false) !== true) {
             return response()->json(['status' => 'failed', 'message' => $result['message'] ?? 'Unable to verify payment.'], 422);
+        }
+
+        $existingRegistration = DB::table('wp_evt_registrations')
+            ->where('gateway_reference', $reference)
+            ->first(['id', 'status', 'ticket_generated_at', 'ticket_sent_at']);
+        $needsReconciliation = ! $existingRegistration
+            || $existingRegistration->status !== 'paid'
+            || empty($existingRegistration->ticket_generated_at)
+            || empty($existingRegistration->ticket_sent_at);
+
+        if (($result['status'] ?? '') === 'success' && $needsReconciliation) {
+            $webhookPayload = json_encode([
+                'event' => 'charge.success',
+                'data' => $result['response'] ?? [],
+            ], JSON_UNESCAPED_SLASHES);
+            $reconciliationRequest = Request::create('/api/paystack-webhook', 'POST', [], [], [], [], $webhookPayload);
+            $reconciliationRequest->headers->set('Content-Type', 'application/json');
+            $reconciliationRequest->headers->set('X-Paystack-Signature', hash_hmac('sha512', $webhookPayload, PaystackService::getConfiguredValue('PAYSTACK_SECRET_KEY', '')));
+            $this->ipn($reconciliationRequest);
         }
 
         $registration = DB::table('wp_evt_registrations')->where('gateway_reference', $reference)->first(['status']);

@@ -33,4 +33,4 @@
 - [ ] Card sandbox checkout completed with paid IPN and ticket email.
 - [ ] All payment, ticket, and email flows marked production-complete.
 
-The latest audit is recorded in `master_md/31_end_to_end_payment_ticket.md`. M-Pesa remained pending in the sandbox and the Card form did not complete its required-field validation, so the final completion items remain unchecked.
+The latest execution record is `master_md/40_paystack_sandbox_execution_2026-09-06.md`. The live M-PESA attempt failed during Paystack initiation and the Card attempt remained pending without a completed hosted charge, so no current webhook, ticket email, or user email confirmation is claimed. The final completion items remain unchecked, and performance verification is deferred.

@@ -110,7 +110,9 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 						$event_title_highlight = trim( $parts[1] );
 					}
 					$event_dates = cer_event_page_format_range( $current_event->event_date, $current_event->event_end_date );
-					$event_venue = $current_event->venue ? $current_event->venue : 'To be confirmed';
+					// Venue is derived from the Location / Map section (display address) when
+					// no explicit venue string exists, so the hero never goes blank.
+					$event_venue = $current_event->venue ? $current_event->venue : ( $location_address ? $location_address : 'To be confirmed' );
 					$event_attendees = number_format_i18n( max( 0, (int) $current_event->max_attendees ) ?: 500 ) . ' delegates';
 					$hero_features = cer_event_page_split_lines( cer_event_page_copy_value( $current_event, 'hero_features', '' ) );
 					$hero_badge_text = cer_event_page_copy_value( $current_event, 'hero_badge_text', 'Event Registration' );
@@ -169,13 +171,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 										<?php if ( ! empty( $hero_convened_by ) ) : ?>
 											<div class="cer-kamgc-convened-by"><span>Convened by:</span> <?php echo esc_html( $hero_convened_by ); ?></div>
 										<?php endif; ?>
-										<?php if ( ! empty( $hero_features ) ) : ?>
-											<ul class="cer-kamgc-feature-list">
-												<?php foreach ( $hero_features as $feature ) : ?>
-													<li><span class="material-symbols-outlined text-success">check_circle</span><?php echo esc_html( $feature ); ?></li>
-												<?php endforeach; ?>
-											</ul>
-										<?php endif; ?>
+
 										<div class="cer-kamgc-actions">
 											<a class="cer-kamgc-button cer-kamgc-button-primary" href="#registration"><?php echo esc_html( $primary_cta_text ); ?> <span class="material-symbols-outlined">arrow_forward</span></a>
 											<a class="cer-kamgc-button cer-kamgc-button-secondary" href="#pillars"><?php echo esc_html( $secondary_cta_text ); ?></a>
@@ -184,21 +180,28 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 													<div class="cer-share-bar" aria-label="Share event">
 														<span class="cer-share-label"><?php esc_html_e( 'Share event:', 'custom-event-registration' ); ?></span>
 														<a href="<?php echo esc_url( $share_links['facebook'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook" title="<?php esc_attr_e( 'Share on Facebook', 'custom-event-registration' ); ?>"><span class="dashicons dashicons-facebook-alt" aria-hidden="true"></span></a>
-														<a href="<?php echo esc_url( $share_links['twitter'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Share on X" title="<?php esc_attr_e( 'Share on X', 'custom-event-registration' ); ?>"><span class="dashicons dashicons-twitter" aria-hidden="true"></span></a>
+																<a href="<?php echo esc_url( $share_links['twitter'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Share on X" title="<?php esc_attr_e( 'Share on X', 'custom-event-registration' ); ?>"><svg class="cer-share-brand-icon cer-share-x-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817-5.963 6.817H1.684l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644Z" fill="currentColor"></path></svg></a>
 														<a href="<?php echo esc_url( $share_links['linkedin'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn" title="<?php esc_attr_e( 'Share on LinkedIn', 'custom-event-registration' ); ?>"><span class="dashicons dashicons-linkedin" aria-hidden="true"></span></a>
-														<a href="<?php echo esc_url( $share_links['whatsapp'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp" title="<?php esc_attr_e( 'Share on WhatsApp', 'custom-event-registration' ); ?>"><span class="dashicons dashicons-format-chat" aria-hidden="true"></span></a>
+																<a href="<?php echo esc_url( $share_links['whatsapp'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp" title="<?php esc_attr_e( 'Share on WhatsApp', 'custom-event-registration' ); ?>"><span class="fa fa-whatsapp cer-share-brand-icon" aria-hidden="true"></span></a>
 													</div>
 													<?php endif; ?>
 									</div>
 									<div class="cer-kamgc-summary-box cer-kamgc-hero-summary">
 										<h3>Conference Summary</h3>
 										<div class="cer-kamgc-summary-metadata">
-											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">calendar_month</span><span><small>Starts</small><strong><?php echo esc_html( cer_event_page_format_date_only( $current_event->event_date ) ); ?></strong></span></div>
-											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">event</span><span><small>Ends</small><strong><?php echo esc_html( cer_event_page_format_date_only( $current_event->event_end_date ) ); ?></strong></span></div>
+											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">calendar_month</span><span><small>Starts</small><strong><?php echo esc_html( cer_event_page_format_datetime( $current_event->event_date ) ); ?></strong></span></div>
+											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">event</span><span><small>Ends</small><strong><?php echo esc_html( cer_event_page_format_datetime( $current_event->event_end_date ) ); ?></strong></span></div>
 											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">location_on</span><span><small>Location</small><strong><?php if ( $location_link ) : ?><a href="<?php echo esc_url( $location_link ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $event_venue ); ?></a><?php else : ?><?php echo esc_html( $event_venue ); ?><?php endif; ?></strong></span></div>
 											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">groups</span><span><small>Capacity</small><strong><?php echo esc_html( $event_attendees ); ?></strong></span></div>
 										</div>
 									</div>
+									<?php if ( ! empty( $hero_features ) ) : ?>
+										<ul class="cer-kamgc-feature-list">
+											<?php foreach ( $hero_features as $feature ) : ?>
+												<li><span class="material-symbols-outlined text-success">check_circle</span><?php echo esc_html( $feature ); ?></li>
+											<?php endforeach; ?>
+										</ul>
+									<?php endif; ?>
 								</div>
 							</section>
 
@@ -237,7 +240,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 												<?php $pillar_panel_id = 'cer-pillar-panel-' . (int) $index; ?>
 												<div class="cer-kamgc-pillars-card cer-reveal" style="--cer-reveal-delay: <?php echo (int) ( $index * 60 ); ?>ms;">
 													<button type="button" class="cer-kamgc-pillars-front" aria-expanded="false" aria-controls="<?php echo esc_attr( $pillar_panel_id ); ?>"><div class="cer-kamgc-pillars-icon"><span class="material-symbols-outlined"><?php echo esc_html( $pillar->icon ? $pillar->icon : 'insights' ); ?></span></div><h3><?php echo esc_html( $pillar->title ); ?></h3></button>
-													<div class="cer-kamgc-pillars-back" id="<?php echo esc_attr( $pillar_panel_id ); ?>"><p><?php echo wp_kses_post( $pillar->description ); ?></p></div>
+												<div class="cer-kamgc-pillars-back" id="<?php echo esc_attr( $pillar_panel_id ); ?>"><button type="button" class="cer-kamgc-pillars-close" aria-label="<?php esc_attr_e( 'Close pillar details', 'custom-event-registration' ); ?>"><span class="material-symbols-outlined">close</span></button><p><?php echo wp_kses_post( $pillar->description ); ?></p></div>
 												</div>
 											<?php endforeach; ?>
 										</div>
@@ -402,20 +405,17 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 								</section>
 							<?php endif; ?>
 
-							<?php if ( $location_link || ( $location_lat && $location_lng ) ) : ?>
+							<?php
+							$map_embed_url = cer_event_page_get_map_embed_url( $location_link, $location_lat, $location_lng, $location_address, $event_venue );
+							?>
+							<?php if ( '' !== $map_embed_url ) : ?>
 								<div class="cer-kamgc-map-widget" id="cer-map-widget">
 									<button type="button" class="cer-kamgc-map-toggle" id="cer-map-toggle" aria-label="<?php esc_attr_e( 'Show event location', 'custom-event-registration' ); ?>">
 										<span class="material-symbols-outlined">location_on</span>
 									</button>
 									<div class="cer-kamgc-map-panel" id="cer-map-panel" hidden>
-										<div class="cer-kamgc-map-panel-header">
-											<span><?php echo esc_html( $location_address ? $location_address : $event_venue ); ?></span>
-											<button type="button" class="cer-kamgc-map-close" id="cer-map-close" aria-label="<?php esc_attr_e( 'Close map', 'custom-event-registration' ); ?>"><span class="material-symbols-outlined">close</span></button>
-										</div>
-										<div class="cer-kamgc-map-embed">
-											<iframe src="<?php echo esc_url( cer_event_page_get_map_embed_url( $location_link, $location_lat, $location_lng, $location_address ) ); ?>" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-										</div>
-										<a class="cer-kamgc-button cer-kamgc-button-primary" href="<?php echo esc_url( $location_link ? $location_link : 'https://www.google.com/maps?q=' . rawurlencode( $location_lat . ',' . $location_lng ) ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Get Directions', 'custom-event-registration' ); ?> <span class="material-symbols-outlined">arrow_forward</span></a>
+										<button type="button" class="cer-kamgc-map-close" id="cer-map-close" aria-label="<?php esc_attr_e( 'Close map', 'custom-event-registration' ); ?>"><span class="material-symbols-outlined">close</span></button>
+										<iframe class="cer-kamgc-map-iframe" src="<?php echo esc_url( $map_embed_url ); ?>" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="<?php esc_attr_e( 'Event location map', 'custom-event-registration' ); ?>"></iframe>
 									</div>
 								</div>
 							<?php endif; ?>
@@ -584,7 +584,7 @@ if ( ! function_exists( 'cer_event_page_split_lines' ) ) {
 }
 
 if ( ! function_exists( 'cer_event_page_get_map_embed_url' ) ) {
-	function cer_event_page_get_map_embed_url( $location_link, $lat, $lng, $address ) {
+	function cer_event_page_get_map_embed_url( $location_link, $lat, $lng, $address, $fallback_query = '' ) {
 		if ( $lat && $lng ) {
 			return 'https://www.google.com/maps?q=' . rawurlencode( $lat . ',' . $lng ) . '&output=embed';
 		}
@@ -601,6 +601,12 @@ if ( ! function_exists( 'cer_event_page_get_map_embed_url' ) ) {
 					return 'https://www.google.com/maps?q=' . rawurlencode( $params['q'] ) . '&output=embed';
 				}
 			}
+		}
+
+		// Short links (e.g. maps.app.goo.gl) carry no readable query — fall back to
+		// the venue/label text so the embed still renders something meaningful.
+		if ( $fallback_query && 'To be confirmed' !== $fallback_query ) {
+			return 'https://www.google.com/maps?q=' . rawurlencode( $fallback_query ) . '&output=embed';
 		}
 
 		return '';

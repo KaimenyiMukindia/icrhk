@@ -180,7 +180,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	$default_event['target_audience'] = wp_kses_post( wp_unslash( $_POST['target_audience'] ?? '' ) );
 	$default_event['event_date'] = cer_normalize_datetime_value( wp_unslash( $_POST['event_date'] ?? '' ) );
 	$default_event['event_end_date'] = cer_normalize_datetime_value( wp_unslash( $_POST['event_end_date'] ?? '' ) );
-	$default_event['venue'] = sanitize_text_field( wp_unslash( $_POST['event_venue'] ?? '' ) );
+	// The standalone venue field was removed from the form (it duplicated the
+	// Location / Map section). Accept a posted value for back-compat, otherwise
+	// keep the stored one; the location address below takes final precedence.
+	$posted_venue = sanitize_text_field( wp_unslash( $_POST['event_venue'] ?? '' ) );
+	if ( '' !== $posted_venue ) {
+		$default_event['venue'] = $posted_venue;
+	}
 	$default_event['status'] = sanitize_key( wp_unslash( $_POST['status'] ?? 'draft' ) );
 	$default_event['show_event_information'] = empty( $_POST['show_event_information'] ) ? 0 : 1;
 	$default_event['show_speakers'] = empty( $_POST['show_speakers'] ) ? 0 : 1;
@@ -205,6 +211,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	$default_event['location_lat'] = sanitize_text_field( wp_unslash( $_POST['location_lat'] ?? '' ) );
 	$default_event['location_lng'] = sanitize_text_field( wp_unslash( $_POST['location_lng'] ?? '' ) );
 	$default_event['location_address'] = sanitize_text_field( wp_unslash( $_POST['location_address'] ?? '' ) );
+
+	// Single source of truth for the venue: the Location / Map display address.
+	// The front end reads `venue`, so deriving it here keeps every existing
+	// consumer (hero badge, summary card, ticket PDF) working unchanged.
+	if ( '' !== $default_event['location_address'] ) {
+		$default_event['venue'] = $default_event['location_address'];
+	}
 
 	if ( empty( $default_event['title'] ) ) {
 		$errors['event_title'] = __( 'Please enter an event title.', 'custom-event-registration' );
@@ -275,6 +288,26 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	}
 
 	if ( empty( $errors ) ) {
+		// Total capacity is the sum of the individual ticket quantities. The
+		// dashboard "Max Attendees" field is derived from this and read-only.
+		$computed_max_attendees = 0;
+		foreach ( $ticket_rows as $ticket ) {
+			if ( '' === sanitize_text_field( wp_unslash( $ticket['name'] ?? '' ) ) ) {
+				continue;
+			}
+			$computed_max_attendees += absint( $ticket['quantity_available'] ?? 0 );
+		}
+		if ( $computed_max_attendees > 0 ) {
+			$default_event['max_attendees'] = $computed_max_attendees;
+		} elseif ( ! $default_event['max_attendees'] && $event_id ) {
+			// No quantities entered anywhere — keep whatever capacity the event
+			// already had instead of zeroing it out.
+			$existing_max = $wpdb->get_var( $wpdb->prepare( "SELECT max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d", $event_id ) );
+			if ( null !== $existing_max ) {
+				$default_event['max_attendees'] = (int) $existing_max;
+			}
+		}
+
 		$event_data = array(
 			'name' => $default_event['title'],
 			'slug' => $default_event['slug'],
@@ -816,10 +849,6 @@ if ( empty( $faq_rows ) ) {
 							<input type="text" id="event-end-date" class="cer-datetime-picker" name="event_end_date" value="<?php echo esc_attr( cer_format_datetime_for_picker( $event_data['event_end_date'] ) ); ?>" placeholder="YYYY-MM-DD HH:MM" />
 						</div>
 						<div class="cer-field">
-							<label for="event-venue"><?php esc_html_e( 'Venue', 'custom-event-registration' ); ?></label>
-							<input type="text" id="event-venue" name="event_venue" value="<?php echo esc_attr( $event_data['event_venue'] ); ?>" placeholder="Enter the event venue" />
-						</div>
-						<div class="cer-field">
 							<label for="status"><?php esc_html_e( 'Status', 'custom-event-registration' ); ?></label>
 							<select id="status" name="status">
 								<option value="draft" <?php selected( $event_data['status'], 'draft' ); ?>><?php esc_html_e( 'Draft', 'custom-event-registration' ); ?></option>
@@ -830,7 +859,8 @@ if ( empty( $faq_rows ) ) {
 						</div>
 						<div class="cer-field">
 							<label for="max-attendees"><?php esc_html_e( 'Max Attendees', 'custom-event-registration' ); ?></label>
-							<input type="number" id="max-attendees" name="max_attendees" value="<?php echo esc_attr( $event_data['max_attendees'] ); ?>" placeholder="250" min="0" />
+							<input type="number" id="max-attendees" name="max_attendees" value="<?php echo esc_attr( $event_data['max_attendees'] ); ?>" placeholder="0" min="0" readonly />
+							<p class="cer-help-text"><?php esc_html_e( 'Auto-calculated as the total of all ticket quantities added below.', 'custom-event-registration' ); ?></p>
 						</div>
 						<div class="cer-field">
 							<label><?php esc_html_e( 'Featured Image', 'custom-event-registration' ); ?></label>
@@ -1333,7 +1363,7 @@ if ( empty( $faq_rows ) ) {
 				<div class="cer-panel-header-actions"></div>
 			</div>
 			<div class="cer-panel-body">
-				<p class="cer-inline-help"><?php esc_html_e( 'Set the venue location. This link is used by the hero location badge and the front-end floating map widget.', 'custom-event-registration' ); ?></p>
+				<p class="cer-inline-help"><?php esc_html_e( 'Set the venue location once — it feeds the venue display, the hero location badge and the front-end floating map widget. Search for a place or paste coordinates (lat, lng) in the same map picker.', 'custom-event-registration' ); ?></p>
 				<div class="cer-field-grid">
 					<div class="cer-field cer-full">
 						<label for="location-link"><?php esc_html_e( 'Location Link (Google Maps URL)', 'custom-event-registration' ); ?></label>
@@ -1350,10 +1380,10 @@ if ( empty( $faq_rows ) ) {
 					<div class="cer-field cer-full">
 						<label for="location-address"><?php esc_html_e( 'Display Address', 'custom-event-registration' ); ?></label>
 						<input type="text" id="location-address" name="location_address" value="<?php echo esc_attr( $event_data['location_address'] ); ?>" placeholder="KICC, Nairobi, Kenya" />
+						<p class="cer-help-text"><?php esc_html_e( 'Also used as the event venue label on the front end and tickets.', 'custom-event-registration' ); ?></p>
 					</div>
 					<div class="cer-field cer-full">
 						<button type="button" class="button" id="cer-open-map-search"><?php esc_html_e( 'Search on Map', 'custom-event-registration' ); ?></button>
-						<button type="button" class="button" id="cer-use-coordinates"><?php esc_html_e( 'Use Coordinates as Link', 'custom-event-registration' ); ?></button>
 					</div>
 				</div>
 			</div>
@@ -1365,7 +1395,7 @@ if ( empty( $faq_rows ) ) {
 				<button type="button" class="cer-map-modal-close" id="cer-close-map-search" aria-label="<?php esc_attr_e( 'Close', 'custom-event-registration' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
 				<h2><?php esc_html_e( 'Search Location', 'custom-event-registration' ); ?></h2>
 				<div class="cer-map-search-row">
-					<input type="text" id="cer-map-search-input" placeholder="<?php esc_attr_e( 'Type an address or place name…', 'custom-event-registration' ); ?>" />
+					<input type="text" id="cer-map-search-input" placeholder="<?php esc_attr_e( 'Type an address, place name, or coordinates (lat, lng)…', 'custom-event-registration' ); ?>" />
 					<button type="button" class="button button-primary" id="cer-map-search-go"><?php esc_html_e( 'Preview', 'custom-event-registration' ); ?></button>
 				</div>
 				<div class="cer-map-embed-wrap">

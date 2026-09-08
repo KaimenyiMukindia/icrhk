@@ -11,7 +11,7 @@ final class PaystackService
 
     public function __construct()
     {
-        $this->secretKey = (string) env('PAYSTACK_SECRET_KEY', '');
+        $this->secretKey = self::getConfiguredValue('PAYSTACK_SECRET_KEY', '');
     }
 
     public function initializeTransaction(string $email, float $amount, array $metadata = [], array $channels = ['card', 'mobile_money']): array
@@ -25,19 +25,24 @@ final class PaystackService
 
         $amount = $this->sandboxAmount($amount);
         $fullName = trim((string) ($metadata['full_name'] ?? ''));
+        $gatewayPhone = self::resolveGatewayPhone((string) ($metadata['phone'] ?? ''));
+        $payload = [
+            'email' => $email,
+            'amount' => (int) round($amount * 100),
+            'currency' => 'KES',
+            'reference' => (string) ($metadata['payment_uuid'] ?? ''),
+            'first_name' => $fullName,
+            'channels' => array_values($channels),
+            'metadata' => $metadata,
+        ];
+        if ($gatewayPhone !== '') {
+            $payload['phone'] = $gatewayPhone;
+        }
+
         $response = Http::timeout(15)
             ->withToken($this->secretKey)
             ->acceptJson()
-            ->post($this->baseUrl . '/transaction/initialize', [
-                'email' => $email,
-                'amount' => (int) round($amount * 100),
-                'currency' => 'KES',
-                'reference' => (string) ($metadata['payment_uuid'] ?? ''),
-                'first_name' => $fullName,
-                'phone' => (string) ($metadata['phone'] ?? ''),
-                'channels' => array_values($channels),
-                'metadata' => $metadata,
-            ]);
+            ->post($this->baseUrl . '/transaction/initialize', $payload);
 
         if (! $response->successful() || $response->json('status') !== true) {
             logger()->error('Paystack transaction initialization failed', [
@@ -98,6 +103,7 @@ final class PaystackService
         }
 
         $amount = $this->sandboxAmount($amount);
+        $gatewayPhone = self::resolveGatewayPhone($phone);
         $response = Http::timeout(15)
             ->withToken($this->secretKey)
             ->acceptJson()
@@ -107,7 +113,7 @@ final class PaystackService
                 'currency' => 'KES',
                 'reference' => $reference,
                 'mobile_money' => [
-                    'phone' => str_starts_with($phone, '+') ? $phone : '+' . $phone,
+                    'phone' => $gatewayPhone,
                     'provider' => 'mpesa',
                 ],
                 'metadata' => $metadata,
@@ -157,8 +163,85 @@ final class PaystackService
         return hash_equals(hash_hmac('sha512', $payload, $this->secretKey), $signature);
     }
 
+    public static function resolveGatewayPhone(string $phone): string
+    {
+        $normalized = preg_replace('/\D+/', '', trim((string) $phone)) ?? '';
+        if ($normalized === '') {
+            return '';
+        }
+
+        if (self::isSandboxEnvironment()) {
+            return '+254710000000';
+        }
+
+        if (str_starts_with($normalized, '254')) {
+            return '+' . $normalized;
+        }
+
+        if (str_starts_with($normalized, '0')) {
+            return '+254' . substr($normalized, 1);
+        }
+
+        return '+254' . $normalized;
+    }
+
     private function sandboxAmount(float $amount): float
     {
-        return strtolower((string) env('PAYSTACK_ENV', 'live')) === 'sandbox' ? 1.00 : $amount;
+        return self::isSandboxEnvironment() ? 1.00 : $amount;
+    }
+
+    public static function isSandboxEnvironment(): bool
+    {
+        return strtolower(self::getConfiguredValue('PAYSTACK_ENV', 'live')) === 'sandbox';
+    }
+
+    public static function getConfiguredValue(string $key, string $default = ''): string
+    {
+        if (function_exists('env')) {
+            $value = env($key, $default);
+            if (is_string($value) && $value !== '') {
+                return $value;
+            }
+        }
+
+        $value = getenv($key);
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
+
+        $value = $_ENV[$key] ?? $_SERVER[$key] ?? '';
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
+
+        $dotenvPath = dirname(__DIR__, 2) . '/.env';
+        if (is_file($dotenvPath)) {
+            $lines = file($dotenvPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                $trimmed = trim($line);
+                if ($trimmed === '' || str_starts_with($trimmed, '#')) {
+                    continue;
+                }
+
+                [$name, $rawValue] = array_pad(explode('=', $trimmed, 2), 2, '');
+                if (trim($name) !== $key) {
+                    continue;
+                }
+
+                $parsed = trim((string) $rawValue);
+                if (str_starts_with($parsed, '"') && str_ends_with($parsed, '"')) {
+                    $parsed = trim($parsed, '"');
+                }
+                if (str_starts_with($parsed, "'") && str_ends_with($parsed, "'")) {
+                    $parsed = trim($parsed, "'");
+                }
+
+                if ($parsed !== '') {
+                    return $parsed;
+                }
+            }
+        }
+
+        return $default;
     }
 }

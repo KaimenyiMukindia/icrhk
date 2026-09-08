@@ -361,12 +361,29 @@
         return 'https://www.google.com/maps?q=' + encodeURIComponent(query);
     }
 
+    /* One picker for everything: the Google Maps embed `q` parameter accepts a
+       place name/address or "lat,lng" coordinates alike (Maps Embed docs), so
+       both flow through the same iframe preview and the same confirm step. */
+    function parseCoordinates(query) {
+        var match = query.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+        return match ? { lat: match[1], lng: match[2] } : null;
+    }
+
+    function previewMapQuery(query) {
+        if (!query) {
+            return;
+        }
+        $('#cer-map-embed').attr('src', mapEmbedUrlFromQuery(query));
+    }
+
     $('#cer-open-map-search').on('click', function () {
         var $modal = $('#cer-map-modal');
-        var initialQuery = $('#location-address').val() || $('#location-link').val() || '';
+        var lat = $('#location-lat').val().trim();
+        var lng = $('#location-lng').val().trim();
+        var initialQuery = $('#location-address').val() || ((lat && lng) ? lat + ',' + lng : '') || $('#location-link').val() || '';
         $('#cer-map-search-input').val(initialQuery);
         if (initialQuery) {
-            $('#cer-map-embed').attr('src', mapEmbedUrlFromQuery(initialQuery));
+            previewMapQuery(initialQuery);
         }
         $modal.attr('hidden', false);
     });
@@ -380,11 +397,17 @@
     });
 
     $('#cer-map-search-go').on('click', function () {
-        var query = $('#cer-map-search-input').val().trim();
-        if (!query) {
-            return;
+        previewMapQuery($('#cer-map-search-input').val().trim());
+    });
+
+    /* The picker modal sits inside the event <form>: Enter must preview the
+       search, never submit the form (which used to close the modal and reload
+       the page without applying the searched location). */
+    $('#cer-map-search-input').on('keydown', function (event) {
+        if (event.key === 'Enter' || event.keyCode === 13) {
+            event.preventDefault();
+            previewMapQuery($(this).val().trim());
         }
-        $('#cer-map-embed').attr('src', mapEmbedUrlFromQuery(query));
     });
 
     $('#cer-map-use-location').on('click', function () {
@@ -392,17 +415,38 @@
         if (query) {
             $('#location-link').val(mapLinkFromQuery(query));
             $('#location-address').val(query);
+            var coords = parseCoordinates(query);
+            if (coords) {
+                $('#location-lat').val(coords.lat);
+                $('#location-lng').val(coords.lng);
+            }
         }
         $('#cer-map-modal').attr('hidden', true);
     });
 
-    $('#cer-use-coordinates').on('click', function () {
-        var lat = $('#location-lat').val().trim();
-        var lng = $('#location-lng').val().trim();
-        if (lat && lng) {
-            $('#location-link').val('https://www.google.com/maps?q=' + encodeURIComponent(lat + ',' + lng));
+    /* Max Attendees is derived: always the sum of the individual ticket
+       quantities, so the field is read-only and recounted live. */
+    function refreshMaxAttendees(soft) {
+        var total = 0;
+        $('[name^="tickets["][name$="[quantity_available]"]').each(function () {
+            var value = parseInt($(this).val(), 10);
+            if (!isNaN(value) && value > 0) {
+                total += value;
+            }
+        });
+        if (soft && total === 0) {
+            return; // keep the stored value until a quantity is entered
         }
+        $('#max-attendees').val(total);
+    }
+
+    $(document).on('input', '[name^="tickets["][name$="[quantity_available]"]', function () {
+        refreshMaxAttendees(false);
     });
+    $(document).on('click', '.cer-add-row, .cer-remove-row', function () {
+        refreshMaxAttendees(false);
+    });
+    refreshMaxAttendees(true);
 
     $('.cer-panel').each(function (index) {
         if (index > 0 && !$(this).hasClass('is-collapsed')) {

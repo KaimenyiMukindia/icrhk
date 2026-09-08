@@ -31,6 +31,7 @@ add_action( 'admin_init', 'cer_maybe_ensure_event_schema' );
 add_action( 'admin_init', 'cer_handle_admin_actions' );
 add_action( 'wp_ajax_cer_submit_registration', 'cer_handle_ajax_submission' );
 add_action( 'wp_ajax_nopriv_cer_submit_registration', 'cer_handle_ajax_submission' );
+add_action( 'rest_api_init', 'cer_register_rest_routes' );
 add_action( 'cer_sync_registration', 'cer_sync_registration_async' );
 add_action( 'wp_enqueue_scripts', 'cer_enqueue_frontend_assets' );
 add_action( 'admin_enqueue_scripts', 'cer_enqueue_admin_assets' );
@@ -710,9 +711,46 @@ function cer_enqueue_frontend_assets() {
 	}
 
 	if ( $should_enqueue ) {
+		wp_dequeue_script( 'tweenMax' );
+		wp_deregister_script( 'tweenMax' );
+		wp_dequeue_script( 'wow' );
+		wp_deregister_script( 'wow' );
+		wp_dequeue_script( 'appear' );
+		wp_deregister_script( 'appear' );
+		wp_dequeue_script( 'isotope' );
+		wp_deregister_script( 'isotope' );
+
 		wp_enqueue_style( 'dashicons' );
-		// Plus Jakarta Sans is declared on .cer-kamgc-page but was never enqueued,
-		// so the display face silently fell back to Open Sans.
+
+		$critical_css = "
+			.cer-kamgc-page { font-family: 'Plus Jakarta Sans', 'Open Sans', sans-serif; color: #0b1726; }
+			.cer-kamgc-shell { max-width: 1200px; margin: 0 auto; padding: 0 18px 48px; }
+			.cer-kamgc-hero { position: relative; margin-top: 24px; padding: 32px 0 0; }
+			.cer-kamgc-hero-inner { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.8fr); gap: 28px; align-items: start; }
+			.cer-kamgc-hero-copy { position: relative; z-index: 1; }
+			.cer-kamgc-hero-badges { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+			.cer-kamgc-badge, .cer-kamgc-convening-badge, .cer-kamgc-activism-badge, .cer-kamgc-emblem-badge { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(255,255,255,.75); border: 1px solid rgba(18,63,70,.12); box-shadow: 0 16px 32px rgba(11,23,38,.08); }
+			.cer-kamgc-hero-copy h1 { margin: 0 0 16px; font-size: clamp(2.4rem, 5vw, 5rem); line-height: 0.96; letter-spacing: -0.06em; }
+			.cer-kamgc-hero-copy h1 span { display: block; color: #0b7a73; }
+			.cer-kamgc-hero-description { max-width: 62ch; font-size: 1.05rem; line-height: 1.7; color: rgba(11,23,38,.8); }
+			.cer-kamgc-feature-list { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 10px; }
+			.cer-kamgc-feature-list li { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #0d2f3c; }
+			.cer-kamgc-summary-box { background: rgba(255,255,255,.8); border: 1px solid rgba(18,63,70,.12); border-radius: 22px; box-shadow: 0 18px 40px rgba(11,23,38,.08); }
+			.cer-kamgc-hero-summary { padding: 22px; }
+			.cer-kamgc-summary-metadata { display: grid; gap: 12px; }
+			.cer-kamgc-summary-metadata > div { display: flex; gap: 12px; align-items: center; }
+			.cer-kamgc-summary-metadata small { display: block; color: rgba(11,23,38,.62); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+			.cer-kamgc-summary-metadata strong { display: block; font-size: 1rem; }
+			.cer-kamgc-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 24px; }
+			.cer-kamgc-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 14px; text-decoration: none; font-weight: 700; }
+			.cer-kamgc-button-primary { background: linear-gradient(135deg, #0b7a73, #0f9d8b); color: white; }
+			.cer-kamgc-button-secondary { background: white; border: 1px solid rgba(11,23,38,.12); color: #0b1726; }
+			@media (max-width: 900px) { .cer-kamgc-hero-inner { grid-template-columns: 1fr; } }
+		";
+
+		wp_register_style( 'cer-event-critical', false, array(), null );
+		wp_add_inline_style( 'cer-event-critical', $critical_css );
+		wp_enqueue_style( 'cer-event-critical' );
 		wp_enqueue_style( 'cer-event-fonts', 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style( 'cer-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap', array(), null );
 		wp_enqueue_style( 'cer-event-registration', CER_PLUGIN_URL . 'assets/css/cer-event.css', array( 'cer-event-fonts', 'cer-material-symbols' ), filemtime( CER_PLUGIN_DIR . 'assets/css/cer-event.css' ) );
@@ -720,6 +758,7 @@ function cer_enqueue_frontend_assets() {
 		wp_enqueue_script( 'cer-event-registration', CER_PLUGIN_URL . 'assets/js/cer-registration.js', array( 'cer-paystack-inline' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-registration.js' ), true );
 		wp_localize_script( 'cer-event-registration', 'cerRegistrationSettings', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'rest_url' => rest_url( 'cer/v1/register' ),
 			'nonce'    => wp_create_nonce( 'cer_registration_form' ),
 			'currency' => 'KES',
 			'payment_verify_url' => home_url( '/laravel-engine/public/api/payment/verify' ),
@@ -996,9 +1035,12 @@ function cer_initiate_laravel_payment( array $registration_data ): array {
 			'headers' => array(
 				'Content-Type' => 'application/json; charset=utf-8',
 				'X-WordPress-Bridge' => 'cer',
+				'Connection' => 'keep-alive',
 			),
 			'body' => wp_json_encode( $registration_data ),
-			'timeout' => 20,
+			'timeout' => 8,
+			'connect_timeout' => 3,
+			'httpversion' => '1.1',
 		)
 	);
 
@@ -1068,22 +1110,52 @@ function cer_confirm_registration_paid( int $registration_id ): array {
 	}
 }
 
-function cer_handle_ajax_submission() {
-	$nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] ) ) : '';
+function cer_register_rest_routes() {
+	register_rest_route(
+		'cer/v1',
+		'/register',
+		array(
+			'methods'             => WP_REST_Server::CREATABLE,
+			'callback'            => 'cer_handle_rest_registration_submission',
+			'permission_callback' => '__return_true',
+		)
+	);
+}
+
+function cer_handle_rest_registration_submission( WP_REST_Request $request ) {
+	$payload = $request->get_body_params();
+	$result = cer_process_registration_submission( $payload );
+
+	if ( ! empty( $result['success'] ) ) {
+		return rest_ensure_response( array(
+			'success' => true,
+			'data'    => $result['data'],
+		) );
+	}
+
+	return rest_ensure_response( array(
+		'success' => false,
+		'data'    => array( 'message' => $result['message'] ),
+	) );
+}
+
+function cer_process_registration_submission( $payload = array() ) {
+	$payload = is_array( $payload ) ? $payload : array();
+	$nonce = isset( $payload['security'] ) ? sanitize_text_field( wp_unslash( $payload['security'] ) ) : '';
 	if ( ! wp_verify_nonce( $nonce, 'cer_registration_form' ) ) {
-		wp_send_json_error( array( 'message' => 'Security verification failed.' ) );
+		return array( 'success' => false, 'message' => 'Security verification failed.' );
 	}
 
 	global $wpdb;
 
-	$full_name = sanitize_text_field( wp_unslash( $_POST['full_name'] ?? '' ) );
-	$email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
-	$phone = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
-	$ticket_type_id = absint( wp_unslash( $_POST['ticket_type_id'] ?? 0 ) );
-	$ticket_type = sanitize_text_field( wp_unslash( $_POST['ticket_type'] ?? '' ) );
-	$payment_method = sanitize_text_field( wp_unslash( $_POST['payment_method'] ?? '' ) );
-	$notes = sanitize_textarea_field( wp_unslash( $_POST['notes'] ?? '' ) );
-	$event_id = absint( wp_unslash( $_POST['event_id'] ?? 0 ) );
+	$full_name = sanitize_text_field( wp_unslash( $payload['full_name'] ?? '' ) );
+	$email = sanitize_email( wp_unslash( $payload['email'] ?? '' ) );
+	$phone = sanitize_text_field( wp_unslash( $payload['phone'] ?? '' ) );
+	$ticket_type_id = absint( wp_unslash( $payload['ticket_type_id'] ?? 0 ) );
+	$ticket_type = sanitize_text_field( wp_unslash( $payload['ticket_type'] ?? '' ) );
+	$payment_method = sanitize_text_field( wp_unslash( $payload['payment_method'] ?? '' ) );
+	$notes = sanitize_textarea_field( wp_unslash( $payload['notes'] ?? '' ) );
+	$event_id = absint( wp_unslash( $payload['event_id'] ?? 0 ) );
 
 		$payment_method = in_array( $payment_method, array( 'mpesa', 'card' ), true ) ? $payment_method : '';
 		// Phone is required for both methods; full name is only collected for M-Pesa.
@@ -1098,7 +1170,7 @@ function cer_handle_ajax_submission() {
 		}
 
 		if ( empty( $email ) || empty( $payment_method ) || empty( $phone ) || ( 'mpesa' === $payment_method && empty( $full_name ) ) ) {
-		wp_send_json_error( array( 'message' => 'Please complete all required fields.' ) );
+		return array( 'success' => false, 'message' => 'Please complete all required fields.' );
 	}
 		if ( 'card' === $payment_method ) {
 			$full_name = '';
@@ -1107,15 +1179,15 @@ function cer_handle_ajax_submission() {
 	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = %s LIMIT 1", $event_id, 'published' ) );
 	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d LIMIT 1", $ticket_type_id, $event_id ) );
 	if ( ! $event || ! $ticket ) {
-		wp_send_json_error( array( 'message' => 'The selected event or ticket is no longer available.' ) );
+		return array( 'success' => false, 'message' => 'The selected event or ticket is no longer available.' );
 	}
 
 	$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d AND status = %s", $event_id, 'paid' ) );
 	if ( ! empty( $event->max_attendees ) && $paid_registrations >= (int) $event->max_attendees ) {
-		wp_send_json_error( array( 'message' => 'This event has reached its attendance capacity.' ) );
+		return array( 'success' => false, 'message' => 'This event has reached its attendance capacity.' );
 	}
 	if ( null !== $ticket->quantity_available && (int) $ticket->quantity_sold >= (int) $ticket->quantity_available ) {
-		wp_send_json_error( array( 'message' => 'This ticket type is sold out.' ) );
+		return array( 'success' => false, 'message' => 'This ticket type is sold out.' );
 	}
 
 	$ticket_type = (string) $ticket->name;
@@ -1184,11 +1256,17 @@ function cer_handle_ajax_submission() {
 			if ( ! wp_schedule_single_event( time() + 1, 'cer_sync_registration', array( $sync_data ) ) ) {
 				error_log( 'CER Laravel sync could not be scheduled.' );
 			}
-			wp_send_json_success( array(
+			return array(
+				'success' => true,
+				'data'    => array(
 					'message' => 'Registration received. Opening secure payment checkout.',
+					'payment_method' => $payment_method,
+					'payment_status' => ! empty( $payment_response['status'] ) ? sanitize_text_field( $payment_response['status'] ) : 'pending',
+					'display_text' => ! empty( $payment_response['display_text'] ) ? sanitize_text_field( $payment_response['display_text'] ) : '',
 					'access_code' => ! empty( $payment_response['access_code'] ) ? sanitize_text_field( $payment_response['access_code'] ) : '',
 					'reference' => ! empty( $payment_response['reference'] ) ? sanitize_text_field( $payment_response['reference'] ) : '',
-			) );
+				),
+			);
 		} catch ( Exception $e ) {
 			error_log( 'CER payment initiation failed: ' . $e->getMessage() );
 			$wpdb->update(
@@ -1198,10 +1276,18 @@ function cer_handle_ajax_submission() {
 				array( '%s', '%s' ),
 				array( '%s' )
 			);
-			wp_send_json_error( array( 'message' => 'Payment initiation failed: ' . $e->getMessage() ) );
+			return array( 'success' => false, 'message' => 'Payment initiation failed: ' . $e->getMessage() );
 		}
 	}
-	wp_send_json_error( array( 'message' => 'The registration could not be saved.' ) );
+	return array( 'success' => false, 'message' => 'The registration could not be saved.' );
+}
+
+function cer_handle_ajax_submission() {
+	$result = cer_process_registration_submission( $_POST );
+	if ( ! empty( $result['success'] ) ) {
+		wp_send_json_success( $result['data'] );
+	}
+	wp_send_json_error( array( 'message' => $result['message'] ) );
 }
 
 function cer_sync_registration_async( array $sync_data ): void {
