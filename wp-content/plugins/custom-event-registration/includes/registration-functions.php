@@ -26,7 +26,7 @@ function cer_get_registration_form_markup( $event_id = null ) {
 	<form id="cer-registration-form" class="cer-registration-form" method="post" data-payment-method="mpesa" novalidate>
 		<div class="cer-payment-toggle" role="tablist" aria-label="Select payment method">
 			<button class="cer-payment-toggle-btn is-active" id="btn-mpesa" type="button">M-Pesa</button>
-			<button class="cer-payment-toggle-btn" id="btn-card" type="button">Credit/Debit Card</button>
+			<button class="cer-payment-toggle-btn" id="btn-card" type="button"><span class="cer-toggle-label-full">Credit/Debit Card</span><span class="cer-toggle-label-short">Card</span></button>
 		</div>
 		<input id="payment_method_hidden" name="payment_method" type="hidden" value="mpesa">
 		<div class="cer-form-grid">

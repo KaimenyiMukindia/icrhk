@@ -5953,35 +5953,38 @@ html.cer-js .cer-reveal.is-visible {
 }
 
 /* ==========================================================================
-   OUR OBJECTIVES — card copy runs the full card width
+   OUR OBJECTIVES — card copy runs the full card width (<=1024px only)
    ========================================================================== */
 
-/* --- The numeral spanned both rows, so the description was penned into the
-   right-hand column with an empty 54px gutter beside it — a hard indent on
-   desktop and a stranded block on mobile. The numeral now marks the title
-   row only and the description spans the card, edge to edge. ------------- */
-.cer-kamgc-objectives .cer-kamgc-compact-card {
-    grid-template-columns: 44px minmax(0, 1fr) !important;
-    gap: 0.6rem 0.75rem !important;
-    align-items: center;
-}
+/* --- On a narrow card the numeral spanning both rows stranded the
+   description in the right-hand column behind an empty 54px gutter, so below
+   1025px the numeral marks the title row only and the description runs edge
+   to edge. Desktop keeps the original indent — the description starts on the
+   heading's left edge — which reads correctly at three columns wide. ----- */
+@media (max-width: 1024px) {
+    .cer-kamgc-objectives .cer-kamgc-compact-card {
+        grid-template-columns: 44px minmax(0, 1fr) !important;
+        gap: 0.6rem 0.75rem !important;
+        align-items: center;
+    }
 
-.cer-kamgc-objectives .cer-kamgc-compact-card::before {
-    grid-row: 1 !important;
-    grid-column: 1 !important;
-    align-self: center;
-}
+    .cer-kamgc-objectives .cer-kamgc-compact-card::before {
+        grid-row: 1 !important;
+        grid-column: 1 !important;
+        align-self: center;
+    }
 
-.cer-kamgc-objectives .cer-kamgc-compact-card h3 {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-    margin: 0 !important;
-    align-self: center;
-}
+    .cer-kamgc-objectives .cer-kamgc-compact-card h3 {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        margin: 0 !important;
+        align-self: center;
+    }
 
-.cer-kamgc-objectives .cer-kamgc-compact-card p {
-    grid-column: 1 / -1 !important;
-    grid-row: 2 !important;
+    .cer-kamgc-objectives .cer-kamgc-compact-card p {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+    }
 }
 
 /* ==========================================================================
@@ -6044,5 +6047,217 @@ html.cer-js .cer-reveal.is-visible {
     .cer-payment-toggle-btn {
         width: 100%;
         border-radius: 10px !important;
+    }
+}
+
+/* ==========================================================================
+   THEMATIC PILLARS — small-screen popup (<=1024px)
+   --------------------------------------------------------------------------
+   A centred popup in the brand orange with its own cancel button, not an
+   inline expansion. JS moves the panel out of its card into this body-level
+   fixed host while it is open, so the card keeps its height and the document
+   never reflows; the page is scroll-locked behind it. The portal is necessary
+   rather than a fixed-in-place panel: `.cer-kamgc-pillars-card-wrapper`
+   carries backdrop-filter and therefore becomes the containing block for any
+   fixed descendant, and the rail's overflow-x would clip an absolute one.
+   Desktop (>=1025px) keeps its own hover tooltip untouched.
+   ========================================================================== */
+.cer-pillar-pop,
+.cer-pillar-pop-backdrop {
+    /* Both hosts live on <body>, outside .cer-event-page/.cer-kamgc-page, so
+       the page's design tokens do not reach them. Restate the few needed. */
+    --k-orange: #F0761E;
+    --cer-radius-xl: 24px;
+    --cer-dur-micro: 150ms;
+    --cer-dur-base: 250ms;
+    --cer-ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cer-pillar-pop-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(11, 20, 28, 0.5);
+    opacity: 0;
+    transition: opacity var(--cer-dur-base) var(--cer-ease-out);
+}
+
+.cer-pillar-pop-backdrop.is-visible {
+    opacity: 1;
+}
+
+.cer-pillar-pop {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 100001;
+    width: min(340px, calc(100vw - 2.5rem));
+    max-height: calc(100vh - 3rem);
+    display: flex;
+    flex-direction: column;
+    padding: 1.35rem 1.25rem 1.35rem;
+    background: var(--k-orange);
+    color: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 18px 44px rgba(240, 118, 30, 0.36);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+    transition: opacity var(--cer-dur-base) var(--cer-ease-out),
+                transform var(--cer-dur-base) var(--cer-ease-out);
+}
+
+.cer-pillar-pop.is-visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.cer-pillar-pop-cancel {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.18);
+    color: #ffffff;
+    cursor: pointer;
+    transition: background var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+.cer-pillar-pop-cancel:hover,
+.cer-pillar-pop-cancel:focus-visible {
+    background: rgba(0, 0, 0, 0.34);
+}
+
+.cer-pillar-pop-cancel .material-symbols-outlined {
+    font-size: 19px;
+    line-height: 1;
+}
+
+.cer-pillar-pop-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.cer-pillar-pop-title {
+    margin: 0 2rem 0.5rem 0 !important;
+    color: #ffffff !important;
+    font-size: 1rem !important;
+    line-height: 1.3 !important;
+    font-weight: 700 !important;
+    text-align: left !important;
+}
+
+/* The portalled panel is no longer a collapsible row inside a card: reset the
+   0fr/1fr machinery and every tooltip artefact it carries — the host owns the
+   chrome now. */
+.cer-pillar-pop .cer-kamgc-pillars-back {
+    display: block !important;
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    transform: none !important;
+    grid-template-rows: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transition: none !important;
+}
+
+/* Kill the tooltip arrow and the panel's own corner ×; the host has a cancel
+   button of its own. */
+.cer-pillar-pop .cer-kamgc-pillars-back::before,
+.cer-pillar-pop .cer-kamgc-pillars-back::after,
+.cer-pillar-pop .cer-kamgc-pillars-close {
+    display: none !important;
+}
+
+.cer-pillar-pop .cer-kamgc-pillars-back > * {
+    overflow: visible !important;
+    min-height: 0 !important;
+}
+
+.cer-pillar-pop .cer-kamgc-pillars-back p {
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #ffffff !important;
+    font-size: 0.9rem !important;
+    line-height: 1.6 !important;
+    font-weight: 500 !important;
+    text-align: left !important;
+}
+
+/* No page scroll while the popup is open. */
+body.cer-pillar-pop-lock {
+    overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cer-pillar-pop,
+    .cer-pillar-pop-backdrop {
+        transition: none !important;
+    }
+}
+
+/* Desktop keeps the in-card tooltip; these hosts are never used there. */
+@media (min-width: 1025px) {
+    .cer-pillar-pop,
+    .cer-pillar-pop-backdrop {
+        display: none !important;
+    }
+}
+
+/* ==========================================================================
+   PAYMENT TOGGLE — side by side below 1025px
+   --------------------------------------------------------------------------
+   The two tabs dropped to a single column below 820px, which pushed the form
+   down and read as two unrelated buttons rather than one switch. They stay
+   side by side at every width now; "Credit/Debit Card" is too long for half a
+   phone width, so it shortens to "Card" and the full name returns on desktop.
+   ========================================================================== */
+
+/* Short label is desktop-hidden; the pair swaps at the breakpoint. */
+.cer-toggle-label-short {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .cer-payment-toggle {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        /* Back to the pill track — the rectangle geometry below only existed
+           to serve the stacked layout. */
+        border-radius: 999px !important;
+        padding: 5px !important;
+        gap: 4px !important;
+    }
+
+    .cer-payment-toggle-btn {
+        width: 100%;
+        border-radius: 999px !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        white-space: nowrap;
+    }
+
+    .cer-toggle-label-full {
+        display: none;
+    }
+
+    .cer-toggle-label-short {
+        display: inline;
     }
 }
