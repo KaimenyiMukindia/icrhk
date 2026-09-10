@@ -6261,3 +6261,216 @@ body.cer-pillar-pop-lock {
         display: inline;
     }
 }
+
+/* ==========================================================================
+   HERO COUNTDOWN — inside the Conference Summary card
+   --------------------------------------------------------------------------
+   Sits between the card heading and the Starts / Ends rows, so the dates and
+   the time left to them read as one block. Tiles reuse the summary rows'
+   white-on-glass fill and 14px radius; digits use the hero heading's
+   Montserrat 800. Every rule is qualified through .cer-kamgc-countdown so
+   the card's generic `strong` / `p` rules cannot restyle it. The block is a
+   direct child of the hero summary, so it already joins the hero load
+   sequence and that sequence's reduced-motion override.
+   ========================================================================== */
+.cer-kamgc-countdown {
+    display: grid;
+    gap: 0.65rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Plus Jakarta Sans', 'Open Sans', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--k-purple, #5A2A8C);
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-label::before,
+.cer-kamgc-countdown .cer-kamgc-countdown-pill::before {
+    content: "";
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--k-orange, #F0761E);
+    animation: cer-countdown-beat 2s ease-in-out infinite;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-tz {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #6b7683;
+}
+
+/* auto-fit, not a fixed four: in the final 24 hours the Days tile drops out
+   and the remaining three share the row. Four 54px tiles fit the ~254px the
+   card has at 390px. */
+.cer-kamgc-countdown .cer-kamgc-countdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
+    gap: 0.5rem;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-unit {
+    display: grid;
+    justify-items: center;
+    gap: 0.4rem;
+    padding: 0.75rem 0.25rem 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.62);
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-unit b {
+    font-family: 'Montserrat', 'Open Sans', sans-serif;
+    font-size: clamp(1.4rem, 1.1rem + 0.9vw, 1.75rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: #0f172a;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-unit span {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #6b7683;
+}
+
+/* Final 24 hours: days are always zero, so the tile goes and the digits
+   take the orange accent. #C8590A rather than the brand orange keeps the
+   large digits above 3:1 on the white glass. */
+.cer-kamgc-countdown[data-state="final"] .cer-kamgc-countdown-unit[data-unit="days"] {
+    display: none;
+}
+
+.cer-kamgc-countdown[data-state="final"] .cer-kamgc-countdown-unit b {
+    color: #C8590A;
+}
+
+/* One state visible at a time; data-state is printed by PHP and kept
+   current by cer-registration.js. */
+.cer-kamgc-countdown .cer-kamgc-countdown-live,
+.cer-kamgc-countdown .cer-kamgc-countdown-done {
+    display: none;
+}
+
+.cer-kamgc-countdown[data-state="live"] .cer-kamgc-countdown-live,
+.cer-kamgc-countdown[data-state="done"] .cer-kamgc-countdown-done {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.cer-kamgc-countdown[data-state="live"] .cer-kamgc-countdown-head,
+.cer-kamgc-countdown[data-state="live"] .cer-kamgc-countdown-grid,
+.cer-kamgc-countdown[data-state="done"] .cer-kamgc-countdown-head,
+.cer-kamgc-countdown[data-state="done"] .cer-kamgc-countdown-grid {
+    display: none;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-pill {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: var(--k-orange-tint, rgba(240, 118, 30, 0.12));
+    color: #9C4308;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-pill::before {
+    animation-duration: 1.4s;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-day {
+    font-family: 'Montserrat', 'Open Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #0f172a;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-days {
+    display: grid;
+    grid-template-columns: repeat(var(--cer-day-count, 3), minmax(0, 1fr));
+    gap: 0.4rem;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-segment {
+    display: grid;
+    gap: 0.35rem;
+}
+
+/* Fill is a scaleX, not a width, so the per-second update never triggers
+   layout. */
+.cer-kamgc-countdown .cer-kamgc-countdown-segment i {
+    position: relative;
+    display: block;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: rgba(20, 32, 43, 0.1);
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-segment i::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--k-purple, #5A2A8C), var(--k-orange, #F0761E));
+    transform: scaleX(var(--cer-fill, 0));
+    transform-origin: left;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-segment small {
+    font-size: 0.66rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #6b7683;
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-note {
+    font-size: 0.8rem;
+    color: var(--kamgc-body, #475467);
+}
+
+.cer-kamgc-countdown .cer-kamgc-countdown-done-title {
+    font-family: 'Montserrat', 'Open Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: #0f172a;
+}
+
+@keyframes cer-countdown-beat {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cer-kamgc-countdown .cer-kamgc-countdown-label::before,
+    .cer-kamgc-countdown .cer-kamgc-countdown-pill::before {
+        animation: none;
+    }
+}

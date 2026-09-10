@@ -696,3 +696,86 @@
         });
     }, { passive: true });
 })(document, window);
+
+/* --- Hero countdown ------------------------------------------------------
+   PHP prints the current numbers and state, so the card is readable before
+   this runs; the script only keeps them ticking and moves between states.
+   It counts from the visitor's clock, not a server time in the markup: the
+   page can be served from cache long after it was rendered. */
+(function (document, window) {
+    var roots = document.querySelectorAll('.cer-kamgc-countdown');
+    var DAY_MS = 86400000;
+
+    function pad(value) {
+        return (value < 10 ? '0' : '') + value;
+    }
+
+    function setup(root) {
+        var starts = Date.parse(root.getAttribute('data-starts'));
+        var ends = Date.parse(root.getAttribute('data-ends'));
+        if (isNaN(starts) || isNaN(ends)) {
+            return;
+        }
+
+        var label = root.querySelector('[data-countdown-label]');
+        var dayLabel = root.querySelector('[data-countdown-day]');
+        var units = {};
+        ['days', 'hours', 'minutes', 'seconds'].forEach(function (unit) {
+            units[unit] = root.querySelector('[data-unit="' + unit + '"] b');
+        });
+        var segments = Array.prototype.map.call(root.querySelectorAll('.cer-kamgc-countdown-segment'), function (el) {
+            return { open: Date.parse(el.getAttribute('data-open')), close: Date.parse(el.getAttribute('data-close')), bar: el.querySelector('i') };
+        });
+
+        /* "Today" and "tomorrow" are the event's calendar days, not the visitor's. */
+        var dateKey;
+        try {
+            var format = new Intl.DateTimeFormat('en-CA', { timeZone: root.getAttribute('data-timezone'), year: 'numeric', month: '2-digit', day: '2-digit' });
+            dateKey = function (time) { return format.format(new Date(time)); };
+        } catch (error) {
+            dateKey = function (time) { return new Date(time).toDateString(); };
+        }
+
+        var timer = 0;
+
+        function render() {
+            var now = Date.now();
+            var state = now >= ends ? 'done' : now >= starts ? 'live' : now >= starts - DAY_MS ? 'final' : 'upcoming';
+            root.setAttribute('data-state', state);
+
+            if (state === 'upcoming' || state === 'final') {
+                var total = Math.floor((starts - now) / 1000);
+                var days = Math.floor(total / 86400);
+                var hours = Math.floor((total % 86400) / 3600);
+                var minutes = Math.floor((total % 3600) / 60);
+                units.days.textContent = days;
+                units.hours.textContent = pad(hours);
+                units.minutes.textContent = pad(minutes);
+                units.seconds.textContent = pad(total % 60);
+                label.textContent = state === 'final'
+                    ? (dateKey(now) === dateKey(starts) ? 'Opens today at ' : 'Opens tomorrow at ') + root.getAttribute('data-start-time')
+                    : root.getAttribute('data-label');
+                root.setAttribute('aria-label', days + ' days, ' + hours + ' hours and ' + minutes + ' minutes until the conference opens');
+            } else if (state === 'live') {
+                var day = 0;
+                segments.forEach(function (segment) {
+                    if (now >= segment.open) {
+                        day++;
+                    }
+                    var fill = Math.min(1, Math.max(0, (now - segment.open) / Math.max(1, segment.close - segment.open)));
+                    segment.bar.style.setProperty('--cer-fill', fill.toFixed(3));
+                });
+                dayLabel.textContent = 'Day ' + Math.max(1, day) + ' of ' + segments.length;
+                root.setAttribute('aria-label', 'The conference is happening now, ' + dayLabel.textContent);
+            } else {
+                root.removeAttribute('aria-label');
+                window.clearInterval(timer);
+            }
+        }
+
+        render();
+        timer = window.setInterval(render, 1000);
+    }
+
+    Array.prototype.forEach.call(roots, setup);
+})(document, window);
