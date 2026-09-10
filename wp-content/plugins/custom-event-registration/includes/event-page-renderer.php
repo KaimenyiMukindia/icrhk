@@ -188,6 +188,34 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 									</div>
 									<div class="cer-kamgc-summary-box cer-kamgc-hero-summary">
 										<h3>Conference Summary</h3>
+										<?php $countdown = cer_event_page_countdown_data( $current_event ); ?>
+										<?php if ( $countdown ) : ?>
+											<div class="cer-kamgc-countdown" role="timer" aria-live="off" data-state="<?php echo esc_attr( $countdown['state'] ); ?>" data-starts="<?php echo esc_attr( $countdown['starts'] ); ?>" data-ends="<?php echo esc_attr( $countdown['ends'] ); ?>" data-timezone="<?php echo esc_attr( $countdown['timezone'] ); ?>" data-start-time="<?php echo esc_attr( $countdown['start_time'] ); ?>" data-label="<?php echo esc_attr( $countdown['label'] ); ?>">
+												<div class="cer-kamgc-countdown-head">
+													<span class="cer-kamgc-countdown-label" data-countdown-label><?php echo esc_html( 'final' === $countdown['state'] ? $countdown['final_label'] : $countdown['label'] ); ?></span>
+													<span class="cer-kamgc-countdown-tz"><?php echo esc_html( $countdown['tz_abbr'] ); ?></span>
+												</div>
+												<div class="cer-kamgc-countdown-grid">
+													<?php foreach ( array( 'days' => 'Days', 'hours' => 'Hrs', 'minutes' => 'Min', 'seconds' => 'Sec' ) as $unit => $unit_label ) : ?>
+														<div class="cer-kamgc-countdown-unit" data-unit="<?php echo esc_attr( $unit ); ?>"><b><?php echo esc_html( $countdown['units'][ $unit ] ); ?></b><span><?php echo esc_html( $unit_label ); ?></span></div>
+													<?php endforeach; ?>
+												</div>
+												<div class="cer-kamgc-countdown-live">
+													<span class="cer-kamgc-countdown-pill">Happening now</span>
+													<span class="cer-kamgc-countdown-day" data-countdown-day><?php echo esc_html( sprintf( 'Day %d of %d', $countdown['current_day'], count( $countdown['days'] ) ) ); ?></span>
+													<div class="cer-kamgc-countdown-days" style="--cer-day-count: <?php echo (int) count( $countdown['days'] ); ?>">
+														<?php foreach ( $countdown['days'] as $countdown_day ) : ?>
+															<div class="cer-kamgc-countdown-segment" data-open="<?php echo esc_attr( $countdown_day['open'] ); ?>" data-close="<?php echo esc_attr( $countdown_day['close'] ); ?>"><i style="--cer-fill: <?php echo esc_attr( number_format( $countdown_day['fill'], 3, '.', '' ) ); ?>"></i><small><?php echo esc_html( $countdown_day['label'] ); ?></small></div>
+														<?php endforeach; ?>
+													</div>
+													<span class="cer-kamgc-countdown-note"><?php echo esc_html( $countdown['closes'] ); ?></span>
+												</div>
+												<div class="cer-kamgc-countdown-done">
+													<span class="cer-kamgc-countdown-done-title"><?php echo esc_html( $countdown['closed_text'] ); ?></span>
+													<span class="cer-kamgc-countdown-note"><?php echo esc_html( $countdown['held'] ); ?></span>
+												</div>
+											</div>
+										<?php endif; ?>
 										<div class="cer-kamgc-summary-metadata">
 											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">calendar_month</span><span><small>Starts</small><strong><?php echo esc_html( cer_event_page_format_datetime( $current_event->event_date ) ); ?></strong></span></div>
 											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">event</span><span><small>Ends</small><strong><?php echo esc_html( cer_event_page_format_datetime( $current_event->event_end_date ) ); ?></strong></span></div>
@@ -539,6 +567,102 @@ if ( ! function_exists( 'cer_event_page_table_has_visibility' ) ) {
 if ( ! function_exists( 'cer_event_page_format_datetime' ) ) {
 	function cer_event_page_format_datetime( $value ) {
 		return ! empty( $value ) ? date_i18n( 'M j, Y \a\t g:i a', strtotime( $value ) ) : 'To be confirmed';
+	}
+}
+
+if ( ! function_exists( 'cer_event_page_countdown_data' ) ) {
+	/*
+	 * Hero countdown data.
+	 *
+	 * event_date / event_end_date are stored without a zone and the site timezone
+	 * is not set (it runs on UTC), so the dates are read in the event's own
+	 * timezone, falling back to Nairobi. Reading them through the site setting
+	 * would put the conference opening three hours late.
+	 *
+	 * show_countdown, countdown_label, countdown_closed_text and timezone are
+	 * optional columns: until they exist the countdown is on with default copy.
+	 * No server clock is printed for the browser to trust — LiteSpeed can serve
+	 * this page from cache long after it was rendered.
+	 */
+	function cer_event_page_countdown_data( $event ) {
+		if ( ! $event || empty( $event->event_date ) ) {
+			return null;
+		}
+
+		if ( isset( $event->show_countdown ) && ! (int) $event->show_countdown ) {
+			return null;
+		}
+
+		try {
+			$zone = new DateTimeZone( cer_event_page_copy_value( $event, 'timezone', 'Africa/Nairobi' ) );
+		} catch ( Exception $e ) {
+			$zone = new DateTimeZone( 'Africa/Nairobi' );
+		}
+
+		$starts = new DateTimeImmutable( $event->event_date, $zone );
+		$ends   = ! empty( $event->event_end_date ) ? new DateTimeImmutable( $event->event_end_date, $zone ) : $starts->setTime( 23, 59, 59 );
+		$now    = time();
+
+		if ( $now >= $ends->getTimestamp() ) {
+			$state = 'done';
+		} elseif ( $now >= $starts->getTimestamp() ) {
+			$state = 'live';
+		} elseif ( $now >= $starts->getTimestamp() - DAY_IN_SECONDS ) {
+			$state = 'final';
+		} else {
+			$state = 'upcoming';
+		}
+
+		$remaining = max( 0, $starts->getTimestamp() - $now );
+
+		// One progress segment per conference day, each running from the daily
+		// opening time to the daily closing time.
+		$days        = array();
+		$current_day = 0;
+		$day         = $starts->setTime( 0, 0 );
+		$last_day    = $ends->format( 'Y-m-d' );
+		while ( $day->format( 'Y-m-d' ) <= $last_day && count( $days ) < 14 ) {
+			$open  = $day->setTime( (int) $starts->format( 'G' ), (int) $starts->format( 'i' ) );
+			$close = $day->setTime( (int) $ends->format( 'G' ), (int) $ends->format( 'i' ) );
+			if ( $close <= $open ) {
+				$close = $day->setTime( 23, 59, 59 );
+			}
+			if ( $now >= $open->getTimestamp() ) {
+				$current_day++;
+			}
+			$days[] = array(
+				'label' => $day->format( 'D j' ),
+				'open'  => $open->format( 'c' ),
+				'close' => $close->format( 'c' ),
+				'fill'  => min( 1, max( 0, ( $now - $open->getTimestamp() ) / max( 1, $close->getTimestamp() - $open->getTimestamp() ) ) ),
+			);
+			$day = $day->modify( '+1 day' );
+		}
+
+		$start_time  = $starts->format( 'g:i a' );
+		$final_label = ( wp_date( 'Y-m-d', $now, $zone ) === $starts->format( 'Y-m-d' ) ? 'Opens today at ' : 'Opens tomorrow at ' ) . $start_time;
+
+		return array(
+			'state'       => $state,
+			'starts'      => $starts->format( 'c' ),
+			'ends'        => $ends->format( 'c' ),
+			'timezone'    => $zone->getName(),
+			'tz_abbr'     => $starts->format( 'T' ),
+			'start_time'  => $start_time,
+			'label'       => cer_event_page_copy_value( $event, 'countdown_label', 'Conference opens in' ),
+			'final_label' => $final_label,
+			'units'       => array(
+				'days'    => (string) floor( $remaining / DAY_IN_SECONDS ),
+				'hours'   => sprintf( '%02d', floor( ( $remaining % DAY_IN_SECONDS ) / HOUR_IN_SECONDS ) ),
+				'minutes' => sprintf( '%02d', floor( ( $remaining % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS ) ),
+				'seconds' => sprintf( '%02d', $remaining % MINUTE_IN_SECONDS ),
+			),
+			'days'        => $days,
+			'current_day' => max( 1, $current_day ),
+			'closes'      => 'Closes ' . $ends->format( 'D j M \a\t g:i a' ),
+			'closed_text' => cer_event_page_copy_value( $event, 'countdown_closed_text', 'This conference has concluded' ),
+			'held'        => 'Held ' . cer_event_page_format_range( $event->event_date, $event->event_end_date ),
+		);
 	}
 }
 
