@@ -622,6 +622,8 @@
         '.cer-kamgc-partner-grid > *',
         '.cer-kamgc-stats-grid > *',
         '.cer-kamgc-faq-item',
+        '.cer-kamgc-main-column > .cer-kamgc-card',
+        '.cer-kamgc-sidebar-column > *',
         '.cer-kamgc-section-title',
         '.cer-kamgc-pillar-header'
     ];
@@ -635,7 +637,9 @@
                 return;
             }
             el.classList.add('cer-reveal');
-            el.style.setProperty('--cer-reveal-delay', Math.min(i, 6) * 60 + 'ms');
+            // Stagger within the element's own row or list, not across the page.
+            var siblingIndex = Array.prototype.indexOf.call(el.parentElement.children, el);
+            el.style.setProperty('--cer-reveal-delay', Math.min(siblingIndex, 6) * 80 + 'ms');
             tagged.push(el);
         });
     });
@@ -666,24 +670,10 @@
         }
     });
 
-    /* Safety net.
-       An entrance animation must never be the reason someone cannot read the
-       page. If the observer misses an element — fast scrolling, a throttled
-       background tab, a browser quirk — reveal whatever is still hidden after
-       a few seconds and stop observing. Measured without this: 16 of 19
-       elements were still at opacity 0 after scrolling the whole page. */
-    function revealAll() {
-        tagged.forEach(function (el) {
-            if (!el.classList.contains('is-visible')) {
-                el.classList.add('is-visible');
-            }
-            observer.unobserve(el);
-        });
-    }
-
-    window.setTimeout(revealAll, 3000);
-
-    // Also reveal anything the reader has already scrolled past.
+    /* Safety net: reveal anything the reader has already scrolled to, in case
+       the observer misses it (fast scrolling, a throttled tab). There is no
+       timed reveal-all: it used to fire after 3s and play every entrance
+       off-screen, so the effect was never seen. */
     window.addEventListener('scroll', function () {
         tagged.forEach(function (el) {
             if (el.classList.contains('is-visible')) {
