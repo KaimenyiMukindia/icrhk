@@ -4786,7 +4786,7 @@ html.cer-js .cer-reveal.is-visible {
     padding: 0 !important;
     height: auto !important;
     text-align: left !important;
-    transform: none !important;
+    transform: none;
 }
 
 .cer-kamgc-speaker-card:hover {
@@ -6472,5 +6472,472 @@ body.cer-pillar-pop-lock {
     .cer-kamgc-countdown .cer-kamgc-countdown-label::before,
     .cer-kamgc-countdown .cer-kamgc-countdown-pill::before {
         animation: none;
+    }
+}
+
+/* ==========================================================================
+   COLOUR LAYERS — alternating brand-colour sections over the pattern
+   --------------------------------------------------------------------------
+   Client review: the page read as one washed-out surface. Every panel was
+   the same 42% white glass, the pattern showed only as a 14–20px line between
+   them, and a 1400px cap left wide screens mostly background.
+
+   - Panels run to within one thin strip of the screen edge on every side.
+     Content inside stays centred at a readable width.
+   - Sections alternate: Hero, Pillars, Summit Structure and FAQ stay glass;
+     Speakers, Objectives and Registration become solid KAMGC blue.
+   - Cards use the logo's colours (KAMGC Color Codes): blue #006EAC with white
+     text, orange #FAA41A with dark text, and white. Purple and #F0761E remain
+     small accents only.
+
+   Everything is scoped through `body .cer-kamgc-page` with !important because
+   earlier passes pin most of these properties with !important. Deleting this
+   block reverts the page.
+   ========================================================================== */
+.cer-kamgc-page {
+    --cl-blue: #006EAC;
+    --cl-orange: #FAA41A;
+    --cl-ink: #14202B;
+    --cl-body: #3F4B59;
+    --cl-muted: #6B7683;
+    --cl-line: #E3E9EF;
+    --cl-strip: clamp(14px, 1.8vw, 28px);
+    --cl-content: 1240px;
+    --cl-pad-block: clamp(22px, 4vw, 48px);
+    --cl-pad-inline: max(clamp(18px, 4vw, 48px), calc((100% - var(--cl-content)) / 2));
+    --cl-radius: 28px;
+    --cl-card-radius: 18px;
+    --cl-shadow-card: 0 14px 30px rgba(0, 40, 70, .22);
+}
+
+@media (max-width: 767px) {
+    .cer-kamgc-page { --cl-radius: 20px; }
+}
+
+/* --- Full-width layout with one thin strip of pattern ------------------- */
+body .cer-event-page .cer-event-shell {
+    max-width: none !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-shell {
+    width: 100% !important;
+    max-width: none !important;
+    padding: var(--cl-strip) !important;
+    gap: var(--cl-strip) !important;
+}
+
+body .cer-kamgc-page .cer-event-shell > section,
+body .cer-kamgc-page .cer-kamgc-shell > section {
+    margin: 0 !important;
+    border-bottom: 0 !important;
+}
+
+/* Hero and Registration carry their surface on the section itself; the other
+   sections carry it on their single inner card. */
+body .cer-kamgc-page .cer-kamgc-hero,
+body .cer-kamgc-page .cer-kamgc-main,
+body .cer-kamgc-page .cer-kamgc-speakers-card,
+body .cer-kamgc-page .cer-kamgc-pillars-card-wrapper,
+body .cer-kamgc-page .cer-kamgc-objectives-card,
+body .cer-kamgc-page .cer-kamgc-summit-structure-card,
+body .cer-kamgc-page .cer-kamgc-partners-card,
+body .cer-kamgc-page .cer-kamgc-faq-card {
+    border-radius: var(--cl-radius) !important;
+    padding: var(--cl-pad-block) var(--cl-pad-inline) !important;
+}
+
+/* --- Solid blue sections ------------------------------------------------- */
+body .cer-kamgc-page .cer-kamgc-main,
+body .cer-kamgc-page .cer-kamgc-speakers-card,
+body .cer-kamgc-page .cer-kamgc-objectives-card,
+body .cer-kamgc-page .cer-kamgc-main:hover,
+body .cer-kamgc-page .cer-kamgc-speakers-card:hover,
+body .cer-kamgc-page .cer-kamgc-objectives-card:hover {
+    background: var(--cl-blue) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+    box-shadow: 0 22px 60px rgba(0, 86, 136, .35) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-speakers-card .cer-kamgc-section-title h2,
+body .cer-kamgc-page .cer-kamgc-objectives-card .cer-kamgc-section-title h2 {
+    color: #fff !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-speakers-card .cer-kamgc-section-title p,
+body .cer-kamgc-page .cer-kamgc-objectives-card .cer-kamgc-section-title p {
+    color: rgba(255, 255, 255, .86) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-speakers-card .cer-kamgc-section-title::before,
+body .cer-kamgc-page .cer-kamgc-objectives-card .cer-kamgc-section-title::before {
+    color: var(--cl-orange) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-speakers-card .cer-kamgc-divider-center,
+body .cer-kamgc-page .cer-kamgc-objectives-card .cer-kamgc-divider-center {
+    background: var(--cl-orange) !important;
+}
+
+/* --- Hero (glass): white summary card, blue countdown, brand badges ----- */
+body .cer-kamgc-page .cer-kamgc-hero-summary,
+body .cer-kamgc-page .cer-kamgc-hero-summary:hover {
+    background: #fff !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+    border-radius: var(--cl-card-radius) !important;
+    box-shadow: 0 20px 44px rgba(15, 23, 42, .14) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-hero-summary .cer-kamgc-summary-metadata {
+    gap: 0 !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-hero-summary .cer-kamgc-summary-metadata > div {
+    background: transparent !important;
+    border: 0 !important;
+    border-top: 1px solid var(--cl-line) !important;
+    border-radius: 0 !important;
+    padding: 12px 2px !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-hero-summary .cer-kamgc-summary-metadata > div:first-child {
+    border-top: 0 !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-countdown {
+    background: var(--cl-blue);
+    border-radius: 14px;
+    padding: 14px !important;
+    border-bottom: 0 !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-label { color: #fff; }
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-label::before { background: var(--cl-orange); }
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-tz { color: rgba(255, 255, 255, .72); }
+
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-unit {
+    background: #fff;
+    border: 0;
+    border-radius: 12px;
+}
+
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-unit b { color: var(--cl-ink); }
+body .cer-kamgc-page .cer-kamgc-countdown[data-state="final"] .cer-kamgc-countdown-unit b { color: #C8590A; }
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-pill { background: rgba(255, 255, 255, .18); color: #fff; }
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-day,
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-done-title { color: #fff; }
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-note,
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-segment small { color: rgba(255, 255, 255, .85); }
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-segment i { background: rgba(255, 255, 255, .25); }
+body .cer-kamgc-page .cer-kamgc-countdown .cer-kamgc-countdown-segment i::after { background: var(--cl-orange); }
+
+body .cer-kamgc-page .cer-kamgc-emblem-badge,
+body .cer-kamgc-page .cer-kamgc-convening-badge {
+    background: #fff !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-activism-badge {
+    background: var(--cl-orange) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+    color: var(--cl-ink) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-activism-badge .material-symbols-outlined { color: var(--cl-ink) !important; }
+
+/* --- Speakers: white cards on blue ------------------------------------- */
+body .cer-kamgc-page .cer-kamgc-speaker-card,
+body .cer-kamgc-page .cer-kamgc-speaker-card:hover {
+    background: #fff !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+    border-radius: var(--cl-card-radius) !important;
+    box-shadow: var(--cl-shadow-card) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-speaker-avatar {
+    background: var(--cl-orange) !important;
+    color: var(--cl-ink) !important;
+    box-shadow: none !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-speaker-avatar .material-symbols-outlined { color: var(--cl-ink) !important; }
+body .cer-kamgc-page .cer-kamgc-speaker-card h3 { color: var(--cl-ink) !important; }
+body .cer-kamgc-page .cer-kamgc-speaker-card .cer-kamgc-speaker-role { color: var(--cl-blue) !important; }
+
+/* --- Objectives: white cards on blue, icon tile instead of a numeral ---- */
+body .cer-kamgc-page .cer-kamgc-objectives .cer-kamgc-compact-card,
+body .cer-kamgc-page .cer-kamgc-objectives .cer-kamgc-compact-card:hover {
+    display: grid !important;
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+    /* First row is the icon's height, so every title centres on its icon. */
+    grid-template-rows: minmax(48px, auto) auto !important;
+    column-gap: 14px !important;
+    row-gap: 8px !important;
+    align-items: start !important;
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: var(--cl-card-radius) !important;
+    box-shadow: var(--cl-shadow-card) !important;
+    padding: 22px !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-objectives .cer-kamgc-compact-card::before { display: none !important; }
+
+body .cer-kamgc-page .cer-kamgc-objectives .cer-kamgc-compact-icon {
+    display: grid !important;
+    place-items: center;
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+    background: var(--cl-orange) !important;
+    color: var(--cl-ink) !important;
+    box-shadow: none !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-objectives .cer-kamgc-compact-icon .material-symbols-outlined { font-size: 26px; color: var(--cl-ink) !important; }
+
+body .cer-kamgc-page .cer-kamgc-objectives .cer-kamgc-compact-card h3 {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    align-self: center;
+    color: var(--cl-ink) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-objectives .cer-kamgc-compact-card p {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    color: var(--cl-body) !important;
+}
+
+/* --- Pillars (glass): brand-coloured cards; description stays a popover
+       (hover tooltip on desktop, centred popup below 1025px) ------------- */
+body .cer-kamgc-page .cer-kamgc-pillars-card-wrapper,
+body .cer-kamgc-page .cer-kamgc-pillar-grid {
+    overflow: visible !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-pillar-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    padding: 0 !important;
+    align-items: stretch !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-pillar-grid > .cer-kamgc-pillars-card {
+    flex: none !important;
+    display: grid !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-pillars-front {
+    display: grid !important;
+    align-content: start !important;
+    justify-items: start !important;
+    gap: 14px !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 18px !important;
+    text-align: left !important;
+    border-radius: var(--cl-card-radius) !important;
+    background: var(--cl-orange) !important;
+    color: var(--cl-ink) !important;
+    box-shadow: 0 14px 28px rgba(180, 100, 0, .22) !important;
+    transition: transform var(--cer-dur-micro) var(--cer-ease-out) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-pillars-card:nth-child(even) .cer-kamgc-pillars-front {
+    background: var(--cl-blue) !important;
+    color: #fff !important;
+    box-shadow: 0 14px 28px rgba(0, 86, 136, .26) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-pillars-card:hover .cer-kamgc-pillars-front,
+body .cer-kamgc-page .cer-kamgc-pillars-card:focus-within .cer-kamgc-pillars-front,
+body .cer-kamgc-page .cer-kamgc-pillars-card.is-open .cer-kamgc-pillars-front {
+    transform: translateY(-3px);
+}
+
+body .cer-kamgc-page .cer-kamgc-pillars-front::after { content: none !important; }
+
+body .cer-kamgc-page .cer-kamgc-pillars-icon,
+body .cer-kamgc-page .cer-kamgc-pillars-card:nth-child(even) .cer-kamgc-pillars-icon {
+    width: 48px !important;
+    height: 48px !important;
+    margin: 0 !important;
+    border-radius: 14px !important;
+    background: #fff !important;
+    color: var(--cl-ink) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-pillars-icon .material-symbols-outlined { font-size: 26px !important; color: var(--cl-ink) !important; }
+body .cer-kamgc-page .cer-kamgc-pillars-card:nth-child(even) .cer-kamgc-pillars-icon .material-symbols-outlined { color: var(--cl-blue) !important; }
+
+body .cer-kamgc-page .cer-kamgc-pillars-card h3 {
+    margin: 0 !important;
+    font-family: 'Montserrat', 'Open Sans', sans-serif !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    text-align: left !important;
+    color: inherit !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-pillars-hint {
+    font-size: .78rem;
+    font-weight: 700;
+    opacity: .8;
+}
+
+@media (max-width: 1024px) {
+    body .cer-kamgc-page .cer-kamgc-pillar-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)) !important;
+    }
+}
+
+/* --- Summit structure (glass): blue cards, orange step numbers ---------- */
+body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card,
+body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card:hover {
+    background: var(--cl-blue) !important;
+    border: 0 !important;
+    border-radius: var(--cl-card-radius) !important;
+    box-shadow: 0 14px 30px rgba(0, 86, 136, .26) !important;
+    padding: 22px !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card::before {
+    background: var(--cl-orange) !important;
+    color: var(--cl-ink) !important;
+    box-shadow: none !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card h3 { color: #fff !important; }
+body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card h3::after { display: none !important; }
+body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card p { color: rgba(255, 255, 255, .88) !important; }
+
+/* --- Registration (blue): white cards ----------------------------------- */
+body .cer-kamgc-page .cer-kamgc-main .cer-kamgc-card,
+body .cer-kamgc-page .cer-kamgc-main .cer-kamgc-card:hover,
+body .cer-kamgc-page .cer-kamgc-main .cer-kamgc-sponsor-box,
+body .cer-kamgc-page .cer-kamgc-main .cer-kamgc-sponsor-box:hover,
+body .cer-kamgc-page .cer-kamgc-main .cer-kamgc-summary-box,
+body .cer-kamgc-page .cer-kamgc-main .cer-kamgc-summary-box:hover {
+    background: #fff !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+    border-radius: var(--cl-card-radius) !important;
+    box-shadow: var(--cl-shadow-card) !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-main .cer-kamgc-card h2 { color: var(--cl-ink) !important; }
+
+body .cer-kamgc-page .cer-kamgc-stats-grid > div {
+    background: var(--cl-orange) !important;
+    border: 0 !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-stats-grid > div strong,
+body .cer-kamgc-page .cer-kamgc-stats-grid > div span { color: var(--cl-ink) !important; }
+
+body .cer-kamgc-page .cer-kamgc-stats-grid > div:nth-child(2) { background: var(--cl-blue) !important; }
+body .cer-kamgc-page .cer-kamgc-stats-grid > div:nth-child(2) strong { color: #fff !important; }
+body .cer-kamgc-page .cer-kamgc-stats-grid > div:nth-child(2) span { color: rgba(255, 255, 255, .88) !important; }
+
+body .cer-kamgc-page .cer-primary-button,
+body .cer-kamgc-page .cer-card-submit .cer-primary-button {
+    background: var(--cl-orange) !important;
+    border-color: var(--cl-orange) !important;
+    color: var(--cl-ink) !important;
+    box-shadow: 0 12px 26px rgba(180, 100, 0, .28) !important;
+}
+
+body .cer-kamgc-page .cer-primary-button:hover,
+body .cer-kamgc-page .cer-primary-button:focus-visible {
+    background: #EE9A0E !important;
+}
+
+/* --- FAQ (glass): white rows in two independent columns ----------------- */
+body .cer-kamgc-page .cer-kamgc-faq-accordion {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px 18px !important;
+    align-items: start !important;
+}
+
+body .cer-kamgc-page .cer-kamgc-faq-column {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+}
+
+@media (max-width: 860px) {
+    body .cer-kamgc-page .cer-kamgc-faq-accordion { grid-template-columns: 1fr !important; }
+}
+
+body .cer-kamgc-page .cer-kamgc-faq-item {
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .08) !important;
+    overflow: hidden;
+    transition: box-shadow var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+body .cer-kamgc-page .cer-kamgc-faq-item:hover { box-shadow: 0 12px 26px rgba(15, 23, 42, .13) !important; }
+body .cer-kamgc-page .cer-kamgc-faq-item[open] { box-shadow: 0 12px 26px rgba(15, 23, 42, .12), inset 0 3px 0 var(--cl-orange) !important; }
+
+body .cer-kamgc-page .cer-kamgc-faq-item summary,
+body .cer-kamgc-page .cer-kamgc-faq-item[open] summary {
+    color: var(--cl-ink) !important;
+    min-height: 60px;
+}
+
+body .cer-kamgc-page .cer-kamgc-faq-caret {
+    flex: none;
+    display: inline-grid !important;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 110, 172, .1);
+    color: var(--cl-blue) !important;
+    transition: transform var(--cer-dur-base) var(--cer-ease-out), background-color var(--cer-dur-micro) var(--cer-ease-out);
+}
+
+body .cer-kamgc-page .cer-kamgc-faq-item[open] .cer-kamgc-faq-caret {
+    background: var(--cl-orange);
+    color: var(--cl-ink) !important;
+    transform: rotate(180deg);
+}
+
+/* --- Scroll entrance: cards rise and scale in as they arrive ------------
+   `both` fill is required: the base .cer-reveal rule keeps opacity at 0, so
+   the final frame has to hold opacity 1. The `to` frame deliberately omits
+   transform, so once the entrance ends the element's own transform (hover
+   lift) applies again. Reduced motion keeps the existing no-animation rules,
+   so this is gated on no-preference. */
+@keyframes cer-come-at-you {
+    from { opacity: 0; transform: translateY(40px) scale(.94); }
+    to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html.cer-js body .cer-kamgc-page .cer-reveal.is-visible {
+        animation: cer-come-at-you 700ms cubic-bezier(.22, .8, .26, 1) both !important;
+        animation-delay: var(--cer-reveal-delay, 0ms) !important;
     }
 }

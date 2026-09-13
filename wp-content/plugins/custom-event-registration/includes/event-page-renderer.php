@@ -267,7 +267,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 											<?php foreach ( $event_pillars as $index => $pillar ) : ?>
 												<?php $pillar_panel_id = 'cer-pillar-panel-' . (int) $index; ?>
 												<div class="cer-kamgc-pillars-card cer-reveal" style="--cer-reveal-delay: <?php echo (int) ( $index * 60 ); ?>ms;">
-													<button type="button" class="cer-kamgc-pillars-front" aria-expanded="false" aria-controls="<?php echo esc_attr( $pillar_panel_id ); ?>"><div class="cer-kamgc-pillars-icon"><span class="material-symbols-outlined"><?php echo esc_html( $pillar->icon ? $pillar->icon : 'insights' ); ?></span></div><h3><?php echo esc_html( $pillar->title ); ?></h3></button>
+													<button type="button" class="cer-kamgc-pillars-front" aria-expanded="false" aria-controls="<?php echo esc_attr( $pillar_panel_id ); ?>"><div class="cer-kamgc-pillars-icon"><span class="material-symbols-outlined"><?php echo esc_html( $pillar->icon ? $pillar->icon : 'insights' ); ?></span></div><h3><?php echo esc_html( $pillar->title ); ?></h3><small class="cer-kamgc-pillars-hint">Read focus</small></button>
 												<div class="cer-kamgc-pillars-back" id="<?php echo esc_attr( $pillar_panel_id ); ?>"><button type="button" class="cer-kamgc-pillars-close" aria-label="<?php esc_attr_e( 'Close pillar details', 'custom-event-registration' ); ?>"><span class="material-symbols-outlined">close</span></button><p><?php echo wp_kses_post( $pillar->description ); ?></p></div>
 												</div>
 											<?php endforeach; ?>
@@ -422,11 +422,16 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 											<div class="cer-kamgc-divider-center"></div>
 										</div>
 										<div class="cer-kamgc-faq-accordion">
-											<?php foreach ( $event_faqs as $faq ) : ?>
-												<details class="cer-kamgc-faq-item">
-													<summary><span><?php echo esc_html( $faq->question ); ?></span><span class="material-symbols-outlined cer-kamgc-faq-caret">expand_more</span></summary>
-													<div class="cer-kamgc-faq-answer"><?php echo wp_kses_post( $faq->answer ); ?></div>
-												</details>
+											<?php foreach ( array_chunk( $event_faqs, (int) ceil( count( $event_faqs ) / 2 ) ) as $faq_column ) : ?>
+												<div class="cer-kamgc-faq-column">
+													<?php foreach ( $faq_column as $faq ) : ?>
+														<details class="cer-kamgc-faq-item">
+															<summary><span><?php echo esc_html( $faq->question ); ?></span><span class="material-symbols-outlined cer-kamgc-faq-caret">expand_more</span></summary>
+															<div class="cer-kamgc-faq-answer"><?php echo wp_kses_post( $faq->answer ); ?></div>
+														</details>
+													
+													<?php endforeach; ?>
+												</div>
 											<?php endforeach; ?>
 										</div>
 									</div>
