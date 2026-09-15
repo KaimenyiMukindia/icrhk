@@ -595,12 +595,13 @@
 })(document, window);
 
 /* ==========================================================================
-   ANIMATE ON SCROLL
+   ANIMATE ON SCROLL (AOS)
    --------------------------------------------------------------------------
-   Tags section contents with .cer-reveal and staggers them in as they enter
-   the viewport. Done from JS rather than the template so no markup changes,
-   and so nothing is ever hidden when JS is unavailable — the CSS that hides
-   .cer-reveal is gated on html.cer-js, which is only set below.
+   AOS is enqueued from the CDN; the data-aos attributes are set here rather
+   than in the template so the markup stays clean and nothing is ever hidden
+   when the script does not run — AOS only hides elements that carry the
+   attribute. Variations are per section so the page does not read as one
+   repeated effect.
    ========================================================================== */
 (function (document, window) {
     'use strict';
@@ -608,83 +609,66 @@
     var reduce = window.matchMedia &&
                  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if (reduce || !('IntersectionObserver' in window)) {
-        return; // leave everything visible and untouched
-    }
-
-    /* Contents only — never a glass container (.cer-kamgc-hero, -main, -card,
-       -speakers-card, -pillars-card-wrapper), whose backdrop-filter would be
-       recomposited every frame and dropped by Safari. */
-    var groups = [
-        '.cer-kamgc-speaker-grid > *',
-        '.cer-kamgc-pillar-grid > *',
-        '.cer-kamgc-compact-grid > *',
-        '.cer-kamgc-partner-grid > *',
-        '.cer-kamgc-stats-grid > *',
-        '.cer-kamgc-faq-item',
-        '.cer-kamgc-main-column > .cer-kamgc-card',
-        '.cer-kamgc-sidebar-column > *',
-        '.cer-kamgc-section-title',
-        '.cer-kamgc-pillar-header'
-    ];
-
-    var tagged = [];
-
-    groups.forEach(function (selector) {
-        var nodes = document.querySelectorAll(selector);
-        Array.prototype.forEach.call(nodes, function (el, i) {
-            if (el.classList.contains('cer-reveal')) {
-                return;
-            }
-            el.classList.add('cer-reveal');
-            // Stagger within the element's own row or list, not across the page.
-            var siblingIndex = Array.prototype.indexOf.call(el.parentElement.children, el);
-            el.style.setProperty('--cer-reveal-delay', Math.min(siblingIndex, 6) * 80 + 'ms');
-            tagged.push(el);
-        });
+    /* The pillar cards carry .cer-reveal from the template, and the older CSS
+       keeps those at opacity 0 until .is-visible is added. AOS owns the
+       entrance now, so release them either way. */
+    Array.prototype.forEach.call(document.querySelectorAll('.cer-reveal'), function (el) {
+        el.classList.add('is-visible');
     });
 
-    if (!tagged.length) {
+    if (reduce || typeof window.AOS === 'undefined') {
         return;
     }
 
-    document.documentElement.classList.add('cer-js');
+    /* Each group cycles through its own set, so neighbouring cards enter
+       differently and a scroll down (or back up) never repeats one effect.
+       The hero's own CSS load sequence is left alone; AOS starts below it. */
+    var groups = [
+        { selector: '.cer-kamgc-section-title, .cer-kamgc-pillar-header', animations: ['fade-down'], duration: 600 },
+        { selector: '.cer-kamgc-divider-center', animations: ['zoom-in'], duration: 500 },
+        { selector: '.cer-kamgc-hero-summary', animations: ['fade-left'], duration: 800 },
+        { selector: '.cer-kamgc-feature-list li', animations: ['fade-up', 'zoom-in-up', 'fade-up-right', 'flip-up'], stagger: 70, duration: 600 },
+        { selector: '.cer-kamgc-speaker-grid > *', animations: ['flip-left', 'zoom-in-up', 'flip-right'], stagger: 90, duration: 750 },
+        { selector: '.cer-kamgc-pillar-grid > *', animations: ['zoom-in-up', 'flip-left', 'fade-down', 'flip-right', 'zoom-in-down'], stagger: 80, duration: 700 },
+        { selector: '.cer-kamgc-objectives .cer-kamgc-compact-grid > *', animations: ['fade-up-right', 'zoom-in', 'fade-up-left', 'fade-right', 'zoom-in-up', 'fade-left'], stagger: 80, duration: 700 },
+        { selector: '.cer-kamgc-summit-structure .cer-kamgc-compact-grid > *', animations: ['fade-right', 'zoom-in-down', 'fade-left', 'flip-up', 'fade-up', 'zoom-in', 'fade-down'], stagger: 80, duration: 700 },
+        { selector: '.cer-kamgc-partner-grid > *', animations: ['zoom-in', 'flip-up'], stagger: 70, duration: 600 },
+        { selector: '.cer-kamgc-stats-grid > *', animations: ['zoom-in-up', 'flip-up', 'zoom-in-down'], stagger: 90, duration: 650 },
+        { selector: '.cer-kamgc-main-column > .cer-kamgc-card', animations: ['fade-up-right', 'zoom-in-up'], stagger: 120, duration: 800 },
+        { selector: '.cer-kamgc-sidebar-column > *', animations: ['fade-left', 'zoom-in-left'], stagger: 120, duration: 800 },
+        { selector: '.cer-kamgc-sponsor-list li', animations: ['fade-left', 'fade-right'], stagger: 90, duration: 550 },
+        { selector: '.cer-kamgc-faq-column:first-child .cer-kamgc-faq-item', animations: ['fade-right', 'zoom-in-right'], stagger: 60, duration: 600 },
+        { selector: '.cer-kamgc-faq-column:last-child .cer-kamgc-faq-item', animations: ['fade-left', 'zoom-in-left'], stagger: 60, duration: 600 }
+    ];
 
-    var observer = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('is-visible');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    var easings = ['ease-out-cubic', 'ease-out-back', 'ease-out-quart'];
 
-    tagged.forEach(function (el) {
-        // Anything already on screen at load reveals immediately, so the page
-        // at rest is never a set of blank panels.
-        var r = el.getBoundingClientRect();
-        if (r.top < window.innerHeight && r.bottom > 0) {
-            el.classList.add('is-visible');
-        } else {
-            observer.observe(el);
-        }
-    });
-
-    /* Safety net: reveal anything the reader has already scrolled to, in case
-       the observer misses it (fast scrolling, a throttled tab). There is no
-       timed reveal-all: it used to fire after 3s and play every entrance
-       off-screen, so the effect was never seen. */
-    window.addEventListener('scroll', function () {
-        tagged.forEach(function (el) {
-            if (el.classList.contains('is-visible')) {
+    groups.forEach(function (group) {
+        Array.prototype.forEach.call(document.querySelectorAll(group.selector), function (el, i) {
+            if (el.hasAttribute('data-aos')) {
                 return;
             }
-            if (el.getBoundingClientRect().top < window.innerHeight) {
-                el.classList.add('is-visible');
-                observer.unobserve(el);
+            el.setAttribute('data-aos', group.animations[i % group.animations.length]);
+            el.setAttribute('data-aos-duration', String(group.duration));
+            el.setAttribute('data-aos-easing', easings[i % easings.length]);
+            if (group.stagger) {
+                el.setAttribute('data-aos-delay', String(Math.min(i, 5) * group.stagger));
             }
         });
-    }, { passive: true });
+    });
+
+    window.AOS.init({
+        duration: 700,
+        easing: 'ease-out-cubic',
+        once: false,
+        offset: 60,
+        anchorPlacement: 'top-bottom',
+        disableMutationObserver: false
+    });
+
+    /* The hero summary grows a countdown row every second, and the FAQ and
+       pillar popovers change height; keep AOS positions in step. */
+    window.addEventListener('load', function () { window.AOS.refresh(); });
 })(document, window);
 
 /* --- Hero countdown ------------------------------------------------------

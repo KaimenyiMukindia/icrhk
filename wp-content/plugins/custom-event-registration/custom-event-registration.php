@@ -754,8 +754,10 @@ function cer_enqueue_frontend_assets() {
 		wp_enqueue_style( 'cer-event-fonts', 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap', array(), null );
 		wp_enqueue_style( 'cer-material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap', array(), null );
 		wp_enqueue_style( 'cer-event-registration', CER_PLUGIN_URL . 'assets/css/cer-event.css', array( 'cer-event-fonts', 'cer-material-symbols' ), filemtime( CER_PLUGIN_DIR . 'assets/css/cer-event.css' ) );
+		wp_enqueue_style( 'cer-aos', 'https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css', array(), '2.3.4' );
+		wp_enqueue_script( 'cer-aos', 'https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js', array(), '2.3.4', true );
 		wp_enqueue_script( 'cer-paystack-inline', 'https://js.paystack.co/v2/inline.js', array(), null, true );
-		wp_enqueue_script( 'cer-event-registration', CER_PLUGIN_URL . 'assets/js/cer-registration.js', array( 'cer-paystack-inline' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-registration.js' ), true );
+		wp_enqueue_script( 'cer-event-registration', CER_PLUGIN_URL . 'assets/js/cer-registration.js', array( 'cer-paystack-inline', 'cer-aos' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-registration.js' ), true );
 		wp_localize_script( 'cer-event-registration', 'cerRegistrationSettings', array(
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'rest_url' => rest_url( 'cer/v1/register' ),
