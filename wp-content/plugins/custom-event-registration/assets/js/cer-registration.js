@@ -753,3 +753,34 @@
 
     Array.prototype.forEach.call(roots, setup);
 })(document, window);
+
+/* --- Blob layer offset ---------------------------------------------------
+   The blobs are 80% orange, so they start below the section heading and the
+   white title and intro never sit on one. Sections without a heading
+   (registration) keep the full-height layer. */
+(function (document, window) {
+    var layers = document.querySelectorAll('.cer-kamgc-blobs');
+    if (!layers.length) {
+        return;
+    }
+
+    function place() {
+        Array.prototype.forEach.call(layers, function (layer) {
+            var host = layer.parentElement;
+            // Keynote Speakers keeps its original full-height, low-opacity blobs.
+            var title = host.classList.contains('cer-kamgc-speakers-card') ? null : host.querySelector(':scope > .cer-kamgc-section-title');
+            layer.style.top = title ? (title.offsetTop + title.offsetHeight + 8) + 'px' : '';
+            layer.classList.toggle('is-offset', !!title);
+        });
+    }
+
+    var frame = 0;
+    function schedule() {
+        window.cancelAnimationFrame(frame);
+        frame = window.requestAnimationFrame(place);
+    }
+
+    place();
+    window.addEventListener('load', place);
+    window.addEventListener('resize', schedule, { passive: true });
+})(document, window);
