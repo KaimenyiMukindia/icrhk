@@ -2,4 +2,5 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/lrnzwljz/public_html/wp-content/
-    - /bin/cp -R wp-content/* $DEPLOYPATH
+    - /bin/cp -R plugins $DEPLOYPATH
+    - /bin/cp -R themes $DEPLOYPATH
