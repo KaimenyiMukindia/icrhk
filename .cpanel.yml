@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/lrnzwljz/public_html/wp-content
+    - export DEPLOYPATH=/home/lrnzwljz/icrhk.nyimuki.com/wp-content
     - export REPOPATH=/home/lrnzwljz/repositories/icrhk
     - /bin/mkdir -p $DEPLOYPATH/plugins/custom-event-registration $DEPLOYPATH/themes/goodsoul
     - /bin/cp -Rf $REPOPATH/wp-content/plugins/custom-event-registration/. $DEPLOYPATH/plugins/custom-event-registration/
