@@ -1,5 +1,5 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/lrnzwljz/public_html/
-    - /bin/cp -R * $DEPLOYPATH
+    - export DEPLOYPATH=/home/lrnzwljz/public_html/wp-content/
+    - /bin/cp -R wp-content/* $DEPLOYPATH
