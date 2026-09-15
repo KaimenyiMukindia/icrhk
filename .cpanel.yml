@@ -1,6 +1,8 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/lrnzwljz/public_html/wp-content
-    - /bin/cp -Rf wp-content/plugins/custom-event-registration $DEPLOYPATH/plugins/
-    - /bin/cp -Rf wp-content/themes/goodsoul $DEPLOYPATH/themes/
+    - export DEPLOYPATH=/home/lrnzwljz/public_html/wp-content/
+    - /bin/mkdir -p $DEPLOYPATH/plugins/custom-event-registration/
+    - /bin/mkdir -p $DEPLOYPATH/themes/goodsoul/
+    - /bin/cp -Rf wp-content/plugins/custom-event-registration/* $DEPLOYPATH/plugins/custom-event-registration/
+    - /bin/cp -Rf wp-content/themes/goodsoul/* $DEPLOYPATH/themes/goodsoul/
