@@ -236,6 +236,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 							<?php if ( $show_objectives && ! empty( $event_objectives ) ) : ?>
 								<section class="cer-kamgc-objectives" id="objectives">
 									<div class="cer-kamgc-card cer-kamgc-objectives-card">
+										<span class="cer-kamgc-blobs" aria-hidden="true"><i></i><i></i><i></i></span>
 										<div class="cer-kamgc-section-title">
 											<h2><?php echo esc_html( $objectives_heading ); ?></h2>
 											<?php if ( ! empty( $objectives_intro ) ) : ?><p><?php echo wp_kses_post( $objectives_intro ); ?></p><?php endif; ?>
@@ -331,6 +332,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 							<?php if ( $show_speakers && ! empty( $event_speakers ) ) : ?>
 								<section class="cer-kamgc-speakers">
 									<div class="cer-kamgc-card cer-kamgc-speakers-card">
+										<span class="cer-kamgc-blobs" aria-hidden="true"><i></i><i></i><i></i></span>
 										<div class="cer-kamgc-section-title">
 											<h2><?php echo esc_html( $speakers_heading ); ?></h2>
 											<div class="cer-kamgc-divider-center"></div>
@@ -350,6 +352,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 							<?php endif; ?>
 
 							<section class="cer-kamgc-main" id="registration">
+								<span class="cer-kamgc-blobs" aria-hidden="true"><i></i><i></i><i></i></span>
 								<div class="cer-kamgc-two-col">
 									<div class="cer-kamgc-main-column">
 										<?php if ( $show_event_information ) : ?>
