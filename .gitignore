@@ -41,3 +41,8 @@ wp-content/uploads/
 wp-content/gallery/
 wp-content/debug.log
 .htaccess
+
+# Theme overrides (keep only goodsoul)
+wp-content/themes/*
+!wp-content/themes/goodsoul/
+!wp-content/themes/index.php
