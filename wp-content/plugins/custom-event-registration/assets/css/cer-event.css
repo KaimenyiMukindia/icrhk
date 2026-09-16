@@ -3618,6 +3618,85 @@ body:has(.cer-event-page) {
     text-align: left;
 }
 
+.cer-kamgc-co-convenors {
+    position: relative;
+    display: grid;
+    gap: .8rem;
+    width: min(100%, 760px);
+    margin: 0 0 1.65rem;
+    padding: 1rem 1.15rem 1.1rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .9);
+    border-radius: 20px;
+    background: linear-gradient(105deg, rgba(255, 255, 255, .94), rgba(246, 250, 255, .78));
+    box-shadow: 0 18px 40px rgba(15, 23, 42, .1), inset 0 1px 0 rgba(255, 255, 255, .95);
+}
+
+.cer-kamgc-co-convenors::after {
+    position: absolute;
+    right: -32px;
+    bottom: -42px;
+    width: 150px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(250, 164, 26, .12);
+    content: "";
+    pointer-events: none;
+}
+
+.cer-kamgc-co-convenors-label {
+    position: relative;
+    z-index: 1;
+    color: #1d4ed8;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+.cer-kamgc-co-convenor-list {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: .75rem;
+}
+
+.cer-kamgc-co-convenor {
+    display: grid;
+    flex: 1 1 0;
+    place-items: center;
+    min-width: 0;
+}
+
+.cer-kamgc-co-convenor-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 112px;
+    height: 82px;
+    padding: .65rem;
+    border: 1px solid #d9e4f0;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 8px 18px rgba(23, 61, 95, .08);
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.cer-kamgc-co-convenor-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.cer-kamgc-co-convenor:hover .cer-kamgc-co-convenor-logo,
+.cer-kamgc-co-convenor:focus-within .cer-kamgc-co-convenor-logo {
+    transform: translateY(-3px);
+    border-color: #faa41a;
+    box-shadow: 0 12px 24px rgba(250, 164, 26, .18);
+}
+
 .cer-kamgc-hero-badges {
     display: flex;
     align-items: center;
@@ -4094,11 +4173,23 @@ body:has(.cer-event-page) {
 
 /* --- Emblem badge: sized for the hero corner, not the page. ------------ */
 .cer-kamgc-emblem-badge img {
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
+    width: 92px;
+    height: 92px;
+    border-radius: 16px;
     object-fit: contain;
     background: #231f20;
+}
+
+.cer-kamgc-emblem-badge {
+    padding: .6rem 1rem .6rem .6rem;
+}
+
+.cer-kamgc-emblem-badge strong {
+    font-size: .78rem;
+}
+
+.cer-kamgc-emblem-badge span {
+    font-size: .82rem;
 }
 
 /* ==========================================================================
@@ -4507,6 +4598,22 @@ html.cer-js .cer-reveal.is-visible {
     .cer-kamgc-hero-badges {
         flex-wrap: wrap;
         gap: .5rem;
+    }
+
+    .cer-kamgc-co-convenors {
+        width: 100%;
+        margin-bottom: 1.25rem;
+        padding: .85rem .75rem .9rem;
+    }
+
+    .cer-kamgc-co-convenor-list {
+        gap: .45rem;
+    }
+
+    .cer-kamgc-co-convenor-logo {
+        width: min(29vw, 96px);
+        height: 70px;
+        padding: .5rem;
     }
 
     /* Full-width CTAs are easier to hit than side-by-side pills at 360px. */
@@ -7226,4 +7333,12 @@ footer.elementor-location-footer > .elementor-element-1dc9942 {
 /* Ensure the copyright section remains visible */
 footer.elementor-location-footer > .elementor-element-3be4cff {
     display: block; /* or your preferred layout display */
+}
+
+.cer-kamgc-partner-card h3 {
+    margin: 0;
+    color: #10233f;
+    font-size: .95rem;
+    line-height: 1.35;
+    text-align: center;
 }

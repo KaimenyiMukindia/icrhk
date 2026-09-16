@@ -126,6 +126,24 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 							<section class="cer-kamgc-hero" id="home">
 								<div class="cer-kamgc-hero-inner">
 									<div class="cer-kamgc-hero-copy">
+										<?php if ( $show_partners && ! empty( $event_partners ) ) : ?>
+											<div class="cer-kamgc-co-convenors" aria-label="<?php esc_attr_e( 'Co-convening institutions', 'custom-event-registration' ); ?>">
+												<span class="cer-kamgc-co-convenors-label"><?php esc_html_e( 'Co-convened by', 'custom-event-registration' ); ?></span>
+												<div class="cer-kamgc-co-convenor-list">
+													<?php foreach ( $event_partners as $partner ) : ?>
+														<div class="cer-kamgc-co-convenor">
+															<span class="cer-kamgc-co-convenor-logo">
+																<?php if ( $partner->logo_id ) : ?>
+																	<?php echo wp_get_attachment_image( $partner->logo_id, 'thumbnail', false, array( 'loading' => 'eager' ) ); ?>
+																<?php else : ?>
+																	<span class="material-symbols-outlined" aria-hidden="true">handshake</span>
+																<?php endif; ?>
+															</span>
+														</div>
+													<?php endforeach; ?>
+												</div>
+											</div>
+										<?php endif; ?>
 										<div class="cer-kamgc-hero-badges">
 											<?php
 											/*
@@ -434,7 +452,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 															<span class="material-symbols-outlined" aria-hidden="true">handshake</span>
 														<?php endif; ?>
 													</div>
-													<h3><?php echo esc_html( $partner->name ); ?></h3>
+															<h3><?php echo esc_html( cer_event_page_format_institution_name( $partner->name ) ); ?></h3>
 													<?php if ( $partner_url ) : ?><a class="cer-kamgc-partner-detail" href="<?php echo esc_url( $partner_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $partner_url ); ?></a><?php endif; ?>
 													<?php if ( $partner_tel ) : ?><a class="cer-kamgc-partner-detail" href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $partner_tel ) ); ?>"><?php echo esc_html( $partner_tel ); ?></a><?php endif; ?>
 													<?php if ( $partner_email ) : ?><a class="cer-kamgc-partner-detail" href="mailto:<?php echo esc_attr( $partner_email ); ?>"><?php echo esc_html( $partner_email ); ?></a><?php endif; ?>
@@ -580,6 +598,23 @@ if ( ! function_exists( 'cer_event_page_table_has_visibility' ) ) {
 if ( ! function_exists( 'cer_event_page_format_datetime' ) ) {
 	function cer_event_page_format_datetime( $value ) {
 		return ! empty( $value ) ? date_i18n( 'M j, Y \a\t g:i a', strtotime( $value ) ) : 'To be confirmed';
+	}
+}
+
+if ( ! function_exists( 'cer_event_page_format_institution_name' ) ) {
+	function cer_event_page_format_institution_name( $name ) {
+		$words = preg_split( '/(\s+)/', trim( wp_strip_all_tags( (string) $name ) ), -1, PREG_SPLIT_DELIM_CAPTURE );
+		$lowercase_words = array( 'a', 'an', 'and', 'for', 'in', 'of', 'the', 'to' );
+		$word_position = 0;
+		foreach ( $words as $index => $word ) {
+			if ( preg_match( '/^\s+$/', $word ) ) {
+				continue;
+			}
+			$normalized_word = strtolower( $word );
+			$words[ $index ] = preg_match( '/^[A-Z0-9&.-]{2,}$/', $word ) ? $word : ( $word_position > 0 && in_array( $normalized_word, $lowercase_words, true ) ? $normalized_word : ucfirst( $normalized_word ) );
+			$word_position++;
+		}
+		return implode( '', $words );
 	}
 }
 
