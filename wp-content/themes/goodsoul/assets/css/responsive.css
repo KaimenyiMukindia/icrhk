@@ -1,0 +1,1244 @@
+/* Responsive CSS  */
+
+@media only screen and (max-width: 7000px) {
+    .page-wrapper {
+        overflow: hidden;
+    }
+}
+
+@media only screen and (max-width: 1650px) {}
+
+@media only screen and (max-width: 1550px) {
+    .gallery-section-two .wrapper-box>div {
+        width: 33.333%;
+    }
+}
+
+@media only screen and (max-width: 1400px) {
+    .cause-block-three .content-wrapper {
+        left: 2px;
+    }
+}
+
+@media only screen and (max-width: 1340px) {
+    .gallery-section .portfolio-column,
+    .gallery-section .content-column {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 1200px) {
+    .sticky-header,
+    .main-header .header-upper {
+        display: none;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
+    .mobile-menu {
+        display: none;
+    }
+    .main-menu .navigation>li>ul,
+    .main-menu .navigation>li>ul>li>ul {
+        display: block !important;
+        visibility: hidden;
+        opacity: 0;
+    }
+}
+
+@media only screen and (max-width: 1199px) {
+    .testimonial-block-two .inner-box {
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+    }
+    .testimonial-block-two .content-box {
+        margin-left: 40px;
+        padding-top: 110px;
+    }
+    .testimonial-block-two .author-box .image {
+        margin-right: 0;
+        margin-bottom: -75px;
+        z-index: 9;
+    }
+    .payment-donate-section-two .sec-bg-one {
+        display: none;
+    }
+    .gallery-section-two .wrapper-box>div {
+        width: 50%;
+    }
+    .main-header.header-style-five {
+        padding-top: 0px;
+    }
+}
+
+@media only screen and (max-width: 1023px) {}
+
+@media only screen and (max-width: 991px) {
+    .banner-section .content-box h1 {
+        font-size: 55px;
+        line-height: 65px;
+    }
+    .top-bar .wrapper-box {
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+    }
+    .causes-section-three .cause-carousel-wrapper:before,
+    .causes-section-three .owl-dot-style-one .owl-dots,
+    .counter-block-two:before,
+    .banner-section .content-box .text br {
+        display: none;
+    }
+    .volunteer-section .image-wrapper-one,
+    .volunteer-section .image-wrapper-two {
+        margin: 0;
+        margin-bottom: 40px;
+    }
+    .caring-block {
+        border: 0px !important;
+        margin-bottom: 30px;
+    }
+    .counter-block-two .inner-box {
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+    }
+    .payment-donate-section-two .tab-content {
+        margin-right: 0;
+    }
+    .payment-donate-section-two .nav-tabs {
+        padding: 100px 0;
+    }
+    .testimonial-section .sec-bg-one,
+    .payment-donate-section-two .sec-bg-two {
+        display: none;
+    }
+    .testimonial-section .sec-bg-two {
+        width: 100%;
+    }
+    .causes-section-three .cause-carousel-wrapper {
+        padding-right: 0;
+    }
+    .cause-block-three .inner-box {
+        padding-left: 0px;
+    }
+    .cause-block-three.style-two:nth-child(even) .inner-box {
+        padding-right: 0;
+    }
+    .cause-block-three.style-two .inner-box:after {
+        font-size: 95px;
+    }
+    .sidebar-page-container .post-wrapper {
+        margin-right: 0;
+        padding-bottom: 30px;
+    }
+    .sidebar-page-container .sidebar {
+        padding-left: 0;
+        padding-top: 70px;
+    }
+    .sidebar-page-container .sidebar:before {
+        left: -20px;
+    }
+    .main-header.header-style-four .top-bar {
+        z-index: 99999;
+    }
+    .main-header.header-style-four .search-box-outer {
+        top: 23px;
+    }
+    .mobile-menu.style-fourv .navbar-toggle {
+        top: -40px;
+    }
+    .about-section-three .image-box {
+        margin-bottom: 30px;
+        padding-right: 0;
+    }
+    .about-section-three .contact-box {
+        right: 50%;
+        -webkit-transform: translateX(50%);
+        -ms-transform: translateX(50%);
+        transform: translateX(50%);
+    }
+    .payment-donate-section-three .wrapper-box {
+        margin: 0 auto;
+        padding: 50px 20px;
+    }
+    .default-video-box {
+        float: inherit;
+        margin: 60px auto 0;
+    }
+    .banner-section.style-six .content-box h1,
+    .banner-section.style-five .content-box h1 {
+        font-size: 70px;
+        line-height: 80px;
+        font-weight: 700;
+    }
+    .causes-section-six .wrapper-box {
+        padding: 30px;
+    }
+    .causes-section-six .image:before {
+        display: none;
+    }
+    .causes-section-six .donation-wrapper {
+        border: 0px;
+        padding-left: 0px;
+        margin-top: 0;
+    }
+    .whychoose-us-section-two .wrapper-box>div {
+        margin-bottom: 40px;
+    }
+    .filters li {
+        width: 33.333%;
+        border-right: 1px solid #eaeaea;
+    }
+    .donor-section .right-column:before {
+        left: -20px;
+    }
+    .donor-section.style-two .donor-block {
+        max-width: 33.333%;
+    }
+    .cause-info .progress-block {
+        position: absolute;
+        top: 20px;
+        border: 0px !important;
+    }
+    .cause-info .wrapper-box {
+        padding-top: 110px;
+        -webkit-transform: translateY(-30px);
+        -ms-transform: translateY(-30px);
+        transform: translateY(-30px);
+    }
+    .sidebar-page-container.cause-details .sidebar {
+        padding-top: 110px;
+    }
+}
+
+@media only screen and (max-width: 767px) {
+    .payment-donate-section-three .sec-bg-one,
+    .news-block-three h2 br,
+    .top-bar .left-content {
+        display: none;
+    }
+    .top-bar .wrapper-box {
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+    }
+    .top-bar .right-content {
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+    }
+    .banner-section.style-thre .content-box h1,
+    .banner-section.style-two .content-box h1,
+    .banner-section .content-box h1 {
+        font-size: 45px;
+        line-height: 55px;
+    }
+    .cause-block-three .content-wrapper {
+        position: relative;
+        top: 0;
+        margin: 0 auto;
+        margin-top: -126px;
+    }
+    .owl-nav-style-two .owl-nav {
+        position: relative !important;
+        top: 0;
+        bottom: 0;
+        -webkit-transform: translateY(20px) !important;
+        -ms-transform: translateY(20px) !important;
+        transform: translateY(20px) !important;
+    }
+    .gallery-section-two .wrapper-box>div {
+        width: 100%;
+    }
+    .gallery-section-two .content-column {
+        padding: 100px 20px 50px;
+    }
+    .gallery-section-two .sec-title {
+        margin-bottom: 20px;
+    }
+    .payment-donate-section-three .sec-bg-two {
+        width: 100%;
+    }
+    .banner-section.style-six .content-box h1,
+    .banner-section.style-five .content-box h1 {
+        font-size: 60px;
+        line-height: 70px;
+        font-weight: 700;
+    }
+    .banner-section h2 {
+        font-size: 24px;
+    }
+    .testimonial-block-one .content-box,
+    .testimonial-block-one .author-box {
+        width: 100%;
+    }
+    .banner-slider-nav {
+        display: none !important;
+    }
+    .history-section .swiper-nav-button {
+        display: none;
+    }
+    br {
+        display: none !important;
+    }
+    .contact-info {
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+    }
+    .contact-info li {
+        padding-right: 0;
+        border: 0px;
+    }
+}
+
+@media only screen and (max-width: 599px) {
+    .banner-section h3,
+    .banner-section h4 {
+        padding: 0;
+    }
+    .banner-section.style-three .content-box h1 br,
+    .banner-section.style-two .content-box h1 br,
+    .banner-section .content-box h1 br,
+    .event-block-one h4 br,
+    .cause-block-one .lower-content .bottom-content .share-icon,
+    .banner-section h4 .border-shape-right,
+    .banner-section h4 .border-shape-left {
+        display: none;
+    }
+    .news-block-three .post-info>div+div {
+        margin-left: 15px;
+        border-left: 0;
+        padding-left: 0;
+    }
+    .main-header.header-style-four .contact-info {
+        min-width: auto;
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+    }
+    .main-header.header-style-four .contact-info li {
+        border-right: none;
+        padding-right: 0px;
+    }
+    .filters li {
+        width: 50%;
+    }
+    .donor-section.style-two .donor-block {
+        max-width: 50%;
+    }
+    .cause-block-three.style-two .inner-box {
+        padding: 0 !important;
+    }
+    .cause-block-three.style-two .inner-box:before,
+    .cause-block-three.style-two .inner-box:after {
+        display: none;
+    }
+    .footer-bottom .left-content .icon {
+        margin-bottom: 30px;
+    }
+    .cause-details .donate-form-area .donate-form-wrapper {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .social-icon-seven li {
+        margin-left: 0 !important;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    .cause-details .recent-donars .donor-thumb:nth-child(2) {
+        left: 10%;
+        top: 44%;
+    }
+    .cause-details .recent-donars .donor-thumb:nth-child(6) {
+        top: 35%;
+    }
+    .cause-details .recent-donars .donor-thumb:nth-child(4) {
+        right: 5%;
+    }
+    .event-block-five h1 {
+        font-size: 40px;
+    }
+    .countdown-timer-two li {
+        margin-bottom: 30px;
+    }
+    .single-blog-post .post-info>* {
+        border: none !important;
+    }
+    .contact-form-section .hint {
+        margin-left: 0px;
+    }
+}
+
+@media only screen and (max-width: 499px) {
+    .instagram-widget-two .instagram-wrapper .image {
+        width: 50%;
+    }
+    .news-block-three .share-info {
+        display: none;
+    }
+    .banner-section.style-six .content-box h1,
+    .banner-section.style-five .content-box h1 {
+        font-size: 40px;
+        line-height: 50px;
+        font-weight: 700;
+    }
+    .banner-section.style-five .content-box .text {
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 26px;
+    }
+    .banner-section .link-box a+a {
+        margin-left: 0px;
+    }
+    .intro-section .experience-block {
+        padding-left: 0;
+    }
+    .intro-section .experience-years {
+        position: relative;
+        margin-bottom: 40px;
+    }
+    .newsletter-two input[type="email"] {
+        width: 100%;
+        margin-bottom: 20px;
+        border-radius: 28px;
+    }
+    .newsletter-two .theme-btn {
+        border-radius: 28px;
+    }
+    .whychoose-us-section .image-block .logo-box {
+        position: relative;
+        margin: 0 auto;
+        margin-top: 75px;
+    }
+    .whychoose-us-section .image-block .video-box {
+        bottom: 166px;
+        width: 100%;
+    }
+    .whychoose-us-section .image-block .contact-info-two {
+        top: 0;
+        left: 50%;
+        -webkit-transform: translateX(-50%);
+        -ms-transform: translateX(-50%);
+        transform: translateX(-50%);
+        width: 100%;
+    }
+    .whychoose-us-section .image-block {
+        padding-top: 120px;
+    }
+    .donor-section.style-two .donor-block {
+        max-width: 100%;
+    }
+}
+
+@media only screen and (max-width: 399px) {}
+
+.gallery-item {
+    display: inline-block;
+    padding: 1.79104477%;
+    text-align: center;
+    vertical-align: top;
+}
+
+.gallery-columns-1 .gallery-item {
+    max-width: 100%;
+    width: 100%;
+}
+
+@media screen and (min-width: 30em) {
+    .gallery-columns-1 .gallery-item {
+        max-width: 100%;
+    }
+}
+
+.gallery-columns-2 .gallery-item {
+    max-width: 100%;
+    width: 50%;
+}
+
+@media screen and (min-width: 30em) {
+    .gallery-columns-2 .gallery-item {
+        max-width: 50%;
+    }
+}
+
+.gallery-columns-3 .gallery-item {
+    max-width: 100%;
+    width: 33.33%;
+}
+
+@media screen and (min-width: 30em) {
+    .gallery-columns-3 .gallery-item {
+        max-width: 33.33%;
+    }
+}
+
+.gallery-columns-4>.gallery-item {
+    max-width: 100%;
+    width: 25%;
+}
+
+@media screen and (min-width: 30em) {
+    .gallery-columns-4 .gallery-item {
+        max-width: 25%;
+    }
+}
+
+.gallery-columns-5 .gallery-item {
+    max-width: 100%;
+    width: 20%;
+}
+
+@media screen and (min-width: 48em) {
+    .gallery-columns-5 .gallery-item {
+        max-width: 20%;
+    }
+}
+
+.gallery-columns-6 .gallery-item {
+    max-width: 100%;
+    width: 16.66%;
+}
+
+@media screen and (min-width: 48em) {
+    .gallery-columns-6 .gallery-item {
+        max-width: 16.66%;
+    }
+}
+
+.gallery-columns-7 .gallery-item {
+    max-width: 100%;
+    width: 14.28%;
+}
+
+@media screen and (min-width: 48em) {
+    .gallery-columns-7 .gallery-item {
+        max-width: 14.28%;
+    }
+}
+
+.gallery-columns-8 .gallery-item {
+    max-width: 100%;
+    width: 12.5%;
+}
+
+@media screen and (min-width: 48em) {
+    .gallery-columns-8 .gallery-item {
+        max-width: 12.5%;
+    }
+}
+
+.gallery-columns-9 .gallery-item {
+    max-width: 100%;
+    width: 11.11%;
+}
+
+@media screen and (min-width: 48em) {
+    .gallery-columns-9 .gallery-item {
+        max-width: 11.11%;
+    }
+}
+
+.single-format-gallery .page-links {
+    margin-top: 20px;
+}
+
+.btn-style-one:after,
+.btn-style-two,
+.btn-style-three:before,
+.btn-style-four,
+.btn-style-five,
+.btn-style-six:before,
+.btn-style-six:after,
+.btn-style-seven:before,
+.btn-style-seven:after,
+.btn-style-eight,
+.btn-style-eight:before,
+.btn-style-nine,
+.btn-style-ten:after,
+.btn-style-eleven,
+.btn-style-eleven:before,
+.btn-style-twelve:before,
+.btn-style-twelve:after,
+.btn-style-thirteen,
+.btn-style-thirteen:before,
+.btn-style-fourteen,
+.btn-style-sixteen:before,
+.btn-style-sixteen:after,
+.theme-bg,
+.owl-dot-style-two .owl-dots .owl-dot.active span,
+.owl-dot-style-two .owl-dots .owl-dot:hover span,
+.owl-nav-style-one .owl-nav .owl-next:hover,
+.owl-nav-style-one .owl-nav .owl-prev:hover,
+.scroll-to-top,
+.scroll-to-top.style-four,
+.scroll-to-top.style-five,
+.social-icon-three li a:hover,
+.main-menu .navigation>li.current:before,
+.main-menu .navigation>li.current:after,
+.main-header .cart-btn .item-count,
+.header-upper.style-two .main-menu .navigation>li.current:after,
+.header-upper.style-two .main-menu .navigation>li.current:before,
+.sticky-header.style-two .main-menu .navigation>li.current:after,
+.sticky-header.style-two .main-menu .navigation>li.current:before,
+.main-header .header-upper.style-two .cart-btn .item-count,
+.header-upper.style-three .main-menu .navigation>li.current:after,
+.header-upper.style-three .main-menu .navigation>li.current:before,
+.sticky-header.style-three .main-menu .navigation>li.current:after,
+.sticky-header.style-three .main-menu .navigation>li.current:before,
+.header-upper.style-four .main-menu .navigation>li.current:after,
+.header-upper.style-four .main-menu .navigation>li.current:before,
+.sticky-header.style-four .main-menu .navigation>li.current:after,
+.sticky-header.style-four .main-menu .navigation>li.current:before,
+.main-header.header-style-five .cart-btn .item-count,
+.header-upper.style-four .main-menu .navigation>li.current:after,
+.header-upper.style-four .main-menu .navigation>li.current:before,
+.sticky-header.style-four .main-menu .navigation>li.current:after,
+.sticky-header.style-four .main-menu .navigation>li.current:before,
+.banner-section h2.border-shape:before,
+.banner-section h4 .border-shape-left:before,
+.banner-section h4 .border-shape-left:after,
+.banner-section h4 .border-shape-right:before,
+.banner-section h4 .border-shape-right:after,
+.banner-section .link-box-two .default-btn,
+.banner-section.style-five .content-box .inner:before,
+.banner-section.style-five .content-box .inner:after,
+.banner-section.style-five .banner-slider-pagination .swiper-pagination-bullet.swiper-pagination-bullet-active,
+.banner-section.style-six .banner-slider-pagination .swiper-pagination-bullet.swiper-pagination-bullet-active,
+.slide-progress,
+.banner-section .banner-slider-pagination.style-three .swiper-pagination-bullet.swiper-pagination-bullet-active,
+.sec-title.text-center .icon-box:before,
+.sec-title.text-center .icon-box:after,
+.progress-levels .progress-box .bar .bar-fill,
+.cause-block-one .category a:hover:before,
+.share-icon.style-two ul a:hover,
+.donor-block .bottom-content .price,
+.donor-block .bottom-content .price:before,
+.feature-block-one .icon-box,
+.event-tabs .event-tab-btns .event-tab-btn.active-btn,
+.event-tabs .event-tab-btns .event-tab-btn.active-btn:before,
+.events-section.style-three .link-btn .theme-btn:before,
+.events-section.style-three .link-btn .theme-btn:after,
+.blog-section.style-two .share-icon.style-two ul a:hover,
+.blog-section.style-three .link-btn .theme-btn:before,
+.blog-section.style-three .link-btn .theme-btn:after,
+.blog-section.style-three .news-block-one .category a,
+.blog-section.style-three .share-icon.style-two ul a:hover,
+.blog-section.style-three .news-block-one .inner-box:before,
+.main-footer .footer-widget .widget-title-two:before,
+.office-location-widget .location-point,
+.main-footer.style-four .social-icon-three li a:hover,
+.hidden-sidebar.style-two .newsletter-widget-two .theme-btn:after,
+.hidden-sidebar.style-two .newsletter-widget-two .theme-btn:before,
+.chicklet-list:checked+label,
+.donate-popup.style-two .chicklet-list:checked+label,
+.donate-popup.style-two .btn-style-one:before,
+.donate-popup.style-two .btn-style-one:after,
+.donate-popup.style-three .chicklet-list:checked+label,
+.donate-popup.style-three .btn-style-one:before,
+.donate-popup.style-three .btn-style-one:after,
+.donate-popup.style-four .chicklet-list:checked+label,
+.donate-popup.style-four .btn-style-one:before,
+.donate-popup.style-four .btn-style-one:after,
+.donate-popup.style-five .chicklet-list:checked+label,
+.donate-popup.style-five .contact-form input:focus,
+.donate-popup.style-five .contact-form select:focus,
+.donate-popup.style-five .contact-form textarea:focus,
+.donate-popup.style-five .btn-style-one:before,
+.donate-popup.style-five .btn-style-one:after,
+.progress-levels.style-two .progress-box .bar .bar-fill,
+.progress-levels.style-two .progress-box .percent,
+.progress-levels.style-two .progress-box .percent:before,
+.causes-section-three .cause-carousel-wrapper:before,
+.cause-block-three.style-two .progress-levels.style-two .progress-box .percent,
+.cause-block-three.style-two .progress-levels.style-two .progress-box .percent:before,
+.cause-block-three.style-two .progress-levels.style-two .progress-box .bar .bar-fill,
+.project-block-one .image .icon-box:before,
+.event-block-three .content .toggle-btn.active,
+.event-block-three .join-btn:hover,
+.volunteer-section-two .swiper-nav-button .swiper-button-next,
+.volunteer-section-two .swiper-nav-button .swiper-button-prev,
+.news-block-two .inner-box:before,
+.news-block-two .share-icon.style-two ul a:hover,
+.news-block-two.style-two .inner-box:before,
+.news-block-two.style-two .share-icon.style-two ul a:hover,
+.news-block-two.style-three .inner-box:before,
+.news-block-two.style-three .share-icon.style-two ul a:hover,
+.via-payment-section:before,
+.caring-block .inner-box:hover .icon-box,
+.funfacts-section-two:before,
+.team-block-two .author-info:before,
+.team-block-two .social-icon-two li a:hover,
+.team-section-two.style-two .team-block-two .author-info:before,
+.team-section-two.style-two .team-block-two .social-icon-two li a:hover,
+.payment-donate-section-two .tab-content,
+.payment-donate-section-two .nav-tabs li .nav-link:before,
+.testimonial-block-two .author-box .image .share-icon,
+.gallery-block-one .zoom-btn:before,
+.history-section .swiper-nav-button .swiper-button-next:hover:before,
+.history-section .swiper-nav-button .swiper-button-prev:hover:before,
+.accordion-box .accordion .accord-btn.active span,
+.default-video-box a:before,
+.default-video-box.style-two a:before,
+.news-block-three .inner-box:before,
+.post-widget-two .date:before,
+.tag-cloud-widget ul li a:hover,
+.case-widget .owl-dot-style-one .owl-dots .owl-dot.active span,
+.case-widget .btn-style-seven:before,
+.case-widget .btn-style-seven:after,
+.case-widget .progress-levels.style-two .progress-box .bar .bar-fill,
+.case-widget .progress-levels.style-two .progress-box .percent,
+.case-widget .progress-levels.style-two .progress-box .percent:before,
+.call-to-action-two:before,
+.intro-block-one .campaigns a,
+.intro-block-one .link-btn a,
+.about-section-three .contact-box .icon-box,
+.feature-block-four .overlay .link-btn a,
+.payment-donate-section-three .wrapper-box,
+.payment-donate-section-three .btn-style-ten:before,
+.payment-donate-section-three .default-video-box a,
+.team-block-five .overlay-content,
+.testimonial-block-three .quote,
+.gallery-section-two,
+.gallery-block-two .overlay a:hover,
+.gallery-block-two .caption-title,
+.payment-donate-section-four .form-group:before,
+.payment-donate-section-four .progress-levels .progress-box .percent,
+.payment-donate-section-four .progress-levels .progress-box .bar .bar-fill,
+.payment-donate-section-four .payment-donate-section-four .form-group:before,
+.payment-donate-section-four .btn-style-five,
+.causes-section-six .wrapper-box,
+.caring-block-two .inner-box:hover .icon-box,
+.cause-block-seven .image .link-btn .theme-btn,
+.cause-block-seven .image .link-btn a:before,
+.cause-block-seven .category a:hover:before,
+.cause-block-seven .progress-levels .progress-box .bar .bar-fill,
+.whychoose-us-section-two .link-btn .theme-btn,
+.whychoose-us-section-two .link-btn a:before,
+.team-block-six .author-info:before,
+.team-block-six .social-icon-two li a:hover,
+.filters li.active,
+.gallery-block-three .overlay a:hover,
+.gallery-section-four .gallery-block-three .overlay a:hover,
+.gallery-section-five .filters li.active,
+.gallery-block-four .overlay a:hover,
+.gallery-section-six .gallery-block-three .overlay a:hover,
+.gallery-block-five .overlay a:hover,
+.gallery-block-five .caption-title h4 a span,
+.newsletter-two .wrapper-box,
+.event-widget .signle-event .date,
+.feature-block-three .icon-box:hover,
+.cause-details .video-box a:hover,
+.cause-details .recent-donars .donor-thumb,
+.cause-details .recent-donars .donor-thumb .content,
+.cause-details .recent-donars .donor-thumb .content:before,
+.event-time-place .content h2:before,
+.about-event .tab-btn-style-one .nav-link.active,
+.team-block-four .inner-box:hover .lower-content,
+.team-block-four .inner-box:hover .social-icon-two li a,
+.single-blog-post .share-icon.style-two ul a:hover,
+.contact-info-three h4:before,
+.shop-sidebar-wrapper .search-form button,
+.shop-sidebar-wrapper .search-form button:hover,
+.shop-sidebar-wrapper .search-form input[type=text]:focus+button,
+.single-sidebar-box .categories li:before,
+.shop-sidebar-wrapper .price-ranger .ui-slider-handle:before,
+.shop-sidebar-wrapper .price-ranger .ui-slider .ui-slider-range,
+.shop-sidebar-wrapper .price-ranger .ranger-min-max-block input[type=submit],
+.single-shop-content .content-box .addto-cart-box button.addtocart,
+.product-tab-box .tab-btns .tab-btn span:before,
+.cart-area .cart-table tbody .available-info .icon,
+.cart-middle .apply-coupon .apply-coupon-button button:hover,
+.cart-bottom .calculate-shipping button:hover,
+.cart-bottom button.checkout-btn:hover,
+.checkout-area .exisitng-customer:before,
+.checkout-area .coupon:before,
+.placeorder-button button,
+.btn-style-one:before {
+    background-color: var(--main-one-color);
+}
+
+
+/* Color */
+
+.btn-style-one,
+.theme-color,
+.btn-style-six,
+.btn-style-seven,
+.btn-style-ten,
+.btn-style-eleven:hover,
+.theme-color-two,
+.theme-color-three,
+.theme-color-five,
+.owl-nav-style-two .owl-nav .owl-next:hover,
+.owl-nav-style-two .owl-nav .owl-prev:hover,
+.owl-nav-style-three .owl-nav .owl-next:hover,
+.owl-nav-style-three .owl-nav .owl-prev:hover,
+.owl-nav-style-four .owl-nav .owl-next:hover,
+.owl-nav-style-four .owl-nav .owl-prev:hover,
+.owl-nav-style-five .owl-nav .owl-next:hover,
+.owl-nav-style-five .owl-nav .owl-prev:hover,
+.scroll-to-top.style-two,
+.scroll-to-top.style-three,
+.social-icon-one li a:hover,
+.social-icon-two li a:hover,
+.main-menu .navigation>li.current>a,
+.main-menu .navigation>li:hover>a,
+.main-menu .navigation>li>ul>li:hover>a,
+.main-menu .navigation>li>ul>li>a:before,
+.main-menu .navigation>li>ul>li>ul>li>a:before,
+.main-menu .navigation>li>ul>li>ul>li>a:hover,
+.main-header .sticky-header .main-menu .navigation>li.current-menu-item>a,
+.main-header .sticky-header .main-menu .navigation>li.current>a,
+.main-header .sticky-header .main-menu .navigation>li:hover>a,
+.make-payment button,
+.header-upper.style-two .main-menu .navigation>li.current>a,
+.header-upper.style-two .main-menu .navigation>li:hover>a,
+.header-upper.style-two .main-menu .navigation>li>ul>li:hover>a,
+.header-upper.style-two .main-menu .navigation>li>ul>li>a:before,
+.header-upper.style-two .main-menu .navigation>li>ul>li>ul>li>a:before,
+.header-upper.style-two .main-menu .navigation>li>ul>li>ul>li>a:hover,
+.mobile-menu.style-two .main-menu .navigation>li.current>a,
+.mobile-menu.style-two .main-menu .navigation>li:hover>a,
+.mobile-menu.style-two .main-menu .navigation>li>ul>li:hover>a,
+.mobile-menu.style-two .main-menu .navigation>li>ul>li>ul>li>a:hover,
+.sticky-header.style-two .main-menu .navigation>li.current>a,
+.sticky-header.style-two .main-menu .navigation>li:hover>a,
+.sticky-header.style-two .main-menu .navigation>li>ul>li:hover>a,
+.sticky-header.style-two .main-menu .navigation>li>ul>li>a:before,
+.sticky-header.style-two .main-menu .navigation>li>ul>li>ul>li>a:before,
+.top-bar.style-three .social-icon-one li a:hover,
+.header-upper.style-three .main-menu .navigation>li.current>a,
+.header-upper.style-three .main-menu .navigation>li:hover>a,
+.header-upper.style-three .main-menu .navigation>li>ul>li:hover>a,
+.header-upper.style-three .main-menu .navigation>li>ul>li>a:before,
+.header-upper.style-three .main-menu .navigation>li>ul>li>ul>li>a:before,
+.header-upper.style-three .main-menu .navigation>li>ul>li>ul>li>a:hover,
+.mobile-menu.style-three .main-menu .navigation>li.current>a,
+.mobile-menu.style-three .main-menu .navigation>li:hover>a,
+.mobile-menu.style-three .main-menu .navigation>li>ul>li:hover>a,
+.mobile-menu.style-three .main-menu .navigation>li>ul>li>ul>li>a:hover,
+.sticky-header.style-three .main-menu .navigation>li.current>a,
+.sticky-header.style-three .main-menu .navigation>li:hover>a,
+.sticky-header.style-three .main-menu .navigation>li>ul>li:hover>a,
+.sticky-header.style-three .main-menu .navigation>li>ul>li>a:before,
+.sticky-header.style-three .main-menu .navigation>li>ul>li>ul>li>a:before,
+.main-header.header-style-four .main-menu .navigation>li.current:after,
+.social-icon-five li a:hover,
+.header-upper.style-four .main-menu .navigation>li.current>a,
+.header-upper.style-four .main-menu .navigation>li:hover>a,
+.header-upper.style-four .main-menu .navigation>li>ul>li:hover>a,
+.header-upper.style-four .main-menu .navigation>li>ul>li>a:before,
+.header-upper.style-four .main-menu .navigation>li>ul>li>ul>li>a:before,
+.header-upper.style-four .main-menu .navigation>li>ul>li>ul>li>a:hover,
+.mobile-menu.style-four .main-menu .navigation>li.current>a,
+.mobile-menu.style-four .main-menu .navigation>li:hover>a,
+.mobile-menu.style-four .main-menu .navigation>li>ul>li:hover>a,
+.mobile-menu.style-four .main-menu .navigation>li>ul>li>ul>li>a:hover,
+.sticky-header.style-four .main-menu .navigation>li.current>a,
+.sticky-header.style-four .main-menu .navigation>li:hover>a,
+.sticky-header.style-four .main-menu .navigation>li>ul>li:hover>a,
+.sticky-header.style-four .main-menu .navigation>li>ul>li>a:before,
+.sticky-header.style-four .main-menu .navigation>li>ul>li>ul>li>a:before,
+.header-upper.style-five .main-menu .navigation>li.current>a,
+.header-upper.style-five .main-menu .navigation>li:hover>a,
+.header-upper.style-five .main-menu .navigation>li>ul>li:hover>a,
+.header-upper.style-five .main-menu .navigation>li>ul>li>a:before,
+.header-upper.style-five .main-menu .navigation>li>ul>li>ul>li>a:before,
+.header-upper.style-five .main-menu .navigation>li>ul>li>ul>li>a:hover,
+.mobile-menu.style-five .main-menu .navigation>li.current>a,
+.mobile-menu.style-five .main-menu .navigation>li:hover>a,
+.mobile-menu.style-five .main-menu .navigation>li>ul>li:hover>a,
+.mobile-menu.style-five .main-menu .navigation>li>ul>li>ul>li>a:hover,
+.sticky-header.style-five .main-menu .navigation>li.current>a,
+.sticky-header.style-five .main-menu .navigation>li:hover>a,
+.sticky-header.style-five .main-menu .navigation>li>ul>li:hover>a,
+.sticky-header.style-five .main-menu .navigation>li>ul>li>a:before,
+.sticky-header.style-five .main-menu .navigation>li>ul>li>ul>li>a:before,
+.banner-section.style-two .banner-slider-nav.style-one .banner-slider-control:hover,
+.banner-section.style-three .banner-slider-nav.style-one .banner-slider-control:hover,
+.banner-section.style-five .banner-slider-nav.style-one .banner-slider-control:hover,
+.banner-section.style-six .banner-slider-nav.style-one .banner-slider-control:hover,
+.banner-slider-nav.style-one .banner-slider-control:hover,
+.about-content-block h4,
+.about-image-block .image-two a:hover,
+.sec-title h5,
+.sec-title.style-two h5,
+.sec-title.style-three h5,
+.sec-title .icon-box,
+.cause-block-one h4 a:hover,
+.cause-block-one .category a:hover,
+.share-icon ul a:hover,
+.donor-block .location,
+.donor-block .bottom-content .text,
+.feature-block-one:hover .icon-box,
+.counter-block .count-box,
+.event-block-one .lower-content .date h1,
+.event-block-one .lower-content .date span,
+.event-block-one .link-btn a,
+.events-section.style-three .link-btn .theme-btn,
+.events-section.style-three .event-block-one .lower-content .date span,
+.events-section.style-three .event-block-one .lower-content .date h1,
+.events-section.style-three .event-block-one .link-btn a,
+.testimonial-block-four .designation a,
+.team-block-one .lower-content h4 a:hover,
+.volunteer-section .default-form-area .contact-section-btn label,
+.news-block-one h4 a:hover,
+.blog-section.style-two .news-block-one h4 a:hover,
+.blog-section.style-three .link-btn .theme-btn,
+.blog-section.style-three .news-block-one .date span,
+.blog-section.style-three .news-block-one h4 a:hover,
+.client-section .text-two a,
+.client-section.style-three .text-two a,
+.client-section.style-four .text-two a,
+.client-section.style-five .text-two a,
+.about-widget ul li a:before,
+.link-widget ul li a:before,
+.newsletter-widget form button,
+.link-widget-two ul li a:hover,
+.link-widget-two ul li a:hover:before,
+.post-widget .post .date span,
+.post-widget .post h4 a:hover,
+.office-location-widget .link-btn a span,
+.about-widget-three .copyright-text span,
+.twitter-widget .link a,
+.twitter-widget .text a,
+.twitter-widget .twitter-portfolio .icon,
+.link-widget-three ul li a:hover,
+.link-widget-three ul li a:hover:before,
+.main-footer.style-four .post-widget .post .date,
+.main-footer.style-four .post-widget .post .date span,
+.main-footer.style-four .post-widget .post h4 a:hover,
+.news-widget-two h4 a:hover,
+.hidden-sidebar.style-two .news-widget-two h4 a:hover,
+.donate-popup .close-donate,
+.donate-popup.style-two .close-donate,
+.donate-popup.style-two .btn-style-one,
+.donate-popup.style-three .close-donate,
+.donate-popup.style-three .btn-style-one,
+.donate-popup.style-four .close-donate,
+.donate-popup.style-four .btn-style-one,
+.donate-popup.style-five .close-donate,
+.donate-popup.style-five .btn-style-one,
+.cause-block-two .info-box a,
+.cause-block-three .info-box a span,
+.causes-section-three .owl-dot-style-one .owl-dots .owl-dot.active:before,
+.cause-block-three.style-two .info-box a span,
+.testimonial-block-one .author-box .designation a,
+.testimonial-block-one .content-box .rating a,
+.testimonial-section .owl-next:hover,
+.testimonial-section .owl-prev:hover,
+.testimonial-block-one.style-two .author-box .designation a,
+.testimonial-block-one.style-two .content-box .rating a,
+.testimonial-section.style-two .owl-next:hover,
+.testimonial-section.style-two .owl-prev:hover,
+.event-block-two .event-info span,
+.event-block-three .content .time span,
+.volunteer-section-two .icon-box,
+.volunteer-section-two h4 span,
+.volunteer-section-two .list li:before,
+.volunteer-carousel-pagination .swiper-pagination-bullet.swiper-pagination-bullet-active:before,
+.swiper-counter-two div#current,
+.news-block-two .date span,
+.news-block-two h4 a:hover,
+.news-block-two.style-two .date span,
+.news-block-two.style-two h4 a:hover,
+.news-block-two.style-three h4 a:hover,
+.news-block-two.style-three .date span,
+.about-section-two .link-btn a,
+.funfacts-section-two.style-two .sec-title h5,
+.funfacts-section-two.style-two .counter-block-two .count-box,
+.funfacts-section-two.style-three .sec-title h5,
+.funfacts-section-two.style-three .counter-block-two .count-box,
+.cause-block-four h4 a:hover,
+.cause-block-four .info-box a span,
+.cause-block-four .count-box,
+.cause-block-four.style-two h4 a:hover,
+.cause-block-four.style-two .info-box a span,
+.cause-block-four.style-two .count-box,
+.upcoming-events-section .owl-nav-style-three .owl-nav .owl-next:hover,
+.upcoming-events-section .owl-nav-style-three .owl-nav .owl-prev:hover,
+.payment-donate-section-two .nav-tabs li .nav-link:after,
+.testimonial-block-two .designation a,
+.testimonial-block-two .rating a,
+.testimonial-section-two .owl-dot-style-one .owl-dots .owl-dot.active:before,
+.gallery-section .owl-nav-style-three .owl-nav .owl-next:hover,
+.gallery-section .owl-nav-style-three .owl-nav .owl-prev:hover,
+.page-title .bread-crumb li a,
+.page-title .bread-crumb li a:hover,
+.history-section .description .icon-box,
+.history-section .description h4 span,
+.history-section .swiper-nav-button .swiper-button-next:hover,
+.history-section .swiper-nav-button .swiper-button-prev:hover,
+.whychoose-us-block .icon-box,
+.whychoose-us-section .image-block .contact-info-two .icon-box,
+.accordion-box .accordion.active .accord-btn:after,
+.team-block-three .lower-content h4 a:hover,
+.posts-pagination ul li a:hover,
+.default-video-box a,
+.default-video-box.style-two a,
+.upcoming-events-section-two .sec-title h5,
+.countdown-timer-two li span.days,
+.countdown-timer-two li span.hours,
+.countdown-timer-two li span.minutes,
+.countdown-timer-two li span.seconds,
+.news-block-three .category span,
+.news-block-three .date span,
+.news-block-three h2 a:hover,
+.post-widget-two h4 a:hover,
+.blog-category-widget ul li a:hover,
+.blog-category-widget ul li span,
+.instagram-widget-two .theme-btn span,
+.case-widget .btn-style-seven,
+.case-widget .cause-block-two .info-box a,
+.event-widget .event-item h5 a:hover,
+.post-widget-three .post h5 a:hover,
+.newsletter-one .theme-btn:hover,
+.intro-section .top-content a,
+.about-section-three .contact-box h4,
+.about-section-three .contact-box h4 a,
+.about-section-three .content h4,
+.about-section-three .content .point-block span,
+.feature-block-four .overlay .link-btn a:hover,
+.cause-block-five .lower-content .info-box a span,
+.causes-section-five .owl-nav>div:hover,
+.payment-donate-section-three .default-video-box a:hover,
+.social-icon-six li a:hover,
+.testimonial-block-three .designation a,
+.testimonial-section-three .owl-nav-style-two .owl-nav .owl-next:hover,
+.testimonial-section-three .owl-nav-style-two .owl-nav .owl-prev:hover,
+.testimonial-block-five .designation a,
+.testimonial-section-five .owl-nav-style-two .owl-nav .owl-next:hover,
+.testimonial-section-five .owl-nav-style-two .owl-nav .owl-prev:hover,
+.causes-section-six .theme-btn:hover,
+.caring-block-two .icon-box,
+.cause-block-seven .image .link-btn a:hover,
+.cause-block-seven h4 a:hover,
+.cause-block-seven .category a:hover,
+.whychoose-block-two .icon-box,
+.whychoose-us-section-two .link-btn a:hover,
+.whychoose-us-section-two .contact-info-five .icon-box,
+.whychoose-us-section-two .contact-info-five h4,
+.whychoose-us-section-two .contact-info-five h4 a,
+.whychoose-us-section-two .image-block-two .video-box .video-btn:hover,
+.gallery-block-three .caption-title h5,
+.gallery-section-four .gallery-block-three .caption-title h5,
+.gallery-block-four .caption-title h5,
+.gallery-section-six .gallery-block-three .caption-title h5,
+.newsletter-two .social-icon-three li a:hover,
+.main-footer.style-five .link-widget-three ul li a:hover,
+.main-footer.style-five .link-widget-three ul li a:hover:before,
+.footer-menu li a:hover,
+.cause-info .wrapper-box>div span,
+.cause-info .progress-block .graph-outer .count-box,
+.cause-info .progress-block .graph-outer .count-text,
+.cause-details ul.list li span,
+.feature-block-three .inner-box a:hover,
+.cause-details .recent-donars .link-btn a span,
+.team-block-four .inner-box .designation,
+.single-blog-post .category span,
+.single-blog-post .views span,
+.single-blog-post .top-content .date span,
+.single-blog-post .top-content h2 a:hover,
+.single-blog-post ul.list li span,
+.single-blog-post .author-box .social-icon-three li a:hover,
+.blog-post-pagination .page-view,
+.contact-info-three .link-btn,
+.single-product-item .title-holder .overlay-content ul li a:hover span:before,
+.single-sidebar-box .categories li:hover a,
+.shop-sidebar-wrapper .products-post li .title-holder .post-title a:hover,
+.single-shop-content .content-box span.price,
+.single-shop-content .content-box .review-box ul li i,
+.single-shop-content .content-box .qity .stock-available,
+.single-shop-content .content-box .cart-btn .category,
+.single-shop-content .content-box .cart-btn .category span,
+.share-products-socials ul li a:hover i,
+.product-tab-box .tab-btns .tab-btn.active-btn span,
+.product-tab-box .tab-btns .tab-btn:hover span,
+.review-box-holder .single-review-box .text-holder .top .name h3 span,
+.review-box-holder .single-review-box .text-holder .top .review-box ul li i,
+.shop-page-title p b,
+.product-tab-box .review-form .input-box p span,
+.total-item-info li span,
+.cart-area .cart-table tbody tr .sub-total,
+.cart-area .cart-table tbody tr td .remove span:hover,
+.checkout-area .exisitng-customer h5 a,
+.checkout-area .coupon h5 a,
+.checkout-area .create-acc .checkbox label,
+.checkout-area .table .cart-table tbody tr td.price,
+.login-register-area .form .right h6 span,
+.list-style-one li a:hover,
+a {
+    color: var(--main-one-color);
+}
+
+
+/* Border Color */
+
+.btn-style-six,
+.btn-style-seven,
+.btn-style-twelve,
+.btn-style-sixteen:hover,
+.owl-dot-style-one .owl-dots .owl-dot.active span,
+.owl-dot-style-one .owl-dots .owl-dot:hover span,
+.owl-dot-style-two .owl-dots .owl-dot.active span,
+.owl-dot-style-two .owl-dots .owl-dot:hover span,
+.owl-dot-style-three .owl-dots .owl-dot.active span,
+.owl-nav-style-three .owl-nav .owl-next:hover,
+.owl-nav-style-three .owl-nav .owl-prev:hover,
+.owl-nav-style-four .owl-nav .owl-next:hover,
+.owl-nav-style-four .owl-nav .owl-prev:hover,
+.scroll-to-top.style-two,
+.scroll-to-top.style-three,
+.social-icon-three li a:hover,
+.main-header.header-style-five .main-menu .navigation>li.current:before,
+.main-header.header-style-five .main-menu .navigation>li.current:after,
+.about-image-block .logo-box .image:before,
+.share-icon.style-two ul a:hover,
+.events-section.style-three .link-btn .theme-btn,
+.testimonial-block-four .image:before,
+.testimonial-block-four .image:after,
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus,
+.contact-form .form-control:focus,
+.blog-section.style-two .share-icon.style-two ul a:hover,
+.blog-section.style-three .link-btn .theme-btn,
+.blog-section.style-three .share-icon.style-two ul a:hover,
+.main-footer.style-four .social-icon-three li a:hover,
+.hidden-sidebar.style-two .newsletter-widget-two .theme-btn,
+.donate-popup.style-two .contact-form input:focus,
+.donate-popup.style-two .contact-form select:focus,
+.donate-popup.style-two .contact-form textarea:focus,
+.donate-popup.style-two .btn-style-one,
+.donate-popup.style-three .contact-form input:focus,
+.donate-popup.style-three .contact-form select:focus,
+.donate-popup.style-three .contact-form textarea:focus,
+.donate-popup.style-three .btn-style-one,
+.donate-popup.style-four .contact-form input:focus,
+.donate-popup.style-four .contact-form select:focus,
+.donate-popup.style-four .contact-form textarea:focus,
+.donate-popup.style-four .btn-style-one,
+.donate-popup.style-five .btn-style-one,
+.cause-block-two .inner-box:before,
+.causes-section-three .owl-dot-style-one .owl-dots .owl-dot.active span,
+.causes-section-three .owl-dot-style-one .owl-dots .owl-dot:hover span,
+.cause-block-three.style-two .donate-btn .theme-btn,
+.news-block-two .share-icon.style-two ul a:hover,
+.news-block-two.style-two .share-icon.style-two ul a:hover,
+.news-block-two.style-three .share-icon.style-two ul a:hover,
+.caring-block .inner-box:hover .icon-box:before,
+.caring-block .icon-box:after,
+.caring-block .inner-box:hover .icon-box:after,
+.upcoming-events-section .owl-nav-style-three .owl-nav .owl-next:hover,
+.upcoming-events-section .owl-nav-style-three .owl-nav .owl-prev:hover,
+.team-section-two .owl-dot-style-one .owl-dots .owl-dot.active span,
+.team-section-two.style-two .owl-dot-style-one .owl-dots .owl-dot.active span,
+.testimonial-block-two .content-box,
+.testimonial-section-two .owl-dot-style-one .owl-dots .owl-dot.active span,
+.testimonial-section-two .owl-dot-style-one .owl-dots .owl-dot:hover span,
+.whychoose-us-section .image-block .logo-box .image:before,
+.accordion-box .accordion.active,
+.accordion-box .accordion .accord-btn.active span,
+.posts-pagination ul li a:hover,
+.tag-cloud-widget ul li a:hover,
+.case-widget .btn-style-seven,
+.case-widget .cause-block-two .inner-box:before,
+.intro-section .experience-years,
+.intro-section .top-content a,
+.team-block-five:before,
+.team-section-five .owl-dot-style-one .owl-dots .owl-dot.active span,
+.team-section-five .owl-dot-style-one .owl-dots .owl-dot:hover span,
+.testimonial-section-three .owl-nav-style-two .owl-nav .owl-next:hover,
+.testimonial-section-three .owl-nav-style-two .owl-nav .owl-prev:hover,
+.testimonial-section-five .owl-dots .owl-dot.active span,
+.testimonial-section-five .owl-dots .owl-dot:hover span,
+.testimonial-section-five .owl-nav-style-two .owl-nav .owl-next:hover,
+.testimonial-section-five .owl-nav-style-two .owl-nav .owl-prev:hover,
+.caring-block-two .inner-box:hover .icon-box:before,
+.caring-block-two .icon-box:after,
+.caring-block-two .inner-box:hover .icon-box:after,
+.cause-block-seven .image .link-btn .theme-btn,
+.causes-section-seven .owl-dot-style-one .owl-dots .owl-dot.active span,
+.causes-section-seven .owl-dot-style-one .owl-dots .owl-dot:hover span,
+.whychoose-us-section-two .link-btn a:hover,
+.whychoose-us-section-two .link-btn .theme-btn,
+.whychoose-us-section-two .image-block-two .logo-box .image:before,
+.whychoose-us-section-two .contact-info-five .icon-box,
+.team-section-six .owl-dot-style-one .owl-dots .owl-dot.active span,
+.team-section-six .owl-dot-style-one .owl-dots .owl-dot.active span,
+.team-section-six .owl-dot-style-one .owl-dots .owl-dot:hover span,
+.filters li.active,
+.gallery-block-three .overlay a:hover,
+.gallery-section-five .filters li.active,
+.gallery-section-four .gallery-block-three .overlay a:hover,
+.gallery-block-four .overlay a:hover,
+.gallery-section-six .gallery-block-three .overlay a:hover,
+.gallery-block-five .overlay a:hover,
+.event-widget .signle-event:hover,
+.single-blog-post .share-icon.style-two ul a:hover,
+.shop-sidebar-wrapper .search-form input[type=text]:focus,
+.cart-middle .apply-coupon input[type=text]:focus,
+.checkout-area .form form .field-input input[type=text]:focus,
+.checkout-area .form form .field-input textarea:focus,
+.btn-style-one {
+    border-color: var(--main-one-color);
+}
+
+
+/* Text Shadow */
+
+.list-style-one li a:hover {
+    text-shadow: 0 0 1px var(--main-one-color);
+}
+
+
+/* Stroke*/
+
+.progress .fill {
+    stroke: var(--main-one-color);
+}
+
+
+/* Fill */
+
+.progress .text,
+.progress .value {
+    fill: var(--main-one-color);
+}
+
+.top_cart_bt:hover {
+    color: var(--main-one-color);
+}
+
+.top_cart_bt:hover .item-count {
+    border: 1px solid var(--main-one-color);
+    color: var(--main-one-color);
+}
+
+.search-box-btn:hover {
+    color: var(--main-one-color);
+}
+
+.main-header .header-upper.style-two .search-box-btn:hover {
+    color: var(--main-one-color);
+}
+
+.main-header.header-style-five .search-box-btn:hover {
+    color: var(--main-one-color);
+}
+
+.anim-menu-btn:hover,
+.header-upper.style-two .anim-menu-btn:hover {
+    color: var(--main-one-color);
+}
+
+span.currency-sym-goodform-addon {
+    background: var(--main-one-color);
+}
+
+.payment-donate-section .chicklet-list :checked+label {
+    color: var(--main-one-color);
+}

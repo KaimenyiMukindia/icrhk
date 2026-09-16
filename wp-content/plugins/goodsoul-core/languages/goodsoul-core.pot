@@ -1,0 +1,3431 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Goodsoul Core\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-11 13:25+0600\n"
+"PO-Revision-Date: 2018-07-18 10:21+0600\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: SmartDataSoft <support@smartdatasoft.com>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"X-Generator: Poedit 2.4.1\n"
+"X-Poedit-KeywordsList: __;_e;_n:1,2;_x:1,2c;_ex:1,2c;esc_html_e;esc_attr_e;esc_attr__;"
+"esc_html__\n"
+"X-Poedit-Basepath: .\n"
+"goodsoul-core\n"
+"Last-Translator: \n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: elementor-addons/addons/goodsoul-chariti.php:13
+msgid "Goodsoul Charity"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:44
+msgid "chariti Header area"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:51
+#: elementor-addons/addons/goodsoul-chariti.php:436
+#: elementor-addons/addons/goodsoul_about.php:32
+#: elementor-addons/addons/goodsoul_blog_selector.php:71
+#: elementor-addons/addons/goodsoul_blogs.php:70
+#: elementor-addons/addons/goodsoul_caring.php:33
+#: elementor-addons/addons/goodsoul_donor.php:37
+#: elementor-addons/addons/goodsoul_faq.php:34
+#: elementor-addons/addons/goodsoul_feature.php:35
+#: elementor-addons/addons/goodsoul_footer_about.php:32
+#: elementor-addons/addons/goodsoul_footer_contact.php:33
+#: elementor-addons/addons/goodsoul_footer_post.php:67
+#: elementor-addons/addons/goodsoul_funfact.php:44
+#: elementor-addons/addons/goodsoul_gallery.php:34
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:47
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:35
+#: elementor-addons/addons/goodsoul_sponsors.php:35
+#: elementor-addons/addons/goodsoul_team_home.php:38
+#: elementor-addons/addons/goodsoul_testimonial.php:36
+#: elementor-addons/addons/goodsoul_whychoose.php:34
+msgid "Select Layout"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:54
+#: elementor-addons/addons/goodsoul_about.php:35
+#: elementor-addons/addons/goodsoul_blog_selector.php:74
+#: elementor-addons/addons/goodsoul_blogs.php:73
+#: elementor-addons/addons/goodsoul_caring.php:36
+#: elementor-addons/addons/goodsoul_donation_form.php:49
+#: elementor-addons/addons/goodsoul_donor.php:40
+#: elementor-addons/addons/goodsoul_faq.php:37
+#: elementor-addons/addons/goodsoul_feature.php:38
+#: elementor-addons/addons/goodsoul_footer_about.php:35
+#: elementor-addons/addons/goodsoul_footer_contact.php:36
+#: elementor-addons/addons/goodsoul_footer_post.php:70
+#: elementor-addons/addons/goodsoul_funfact.php:47
+#: elementor-addons/addons/goodsoul_funfact.php:62
+#: elementor-addons/addons/goodsoul_gallery.php:37
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:50
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:38
+#: elementor-addons/addons/goodsoul_sponsors.php:38
+#: elementor-addons/addons/goodsoul_sponsors.php:53
+#: elementor-addons/addons/goodsoul_team_home.php:41
+#: elementor-addons/addons/goodsoul_testimonial.php:39
+#: elementor-addons/addons/goodsoul_whychoose.php:37
+msgid "Style 1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:55
+#: elementor-addons/addons/goodsoul_about.php:36
+#: elementor-addons/addons/goodsoul_blog_selector.php:75
+#: elementor-addons/addons/goodsoul_blogs.php:74
+#: elementor-addons/addons/goodsoul_caring.php:37
+#: elementor-addons/addons/goodsoul_donation_form.php:50
+#: elementor-addons/addons/goodsoul_donor.php:41
+#: elementor-addons/addons/goodsoul_faq.php:38
+#: elementor-addons/addons/goodsoul_feature.php:39
+#: elementor-addons/addons/goodsoul_footer_about.php:36
+#: elementor-addons/addons/goodsoul_footer_contact.php:37
+#: elementor-addons/addons/goodsoul_footer_post.php:71
+#: elementor-addons/addons/goodsoul_funfact.php:48
+#: elementor-addons/addons/goodsoul_funfact.php:63
+#: elementor-addons/addons/goodsoul_gallery.php:38
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:51
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:39
+#: elementor-addons/addons/goodsoul_sponsors.php:39
+#: elementor-addons/addons/goodsoul_sponsors.php:54
+#: elementor-addons/addons/goodsoul_team_home.php:42
+#: elementor-addons/addons/goodsoul_testimonial.php:40
+#: elementor-addons/addons/goodsoul_whychoose.php:38
+msgid "Style 2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:56
+#: elementor-addons/addons/goodsoul_about.php:37
+#: elementor-addons/addons/goodsoul_blog_selector.php:76
+#: elementor-addons/addons/goodsoul_blogs.php:75
+#: elementor-addons/addons/goodsoul_caring.php:38
+#: elementor-addons/addons/goodsoul_donation_form.php:51
+#: elementor-addons/addons/goodsoul_donor.php:42
+#: elementor-addons/addons/goodsoul_footer_about.php:37
+#: elementor-addons/addons/goodsoul_funfact.php:49
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:52
+#: elementor-addons/addons/goodsoul_sponsors.php:40
+#: elementor-addons/addons/goodsoul_team_home.php:43
+#: elementor-addons/addons/goodsoul_testimonial.php:41
+msgid "Style 3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:57
+#: elementor-addons/addons/goodsoul_blog_selector.php:77
+#: elementor-addons/addons/goodsoul_blogs.php:76
+#: elementor-addons/addons/goodsoul_donation_form.php:52
+#: elementor-addons/addons/goodsoul_funfact.php:50
+#: elementor-addons/addons/goodsoul_sponsors.php:41
+#: elementor-addons/addons/goodsoul_team_home.php:44
+#: elementor-addons/addons/goodsoul_testimonial.php:42
+msgid "Style 4"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:58
+#: elementor-addons/addons/goodsoul_blog_selector.php:78
+#: elementor-addons/addons/goodsoul_blogs.php:77
+#: elementor-addons/addons/goodsoul_team_home.php:45
+#: elementor-addons/addons/goodsoul_testimonial.php:43
+msgid "Style 5"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:59
+#: elementor-addons/addons/goodsoul_blog_selector.php:79
+#: elementor-addons/addons/goodsoul_blogs.php:78
+msgid "Style 6"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:60
+#: elementor-addons/addons/goodsoul_blogs.php:79
+msgid "Style 7"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:61
+msgid "Style 8"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:62
+msgid "Style 9"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:63
+msgid "Style 10"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:64
+msgid "Style 11"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:65
+msgid "Style 12"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:66
+msgid "Style 13"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:67
+msgid "Style 14"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:69
+#: elementor-addons/addons/goodsoul_about.php:40
+#: elementor-addons/addons/goodsoul_blog_selector.php:82
+#: elementor-addons/addons/goodsoul_blogs.php:82
+#: elementor-addons/addons/goodsoul_caring.php:41
+#: elementor-addons/addons/goodsoul_donation_form.php:54
+#: elementor-addons/addons/goodsoul_donor.php:45
+#: elementor-addons/addons/goodsoul_faq.php:40
+#: elementor-addons/addons/goodsoul_feature.php:42
+#: elementor-addons/addons/goodsoul_footer_about.php:39
+#: elementor-addons/addons/goodsoul_footer_contact.php:40
+#: elementor-addons/addons/goodsoul_footer_contact.php:108
+#: elementor-addons/addons/goodsoul_footer_post.php:74
+#: elementor-addons/addons/goodsoul_funfact.php:52
+#: elementor-addons/addons/goodsoul_gallery.php:41
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:55
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:42
+#: elementor-addons/addons/goodsoul_sponsors.php:44
+#: elementor-addons/addons/goodsoul_team_home.php:48
+#: elementor-addons/addons/goodsoul_testimonial.php:46
+#: elementor-addons/addons/goodsoul_whychoose.php:41
+msgid "style_1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:76
+#: elementor-addons/addons/goodsoul-chariti.php:491
+#: elementor-addons/addons/goodsoul_blog_selector.php:89
+#: elementor-addons/addons/goodsoul_blogs.php:89
+#: elementor-addons/addons/goodsoul_caring.php:62
+#: elementor-addons/addons/goodsoul_donor.php:208
+#: elementor-addons/addons/goodsoul_feature.php:49
+#: elementor-addons/addons/goodsoul_footer_contact.php:123
+#: elementor-addons/addons/goodsoul_history.php:39
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:65
+#: elementor-addons/addons/goodsoul_intro.php:87
+#: elementor-addons/addons/goodsoul_project.php:64
+#: elementor-addons/addons/goodsoul_sponsors.php:63
+#: elementor-addons/addons/goodsoul_team_home.php:55
+#: elementor-addons/addons/goodsoul_testimonial.php:53
+#: elementor-addons/addons/goodsoul_volunteer.php:66
+#: elementor-addons/addons/goodsoul_whychoose.php:132
+#: elementor-addons/addons/goodsoul_whychoose.php:163
+msgid "Choose Icon"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:88
+#: elementor-addons/addons/goodsoul-upcomming.php:51
+#: elementor-addons/addons/goodsoul_donation_form.php:72
+#: elementor-addons/addons/goodsoul_donation_form.php:305
+#: elementor-addons/addons/goodsoul_faq.php:63
+#: elementor-addons/addons/goodsoul_volunteer.php:87
+msgid "Sub Title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:90
+#: elementor-addons/addons/goodsoul-chariti.php:128
+#: elementor-addons/addons/goodsoul-subscribe.php:50
+#: elementor-addons/addons/goodsoul_volunteer.php:89
+msgid "Complete our online registration form:"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:126
+#: elementor-addons/addons/goodsoul_donation_form.php:98
+msgid "main Title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:179
+#: elementor-addons/addons/goodsoul-contact.php:47
+#: elementor-addons/addons/goodsoul_about.php:64
+#: elementor-addons/addons/goodsoul_call_to_action.php:67
+#: elementor-addons/addons/goodsoul_caring.php:81
+#: elementor-addons/addons/goodsoul_donor.php:60
+#: elementor-addons/addons/goodsoul_events.php:107
+#: elementor-addons/addons/goodsoul_feature.php:81
+#: elementor-addons/addons/goodsoul_feature.php:121
+#: elementor-addons/addons/goodsoul_footer_about.php:54
+#: elementor-addons/addons/goodsoul_footer_contact.php:104
+#: elementor-addons/addons/goodsoul_footer_newsletter.php:41
+#: elementor-addons/addons/goodsoul_footer_twitter.php:41
+#: elementor-addons/addons/goodsoul_funfact.php:171
+#: elementor-addons/addons/goodsoul_funfact.php:230
+#: elementor-addons/addons/goodsoul_funfact.php:320
+#: elementor-addons/addons/goodsoul_funfact.php:413
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:77
+#: elementor-addons/addons/goodsoul_intro.php:116
+#: elementor-addons/addons/goodsoul_project.php:43
+#: elementor-addons/addons/goodsoul_recent_donor.php:31
+#: elementor-addons/addons/goodsoul_sponsors.php:99
+#: elementor-addons/addons/goodsoul_team_home.php:89
+#: elementor-addons/addons/goodsoul_testimonial.php:140
+#: elementor-addons/addons/goodsoul_whychoose.php:57
+msgid "Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:181
+msgid ""
+"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem "
+"Ipsum has been the industry standard dummy text ever since the 1500s"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:217
+#: elementor-addons/addons/goodsoul-chariti.php:296
+#: elementor-addons/addons/goodsoul-subscribe.php:30
+#: elementor-addons/addons/goodsoul_donation_form.php:203
+#: elementor-addons/addons/goodsoul_donation_form.php:233
+msgid "Left Img"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:247
+#: elementor-addons/addons/goodsoul_about.php:123
+#: elementor-addons/addons/goodsoul_donor.php:180
+#: elementor-addons/addons/goodsoul_funfact.php:73
+#: elementor-addons/addons/goodsoul_payment.php:34
+msgid "Background Image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:273
+#: elementor-addons/addons/goodsoul_funfact.php:149
+#: elementor-addons/addons/goodsoul_intro.php:74
+msgid "Background Color"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:326
+#: elementor-addons/addons/goodsoul_donation_form.php:179
+msgid "video url"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:354
+#: elementor-addons/addons/goodsoul_donation_form.php:131
+msgid "Raised Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:356
+#: elementor-addons/addons/goodsoul_donation_form.php:133
+msgid "Raised:"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:363
+#: elementor-addons/addons/goodsoul_donation_form.php:155
+msgid "Goal Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:365
+#: elementor-addons/addons/goodsoul_donation_form.php:157
+msgid "Goal:"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:371
+#: elementor-addons/addons/goodsoul_donation_form.php:122
+msgid "Donate Button Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:373
+#: elementor-addons/addons/goodsoul_donation_form.php:124
+#: elementor-addons/addons/goodsoul_funfact.php:190
+#: elementor-addons/addons/goodsoul_slider.php:182
+#: elementor-addons/addons/goodsoul_slider.php:222
+msgid "Donate Now"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:420
+msgid "chariti list area"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:428
+#: elementor-addons/addons/goodsoul-chariti.php:523
+#: elementor-addons/addons/goodsoul_donation_form.php:335
+msgid "chariti list"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:439
+msgid "Normal"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:440
+msgid "Tab"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:442
+msgid "design_1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:448
+msgid "Tab active"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:451
+msgid "no"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:452
+msgid "yes"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:470 meta-box/config-meta-box.php:126
+msgid "External Images"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:503
+msgid "Category text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:505
+msgid "Health & Diseases"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:513
+msgid "Raised And Donor Info Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:515
+msgid "Raised by 84 people in 12 days"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:647
+#: elementor-addons/addons/goodsoul-chariti.php:738
+#: elementor-addons/addons/goodsoul-chariti.php:845
+#: elementor-addons/addons/goodsoul-chariti.php:945
+#: elementor-addons/addons/goodsoul-chariti.php:1035
+#: elementor-addons/addons/goodsoul-chariti.php:1107
+#: elementor-addons/addons/goodsoul-chariti.php:1186
+#: elementor-addons/addons/goodsoul-chariti.php:1551
+#: elementor-addons/addons/goodsoul-gallery.php:76
+#: elementor-addons/addons/goodsoul-subscribe.php:70
+#: elementor-addons/addons/goodsoul_about.php:368
+#: elementor-addons/addons/goodsoul_about.php:369
+#: elementor-addons/addons/goodsoul_about.php:370
+#: elementor-addons/addons/goodsoul_about.php:375
+#: elementor-addons/addons/goodsoul_about.php:395
+#: elementor-addons/addons/goodsoul_about.php:401
+#: elementor-addons/addons/goodsoul_about.php:427
+#: elementor-addons/addons/goodsoul_donor.php:314
+#: elementor-addons/addons/goodsoul_donor.php:372
+#: elementor-addons/addons/goodsoul_event_celebs.php:163
+#: elementor-addons/addons/goodsoul_feature.php:284
+#: elementor-addons/addons/goodsoul_feature.php:345
+#: elementor-addons/addons/goodsoul_funfact.php:573
+#: elementor-addons/addons/goodsoul_gallery.php:215
+#: elementor-addons/addons/goodsoul_history.php:175
+#: elementor-addons/addons/goodsoul_intro.php:297
+#: elementor-addons/addons/goodsoul_payment.php:114
+#: elementor-addons/addons/goodsoul_portfolio.php:107
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:310
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:375
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:446
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:176
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:220
+#: elementor-addons/addons/goodsoul_project.php:206
+#: elementor-addons/addons/goodsoul_slider.php:393
+#: elementor-addons/addons/goodsoul_sponsors.php:199
+#: elementor-addons/addons/goodsoul_sponsors.php:235
+#: elementor-addons/addons/goodsoul_sponsors.php:273
+#: elementor-addons/addons/goodsoul_sponsors.php:314
+#: elementor-addons/addons/goodsoul_team_home.php:418
+#: elementor-addons/addons/goodsoul_team_home.php:477
+#: elementor-addons/addons/goodsoul_team_home.php:539
+#: elementor-addons/addons/goodsoul_team_home.php:596
+#: elementor-addons/addons/goodsoul_team_home.php:656
+#: elementor-addons/addons/goodsoul_team_page.php:282
+#: elementor-addons/addons/goodsoul_team_page.php:324
+#: elementor-addons/addons/goodsoul_testimonial.php:402
+#: elementor-addons/addons/goodsoul_testimonial.php:443
+#: elementor-addons/addons/goodsoul_testimonial.php:619
+#: elementor-addons/addons/goodsoul_volunteer.php:152
+#: elementor-addons/addons/goodsoul_whychoose.php:267
+#: elementor-addons/addons/goodsoul_whychoose.php:270
+#: elementor-addons/addons/goodsoul_whychoose.php:273
+#: elementor-addons/addons/goodsoul_whychoose.php:310
+#: elementor-addons/addons/goodsoul_whychoose.php:320
+#: elementor-addons/addons/goodsoul_whychoose.php:323
+msgid "Alt"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-chariti.php:1570
+msgid "Country"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:12
+msgid "Volunteer Form"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:24
+msgid "contact Header area"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:31
+#: elementor-addons/addons/goodsoul-gallery.php:31
+#: elementor-addons/addons/goodsoul-upcomming.php:43
+#: elementor-addons/addons/goodsoul_about.php:47
+#: elementor-addons/addons/goodsoul_blog_selector.php:111
+#: elementor-addons/addons/goodsoul_blogs.php:111
+#: elementor-addons/addons/goodsoul_blogs.php:185
+#: elementor-addons/addons/goodsoul_call_to_action.php:57
+#: elementor-addons/addons/goodsoul_caring.php:73
+#: elementor-addons/addons/goodsoul_donor.php:52
+#: elementor-addons/addons/goodsoul_event_celebs.php:47
+#: elementor-addons/addons/goodsoul_events.php:99
+#: elementor-addons/addons/goodsoul_events.php:201
+#: elementor-addons/addons/goodsoul_faq.php:54
+#: elementor-addons/addons/goodsoul_faq.php:94
+#: elementor-addons/addons/goodsoul_feature.php:72
+#: elementor-addons/addons/goodsoul_feature.php:113
+#: elementor-addons/addons/goodsoul_footer_about.php:45
+#: elementor-addons/addons/goodsoul_footer_about.php:74
+#: elementor-addons/addons/goodsoul_footer_contact.php:46
+#: elementor-addons/addons/goodsoul_footer_event.php:65
+#: elementor-addons/addons/goodsoul_footer_instagram.php:33
+#: elementor-addons/addons/goodsoul_footer_map.php:38
+#: elementor-addons/addons/goodsoul_footer_map.php:79
+#: elementor-addons/addons/goodsoul_footer_newsletter.php:33
+#: elementor-addons/addons/goodsoul_footer_post.php:80
+#: elementor-addons/addons/goodsoul_footer_post.php:113
+#: elementor-addons/addons/goodsoul_footer_twitter.php:33
+#: elementor-addons/addons/goodsoul_funfact.php:163
+#: elementor-addons/addons/goodsoul_funfact.php:222
+#: elementor-addons/addons/goodsoul_funfact.php:405
+#: elementor-addons/addons/goodsoul_gallery.php:66
+#: elementor-addons/addons/goodsoul_history.php:51
+#: elementor-addons/addons/goodsoul_intro.php:108
+#: elementor-addons/addons/goodsoul_payment.php:54
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:71
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:113
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:202
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:69
+#: elementor-addons/addons/goodsoul_project.php:35
+#: elementor-addons/addons/goodsoul_sponsors.php:87
+#: elementor-addons/addons/goodsoul_team_home.php:78
+#: elementor-addons/addons/goodsoul_team_page.php:37
+#: elementor-addons/addons/goodsoul_testimonial.php:132
+#: elementor-addons/addons/goodsoul_testimonial.php:161
+#: elementor-addons/addons/goodsoul_testimonial.php:284
+#: elementor-addons/addons/goodsoul_volunteer.php:78
+#: elementor-addons/addons/goodsoul_whychoose.php:48
+msgid "Title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:33
+#: elementor-addons/addons/goodsoul-contact.php:41
+msgid "Become a volunteer"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:39
+msgid "Extra Class"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:49
+msgid ""
+"Please read below to see what a few of our charity partners have to say about us."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:55
+msgid "Contact Form Shortcode"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:62
+msgid "left Side Images"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:71
+msgid "Left First image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:82
+msgid "Left Second image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:93
+msgid "Left Third image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:104
+msgid "Left Fourth image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:116
+msgid "Right Side Images"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:125
+msgid "Right First image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:136
+msgid "Right Second image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:147
+msgid "Right Third image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-contact.php:158
+msgid "Right Fourth image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-gallery.php:12
+msgid "Footer gallery"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-gallery.php:24
+#: elementor-addons/addons/goodsoul_call_to_action.php:28
+#: elementor-addons/addons/goodsoul_gallery.php:26
+msgid "Gallery"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-gallery.php:33
+msgid "title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-gallery.php:40
+msgid "Gallery area"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-gallery.php:48
+msgid "Image area"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-gallery.php:57
+msgid "gallery list"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-subscribe.php:11
+msgid "eventsub event area"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-subscribe.php:23
+msgid "eventsub Header area"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-subscribe.php:40
+msgid "Heading title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-subscribe.php:42
+#: elementor-addons/addons/goodsoul-upcomming.php:53
+msgid "UPCOMING EVENTS"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-subscribe.php:48
+msgid "social "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:20
+msgid "GoodSoul Upcoming"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:35
+msgid "Upcoming Event"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:45
+msgid "Raise awareness and funds"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:60
+msgid "Event Title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:62
+msgid "Triathlon - 2019"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:69
+msgid "Event Venue"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:71
+msgid "245 Holland Rd, Kensington, London W14 8BD, Uk <br>08 August 2019, 10.00am"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:78
+#: elementor-addons/addons/goodsoul-upcomming.php:101
+msgid "Event Link Button Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:80
+msgid "Donate for event"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:87
+msgid "Event Donate Button URL"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:103
+msgid "Book for event"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:110
+msgid "Event Link Button URL"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:124
+msgid "Event Date"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:126
+msgid "Enter date like (Y/M/D) e.g. (2025/12/28)"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:127
+msgid "2025/12/28"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul-upcomming.php:134
+msgid "Background Img"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:13
+msgid "Good Soul About"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:25
+#: elementor-addons/addons/goodsoul_footer_about.php:47
+msgid "About"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:49
+msgid "Be part of a change <br>you want to see in the world"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:56
+msgid "Some Words"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:58
+msgid ""
+"“Generosity consists not of the sum given, but the manner in <br>which it is "
+"bestowed.”"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:66
+msgid ""
+"How all this mistaken idea of denouncing pleasure and praising pain was born <br>and "
+"I will give you a complete account of the system expound the actually <br>teachings "
+"of the great explorer of the truth pursues."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:73
+#: elementor-addons/addons/goodsoul_whychoose.php:144
+msgid "Help words"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:75
+msgid "NEED ASSISTANT FOR <br/> JOIN WITH US?"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:83
+#: elementor-addons/addons/goodsoul_whychoose.php:153
+msgid "Phone Number"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:85
+#: elementor-addons/addons/goodsoul_whychoose.php:155
+msgid "+211 456 7890"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:93
+msgid "Mission Summary"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:95
+msgid ""
+"Beguiled and demoralized by the charms off pleasure the moments, so by desire trouble."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:102
+msgid "Vision Summary"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:104
+msgid ""
+"The great explorer of the truth, theats masters builders off human happiness no one "
+"rejects."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:111
+#: elementor-addons/addons/goodsoul_slider.php:78
+msgid "Background Icon image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:133
+msgid "Experience "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:135
+msgid "32+ <br>Years experience"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:142
+#: elementor-addons/addons/goodsoul_testimonial.php:77
+msgid "Background Second Image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:155
+msgid "Background Third Image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:169
+msgid "Button 1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:175
+#: elementor-addons/addons/goodsoul_blog_selector.php:119
+#: elementor-addons/addons/goodsoul_blogs.php:119
+#: elementor-addons/addons/goodsoul_caring.php:89
+#: elementor-addons/addons/goodsoul_feature.php:129
+#: elementor-addons/addons/goodsoul_footer_map.php:46
+#: elementor-addons/addons/goodsoul_form.php:69
+#: elementor-addons/addons/goodsoul_funfact.php:188
+#: elementor-addons/addons/goodsoul_intro.php:147
+#: elementor-addons/addons/goodsoul_slider.php:180
+#: elementor-addons/addons/goodsoul_team_home.php:100
+#: elementor-addons/addons/goodsoul_team_page.php:53
+#: elementor-addons/addons/goodsoul_whychoose.php:110
+msgid "Button Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:177
+msgid "Our Mission"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:183
+#: elementor-addons/addons/goodsoul_footer_map.php:54
+#: elementor-addons/addons/goodsoul_funfact.php:197
+#: elementor-addons/addons/goodsoul_slider.php:189
+#: elementor-addons/header-settings.php:71 elementor-addons/image-setting-one.php:71
+msgid "Button link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:198
+msgid "Button 2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:205
+#: elementor-addons/addons/goodsoul_slider.php:220
+msgid "Second Button Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:207
+msgid "Our Vision"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:213
+#: elementor-addons/addons/goodsoul_about.php:243
+#: elementor-addons/addons/goodsoul_slider.php:230
+msgid "Second Button link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:228
+msgid "Button 3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:235
+msgid "Third Button Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:237
+msgid "More About Us"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:257
+#: elementor-addons/addons/goodsoul_testimonial.php:89
+#: elementor-addons/addons/goodsoul_whychoose.php:97
+msgid "Youtube link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:272
+#: elementor-addons/addons/goodsoul_whychoose.php:174
+msgid "Point Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:274
+#: elementor-addons/addons/goodsoul_faq.php:96
+msgid "Give Donation"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:281
+#: elementor-addons/addons/goodsoul_whychoose.php:183
+msgid "Point Summary"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:283
+msgid "Indignation and dislikemen who are so beguiled and demoral."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:290
+#: elementor-addons/addons/goodsoul_whychoose.php:192
+msgid "Point List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:295
+#: elementor-addons/addons/goodsoul_whychoose.php:197
+msgid "Point #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:296
+#: elementor-addons/addons/goodsoul_about.php:300
+#: elementor-addons/addons/goodsoul_blog_selector.php:224
+#: elementor-addons/addons/goodsoul_blog_selector.php:228
+#: elementor-addons/addons/goodsoul_caring.php:117
+#: elementor-addons/addons/goodsoul_caring.php:121
+#: elementor-addons/addons/goodsoul_caring.php:125
+#: elementor-addons/addons/goodsoul_donation_form.php:350
+#: elementor-addons/addons/goodsoul_donation_form.php:354
+#: elementor-addons/addons/goodsoul_donor.php:163
+#: elementor-addons/addons/goodsoul_donor.php:167
+#: elementor-addons/addons/goodsoul_donor.php:171
+#: elementor-addons/addons/goodsoul_donor.php:237
+#: elementor-addons/addons/goodsoul_donor.php:241
+#: elementor-addons/addons/goodsoul_donor.php:245
+#: elementor-addons/addons/goodsoul_event_celebs.php:121
+#: elementor-addons/addons/goodsoul_event_celebs.php:125
+#: elementor-addons/addons/goodsoul_event_celebs.php:129
+#: elementor-addons/addons/goodsoul_faq.php:118
+#: elementor-addons/addons/goodsoul_faq.php:122
+#: elementor-addons/addons/goodsoul_faq.php:185
+#: elementor-addons/addons/goodsoul_faq.php:189
+#: elementor-addons/addons/goodsoul_feature.php:158
+#: elementor-addons/addons/goodsoul_feature.php:162
+#: elementor-addons/addons/goodsoul_feature.php:166
+#: elementor-addons/addons/goodsoul_feature.php:170
+#: elementor-addons/addons/goodsoul_footer_about.php:118
+#: elementor-addons/addons/goodsoul_footer_about.php:122
+#: elementor-addons/addons/goodsoul_footer_contact.php:88
+#: elementor-addons/addons/goodsoul_footer_contact.php:92
+#: elementor-addons/addons/goodsoul_footer_contact.php:154
+#: elementor-addons/addons/goodsoul_footer_instagram.php:72
+#: elementor-addons/addons/goodsoul_footer_instagram.php:76
+#: elementor-addons/addons/goodsoul_footer_map.php:170
+#: elementor-addons/addons/goodsoul_footer_map.php:174
+#: elementor-addons/addons/goodsoul_form.php:114
+#: elementor-addons/addons/goodsoul_form.php:118
+#: elementor-addons/addons/goodsoul_funfact.php:298
+#: elementor-addons/addons/goodsoul_funfact.php:302
+#: elementor-addons/addons/goodsoul_funfact.php:306
+#: elementor-addons/addons/goodsoul_funfact.php:386
+#: elementor-addons/addons/goodsoul_funfact.php:390
+#: elementor-addons/addons/goodsoul_funfact.php:394
+#: elementor-addons/addons/goodsoul_funfact.php:480
+#: elementor-addons/addons/goodsoul_funfact.php:484
+#: elementor-addons/addons/goodsoul_funfact.php:488
+#: elementor-addons/addons/goodsoul_gallery.php:165
+#: elementor-addons/addons/goodsoul_gallery.php:169
+#: elementor-addons/addons/goodsoul_gallery.php:173
+#: elementor-addons/addons/goodsoul_history.php:123
+#: elementor-addons/addons/goodsoul_history.php:127
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:115
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:119
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:161
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:165
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:169
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:240
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:244
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:248
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:126
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:130
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:134
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:138
+#: elementor-addons/addons/goodsoul_project.php:120
+#: elementor-addons/addons/goodsoul_project.php:124
+#: elementor-addons/addons/goodsoul_project.php:128
+#: elementor-addons/addons/goodsoul_project.php:132
+#: elementor-addons/addons/goodsoul_project.php:136
+#: elementor-addons/addons/goodsoul_recent_donor.php:93
+#: elementor-addons/addons/goodsoul_recent_donor.php:97
+#: elementor-addons/addons/goodsoul_slider.php:253
+#: elementor-addons/addons/goodsoul_slider.php:257
+#: elementor-addons/addons/goodsoul_slider.php:261
+#: elementor-addons/addons/goodsoul_sponsors.php:137
+#: elementor-addons/addons/goodsoul_sponsors.php:141
+#: elementor-addons/addons/goodsoul_team_home.php:232
+#: elementor-addons/addons/goodsoul_team_home.php:236
+#: elementor-addons/addons/goodsoul_team_home.php:240
+#: elementor-addons/addons/goodsoul_team_home.php:345
+#: elementor-addons/addons/goodsoul_team_home.php:349
+#: elementor-addons/addons/goodsoul_team_home.php:353
+#: elementor-addons/addons/goodsoul_team_page.php:107
+#: elementor-addons/addons/goodsoul_team_page.php:111
+#: elementor-addons/addons/goodsoul_team_page.php:115
+#: elementor-addons/addons/goodsoul_team_page.php:232
+#: elementor-addons/addons/goodsoul_team_page.php:236
+#: elementor-addons/addons/goodsoul_team_page.php:240
+#: elementor-addons/addons/goodsoul_team_page.php:244
+#: elementor-addons/addons/goodsoul_team_page.php:248
+#: elementor-addons/addons/goodsoul_testimonial.php:240
+#: elementor-addons/addons/goodsoul_testimonial.php:244
+#: elementor-addons/addons/goodsoul_testimonial.php:248
+#: elementor-addons/addons/goodsoul_testimonial.php:347
+#: elementor-addons/addons/goodsoul_testimonial.php:351
+#: elementor-addons/addons/goodsoul_testimonial.php:355
+#: elementor-addons/addons/goodsoul_volunteer.php:115
+#: elementor-addons/addons/goodsoul_volunteer.php:119
+#: elementor-addons/addons/goodsoul_volunteer.php:123
+#: elementor-addons/addons/goodsoul_whychoose.php:198
+#: elementor-addons/addons/goodsoul_whychoose.php:202
+msgid "Item content. Click the edit button to change this text."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_about.php:299
+#: elementor-addons/addons/goodsoul_whychoose.php:201
+msgid "Point #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:22
+msgid "Goodsoul Blog Seleector"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:64
+#: elementor-addons/addons/goodsoul_blogs.php:63
+#: elementor-addons/addons/goodsoul_footer_post.php:61
+msgid "Blogs"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:102
+#: elementor-addons/addons/goodsoul_blogs.php:102
+#: elementor-addons/addons/goodsoul_call_to_action.php:47
+#: elementor-addons/addons/goodsoul_feature.php:62
+#: elementor-addons/addons/goodsoul_gallery.php:48
+#: elementor-addons/addons/goodsoul_gallery.php:57
+#: elementor-addons/addons/goodsoul_gallery.php:119
+#: elementor-addons/addons/goodsoul_gallery.php:128
+#: elementor-addons/addons/goodsoul_intro.php:99
+#: elementor-addons/addons/goodsoul_payment.php:45
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:62
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:105
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:194
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:60
+#: elementor-addons/addons/goodsoul_sponsors.php:75
+#: elementor-addons/addons/goodsoul_team_home.php:68
+#: elementor-addons/addons/goodsoul_team_page.php:45
+#: elementor-addons/addons/goodsoul_testimonial.php:103
+msgid "Tagline"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:104
+#: elementor-addons/addons/goodsoul_blogs.php:104
+#: elementor-addons/addons/goodsoul_team_home.php:70
+#: elementor-addons/addons/goodsoul_team_home.php:80
+msgid "Team behind goodsoul"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:121
+#: elementor-addons/addons/goodsoul_blogs.php:121
+#: elementor-addons/addons/goodsoul_team_home.php:102
+msgid "Meet All Members"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:130
+#: elementor-addons/addons/goodsoul_blogs.php:130
+#: elementor-addons/addons/goodsoul_call_to_action.php:86
+#: elementor-addons/addons/goodsoul_gallery.php:84
+#: elementor-addons/addons/goodsoul_intro.php:156
+#: elementor-addons/addons/goodsoul_payment.php:74
+#: elementor-addons/addons/goodsoul_team_home.php:111
+#: elementor-addons/addons/goodsoul_team_page.php:61
+#: elementor-addons/addons/goodsoul_whychoose.php:118
+msgid "Page link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:147
+#: elementor-addons/addons/goodsoul_blogs.php:164
+msgid "Number of Column"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:151
+#: elementor-addons/addons/goodsoul_blogs.php:168
+#: elementor-addons/addons/goodsoul_caring.php:52
+#: elementor-addons/addons/goodsoul_intro.php:181
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:94
+#: elementor-addons/addons/goodsoul_testimonial.php:221
+msgid "2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:152
+#: elementor-addons/addons/goodsoul_blogs.php:169
+#: elementor-addons/addons/goodsoul_caring.php:53
+#: elementor-addons/addons/goodsoul_intro.php:182
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:95
+#: elementor-addons/addons/goodsoul_testimonial.php:222
+msgid "3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:153
+#: elementor-addons/addons/goodsoul_blogs.php:170
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:96
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:103
+#: elementor-addons/addons/goodsoul_testimonial.php:223
+msgid "4"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:163
+msgid "Select Posts"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:172
+msgid "Show external name for this post"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:181
+msgid "Name of the post"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:183
+msgid "External name of the post"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:193
+msgid "Show external image for this post"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:202
+msgid "Post image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:218
+#: elementor-addons/addons/goodsoul_donation_form.php:344
+#: elementor-addons/addons/goodsoul_footer_map.php:164
+#: elementor-addons/addons/goodsoul_intro.php:220
+msgid "Repeater List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:223
+#: elementor-addons/addons/goodsoul_donation_form.php:349
+#: elementor-addons/addons/goodsoul_footer_map.php:169
+msgid "Title #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blog_selector.php:227
+#: elementor-addons/addons/goodsoul_donation_form.php:353
+#: elementor-addons/addons/goodsoul_footer_map.php:173
+msgid "Title #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:22
+msgid "goodsoul Blog"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:147
+#: elementor-addons/addons/goodsoul_events.php:177
+#: elementor-addons/addons/goodsoul_footer_event.php:74
+#: elementor-addons/addons/goodsoul_footer_post.php:89
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:122
+msgid "Category"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:155
+#: elementor-addons/addons/goodsoul_events.php:185
+#: elementor-addons/addons/goodsoul_footer_event.php:82
+#: elementor-addons/addons/goodsoul_footer_post.php:97
+msgid "Number of Post"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:178
+#: elementor-addons/addons/goodsoul_events.php:194
+#: elementor-addons/addons/goodsoul_footer_post.php:106
+msgid "Order By"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:182
+#: elementor-addons/addons/goodsoul_events.php:198
+#: elementor-addons/addons/goodsoul_footer_post.php:110
+msgid "Date"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:183
+#: elementor-addons/addons/goodsoul_events.php:199
+#: elementor-addons/addons/goodsoul_footer_post.php:111
+msgid "ID"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:184
+#: elementor-addons/addons/goodsoul_events.php:200
+#: elementor-addons/addons/goodsoul_footer_post.php:112
+msgid "Author"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:186
+#: elementor-addons/addons/goodsoul_events.php:202
+#: elementor-addons/addons/goodsoul_footer_post.php:114
+msgid "Modified"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:187
+#: elementor-addons/addons/goodsoul_events.php:203
+#: elementor-addons/addons/goodsoul_footer_post.php:115
+msgid "Random"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:188
+#: elementor-addons/addons/goodsoul_events.php:204
+#: elementor-addons/addons/goodsoul_footer_post.php:116
+msgid "Comment count"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:189
+#: elementor-addons/addons/goodsoul_events.php:205
+#: elementor-addons/addons/goodsoul_footer_post.php:117
+msgid "Menu order"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:197
+#: elementor-addons/addons/goodsoul_events.php:213
+#: elementor-addons/addons/goodsoul_footer_post.php:125
+msgid "Order"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:201
+#: elementor-addons/addons/goodsoul_events.php:217
+#: elementor-addons/addons/goodsoul_footer_post.php:129
+msgid "DESC"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_blogs.php:202
+#: elementor-addons/addons/goodsoul_events.php:218
+#: elementor-addons/addons/goodsoul_footer_post.php:130
+msgid "ASC"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_call_to_action.php:15
+msgid "GoodSoul Call To Action"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_call_to_action.php:36
+#: elementor-addons/addons/goodsoul_donor.php:82
+#: elementor-addons/addons/goodsoul_portfolio.php:48
+#: elementor-addons/addons/goodsoul_slider.php:68
+#: elementor-addons/addons/goodsoul_volunteer.php:43
+msgid "Background image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_call_to_action.php:50
+msgid "CHOOSE THE PLACE TO"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_call_to_action.php:60
+msgid "BECOME A GOODSOUL VOLUNTEER"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_call_to_action.php:70
+msgid ""
+"Must explain to you how all this mistaken idea of denouncing pleasure and <br> we "
+"will give you a complete the system teaching."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_call_to_action.php:77
+#: elementor-addons/addons/goodsoul_gallery.php:76
+msgid "Button name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_call_to_action.php:79
+#: elementor-addons/addons/goodsoul_feature.php:115
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:88
+msgid "Become a Volunteer"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:14
+msgid "GoodSoul Caring"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:26
+msgid "Caring"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:48
+#: elementor-addons/addons/goodsoul_intro.php:177
+msgid "Number Of Posts"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:51
+#: elementor-addons/addons/goodsoul_intro.php:180
+#: elementor-addons/addons/goodsoul_testimonial.php:220
+msgid "1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:75
+msgid "Are you healthy & happy? <br>make these too"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:83
+msgid ""
+"How all this mistaken idea denouncing pleasure and praising pain was born and we will "
+"give you a complete."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:91
+msgid "Join With Us"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:97
+msgid "Button Link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:111
+msgid "Caring List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:116
+#: elementor-addons/addons/goodsoul_funfact.php:297
+#: elementor-addons/addons/goodsoul_funfact.php:385
+#: elementor-addons/addons/goodsoul_funfact.php:479
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:160
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:239
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:125
+msgid "Item #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:120
+#: elementor-addons/addons/goodsoul_funfact.php:301
+#: elementor-addons/addons/goodsoul_funfact.php:389
+#: elementor-addons/addons/goodsoul_funfact.php:483
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:164
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:243
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:129
+msgid "Item #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_caring.php:124
+#: elementor-addons/addons/goodsoul_funfact.php:305
+#: elementor-addons/addons/goodsoul_funfact.php:393
+#: elementor-addons/addons/goodsoul_funfact.php:487
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:168
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:247
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:133
+msgid "Item #3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:10
+msgid "Goodsoul Donation Form"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:38
+msgid "Donation Form Header"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:46
+msgid "Form Layout"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:60
+msgid "Background Image "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:75
+msgid ""
+"Every $1 you donate helps to someone in the world, Goodsoul safely handover to who "
+"really needed that money.\n"
+"                "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:100
+msgid "Play your part"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:263
+msgid "Charity list"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:294
+msgid "Category Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:297
+#: elementor-addons/addons/goodsoul_project.php:78
+msgid "Children"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:308
+msgid ""
+"Beguiled and demoralized by the charms of pleasure of the moment, so by desire, that "
+"they cannot foresee."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:315
+msgid "Main Title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:317
+msgid "Donate us to achieve our goal"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donation_form.php:324
+#: elementor-addons/addons/goodsoul_faq.php:168
+msgid "Is Active??"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:18
+msgid "GoodSoul Donor"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:30
+#: elementor-addons/addons/goodsoul_recent_donor.php:21
+msgid "Donors"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:54
+#: elementor-addons/addons/goodsoul_event_celebs.php:49
+#: elementor-addons/addons/goodsoul_feature.php:74
+#: elementor-addons/addons/goodsoul_project.php:37
+msgid "The trusted choice of donors"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:62
+msgid ""
+"We connects nonprofits, donors, and companies in nearly every country around the "
+"world."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:68
+msgid "Background Before Image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:95
+#: elementor-addons/addons/goodsoul_testimonial.php:151
+msgid "Client image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:106
+msgid "Client Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:108
+msgid "Austin Leon"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:114
+msgid "Client Location"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:116
+msgid "San Jose"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:123
+msgid "Client twitter link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:137
+#: elementor-addons/addons/goodsoul_form.php:36
+msgid "Purpose "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:139
+#: elementor-addons/addons/goodsoul_form.php:38
+msgid "Donation"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:146
+#: elementor-addons/addons/goodsoul_event_celebs.php:86
+msgid "Amount "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:148
+msgid "$250"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:157
+#: elementor-addons/addons/goodsoul_testimonial.php:234
+#: elementor-addons/addons/goodsoul_testimonial.php:341
+msgid "Client List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:162
+#: elementor-addons/addons/goodsoul_event_celebs.php:120
+#: elementor-addons/addons/goodsoul_testimonial.php:239
+#: elementor-addons/addons/goodsoul_testimonial.php:346
+msgid "Client #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:166
+#: elementor-addons/addons/goodsoul_event_celebs.php:124
+#: elementor-addons/addons/goodsoul_testimonial.php:243
+#: elementor-addons/addons/goodsoul_testimonial.php:350
+msgid "Client #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:170
+#: elementor-addons/addons/goodsoul_event_celebs.php:128
+#: elementor-addons/addons/goodsoul_testimonial.php:247
+#: elementor-addons/addons/goodsoul_testimonial.php:354
+msgid "Client #3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:199
+msgid "Banifits"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:220
+msgid "Banifit Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:222
+msgid "Maximum tax <br> benefit"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:231
+msgid "Banifit List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:236
+msgid "Banifit #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:240
+msgid "Banifit #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_donor.php:244
+msgid "Banifit #3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:27
+msgid "GoodSoul Event Celebs"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:39
+msgid "Celebs"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:57
+msgid "Celeb image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:68
+msgid "Celeb Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:70
+#: elementor-addons/addons/goodsoul_team_home.php:142
+#: elementor-addons/addons/goodsoul_team_home.php:266
+#: elementor-addons/addons/goodsoul_team_page.php:87
+#: elementor-addons/addons/goodsoul_team_page.php:156
+msgid "Benjie Alphonso"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:77
+msgid "Designation "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:79
+#: elementor-addons/addons/goodsoul_team_home.php:150
+#: elementor-addons/addons/goodsoul_team_home.php:274
+#: elementor-addons/addons/goodsoul_team_page.php:95
+#: elementor-addons/addons/goodsoul_team_page.php:164
+msgid "Founder"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:89
+msgid ""
+"<ul class=\"social-icon-two\">\n"
+"                <li><a href=\"#\"><span class=\"fa fa-facebook\"></span></a></li>\n"
+"                <li><a href=\"#\"><span class=\"fa fa-twitter\"></span></a></li>\n"
+"                <li><a href=\"#\"><span class=\"fa fa-linkedin\"></span></a></li>\n"
+"            </ul>"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:101
+msgid "Celeb Link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_event_celebs.php:115
+msgid "Celebs List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:18
+msgid "Events"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:61
+msgid "event design area"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:68
+msgid "event SHow Style"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:72
+#: elementor-addons/addons/goodsoul_slider.php:60
+msgid "One"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:73
+#: elementor-addons/addons/goodsoul_project.php:102
+#: elementor-addons/addons/goodsoul_slider.php:61
+msgid "Two"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:74
+#: elementor-addons/addons/goodsoul_project.php:103
+msgid "Three"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:75
+msgid "Four"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:76
+msgid "Five"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:84
+#: elementor-addons/addons/goodsoul_faq.php:103
+#: elementor-addons/addons/goodsoul_footer_event.php:59
+msgid "Content"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:90
+msgid "Tagtitle"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:118
+msgid "Join Button Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:126
+msgid "Ongoing Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:135
+msgid "Upcoming Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:144
+msgid "Viwe All Button Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:146
+msgid "View All Events"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:153
+msgid "Donate Button Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_events.php:162
+msgid "Event Page link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:15
+msgid "Goodsoul FAQ"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:27
+msgid "General"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:46
+msgid "Cootact Content"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:56
+msgid "Your donation to this fund <br>will help stop the virus s spread"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:65
+msgid ""
+"“Generosity consists not of the sum given, but the manner in  <br>which it is "
+"bestowed.”"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:72
+msgid "Description"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:74
+msgid ""
+"How all this mistaken idea of denouncing pleasure and praising pain was born <br>and "
+"we will give you a complete account of the system."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:81
+#: elementor-addons/addons/goodsoul_history.php:88
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:29
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:144
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:223
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:109
+msgid "Image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:105
+msgid "Which is the same as saying through shrinking from distinguish."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:112
+msgid "Item List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:117
+#: elementor-addons/addons/goodsoul_faq.php:184
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:114
+#: elementor-addons/addons/goodsoul_recent_donor.php:92
+msgid "Question #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:121
+#: elementor-addons/addons/goodsoul_faq.php:188
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:118
+#: elementor-addons/addons/goodsoul_recent_donor.php:96
+msgid "Question #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:132
+msgid "FAQ"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:139
+msgid "Heading"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:141
+msgid "Be part of a change <br> you want to see in the world"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:150
+msgid "Question"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:152
+msgid "How have you selected your top charities?"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:159
+msgid "Answer"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:161
+msgid ""
+"We denounce with righteous indignation and dislike men who are so beguiled and "
+"demoralized by the charms of pleasure of the moment, so blinded by desire, that they "
+"cannot foresee the pain and trouble that are bound to ensue."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_faq.php:179
+msgid "faqs"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:15
+msgid "GoodSoul Feature"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:27
+msgid "Feature"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:64
+msgid "You can help with this"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:83
+#: elementor-addons/addons/goodsoul_project.php:45
+msgid ""
+"The right way to live as a human being, Just help to those people really need your "
+"help."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:92
+msgid "Feature block image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:103
+msgid "Feature Icon image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:123
+msgid "Indignation and dislike mens all <br>beguiled demoralized."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:131
+msgid "Details"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:138
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:131
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:210
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:77
+#: elementor-addons/addons/goodsoul_project.php:85
+msgid "Page Link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:152
+msgid "Feature List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:157
+msgid "Feature #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:161
+msgid "Feature #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:165
+msgid "Feature #3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:169
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:137
+msgid "Feature #4"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:179
+msgid "Show Bottom Content"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:190
+msgid "Title 2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:192
+msgid "You have the power to bring happiness."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:200
+msgid "Text 2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:202
+msgid ""
+"Expound the actual teachings of the great explorer of the truth, the masterr of human "
+"happiness."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:210
+msgid "Member Button Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:212
+msgid "Meet Our Team"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_feature.php:220
+msgid "Member Page Link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:13
+msgid "GoodSoul Footer About "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:25
+msgid "Footer About"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:56
+msgid ""
+"The great explorer of the truth, the master builders off human happiness no one "
+"rejects, dislikes, or avoids all pleasures itself, because it pleasures rationally "
+"encounter."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:64
+msgid "Our Contact"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:76
+msgid "Contact Us"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:83
+msgid "Contact Title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:85
+#: elementor-addons/addons/goodsoul_footer_contact.php:67
+msgid "Address:"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:91
+#: elementor-addons/addons/goodsoul_footer_contact.php:48
+#: elementor-addons/addons/goodsoul_footer_contact.php:114
+msgid "Contact"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:93
+#: elementor-addons/addons/goodsoul_footer_contact.php:116
+msgid "+211 456 789"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:99
+#: elementor-addons/addons/goodsoul_footer_contact.php:135
+msgid "Contact link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:112
+#: elementor-addons/addons/goodsoul_footer_contact.php:148
+#: elementor-addons/addons/goodsoul_form.php:108
+msgid "Contact List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:117
+#: elementor-addons/addons/goodsoul_footer_contact.php:153
+#: elementor-addons/addons/goodsoul_form.php:113
+msgid "Contact #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_about.php:121
+#: elementor-addons/addons/goodsoul_form.php:117
+msgid "Contact #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:14
+msgid "GoodSoul Footer Contact "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:26
+msgid "Footer Contact"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:56
+msgid "Need A Title?"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:65
+msgid "Address Title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:74
+msgid "Address Details"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:76
+msgid "5404 Berrick Street,"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:82
+msgid "Address List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:87
+msgid "Address #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:91
+msgid "Address #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:101
+msgid "Link show Style"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_contact.php:105
+msgid "Icon"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_event.php:19
+msgid "Goodsoul Footer Event"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_instagram.php:13
+msgid "GoodSoul Footer Instagram"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_instagram.php:25
+msgid "Footer Intagram"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_instagram.php:35
+msgid "WorldWide Tour"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_instagram.php:43
+msgid "Instagram image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_instagram.php:53
+msgid "Id link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_instagram.php:66
+#: elementor-addons/addons/goodsoul_gallery.php:159
+msgid "Image List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_instagram.php:71
+#: elementor-addons/addons/goodsoul_gallery.php:164
+msgid "Image #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_instagram.php:75
+#: elementor-addons/addons/goodsoul_gallery.php:168
+msgid "Image #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:18
+msgid "GoodSoul Footer Map "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:30
+msgid "Footer Map"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:40
+msgid "Our Offices"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:48
+msgid "CONTACT US"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:68
+msgid "Background"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:81
+msgid "54 Berrick Street, <br>Boston 02115."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:87
+msgid "Position"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:94
+#: elementor-addons/addons/goodsoul_footer_map.php:100
+#: elementor-addons/addons/goodsoul_recent_donor.php:50
+msgid "Top"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:102
+#: elementor-addons/addons/goodsoul_recent_donor.php:52
+msgid "25%"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:110
+#: elementor-addons/addons/goodsoul_footer_map.php:116
+#: elementor-addons/addons/goodsoul_recent_donor.php:58
+#: elementor-addons/addons/goodsoul_slider.php:151
+#: elementor-addons/header-settings.php:17 elementor-addons/image-setting-one.php:17
+msgid "Left"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:118
+#: elementor-addons/addons/goodsoul_footer_map.php:135
+#: elementor-addons/addons/goodsoul_footer_map.php:153
+#: elementor-addons/addons/goodsoul_recent_donor.php:60
+#: elementor-addons/addons/goodsoul_recent_donor.php:69
+#: elementor-addons/addons/goodsoul_recent_donor.php:79
+msgid "30%"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:127
+#: elementor-addons/addons/goodsoul_footer_map.php:133
+#: elementor-addons/addons/goodsoul_recent_donor.php:67
+#: elementor-addons/addons/goodsoul_slider.php:159
+#: elementor-addons/header-settings.php:19 elementor-addons/image-setting-one.php:19
+msgid "Right"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:145
+msgid "bottom"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_map.php:151
+#: elementor-addons/addons/goodsoul_recent_donor.php:77
+msgid "Bottom"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_newsletter.php:13
+msgid "GoodSoul Footer Newsletter "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_newsletter.php:25
+msgid "Footer Newsletter"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_newsletter.php:35
+msgid "Newsletter"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_newsletter.php:43
+msgid "Subscribe us and get latest news &amp; <br>upcoming events."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_newsletter.php:49
+msgid "ShortCode"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_post.php:20
+msgid "goodsoul Footer Post"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:13
+msgid "GoodSoul Footer Twitter "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:25
+msgid "Footer Twitter"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:35
+msgid "WorldWide Trends"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:43
+msgid ""
+"Did You Know! Once you initiate a payment towards the <a href=\"#\">#charity,</a> you "
+"will receive a confirmation email against that <a href=\"#\">#payment</a>."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:49
+msgid "Charity link Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:51
+msgid "https://www.goodsoul/charity.com"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:57
+msgid "Charity link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:70
+msgid "User Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:72
+msgid "Mark Richarson"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:78
+msgid "Account Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:80
+msgid "@caregiver"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_footer_twitter.php:86
+msgid "Account link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:16
+msgid "Goodsoul Contact Form"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:29
+msgid "Forms"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:45
+msgid "Select Contact Form"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:46
+msgid ""
+"Contact form 7 - plugin must be installed and there must be some contact forms made "
+"with the contact form 7"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:59
+msgid "Contact Info"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:71
+msgid "Global HQ"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:77
+msgid "Address"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:79
+msgid "5404 Berrick Street, 2nd cross str, Boston, MA 02115."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:86
+msgid "Link Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:88
+msgid "Your Nearest Location"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_form.php:95
+msgid "Link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:21
+msgid "GoodSoul Funfact"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:36
+msgid "Funfact"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:59
+#: elementor-addons/addons/goodsoul_sponsors.php:50
+msgid "Select Layout class"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:65
+msgid "style_cal_1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:98
+msgid "Funfact Image 1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:109
+msgid "Funfact Image 2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:120
+msgid "Funfact Image 3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:132
+#: elementor-addons/addons/goodsoul_intro.php:58
+msgid "Before Image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:165
+#: elementor-addons/addons/goodsoul_testimonial.php:134
+msgid "Numbers speaking"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:173
+#: elementor-addons/addons/goodsoul_testimonial.php:142
+msgid ""
+"Love learning about crazy facts? Then read these amazing facts that will tickle your "
+"brain."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:179
+msgid "Last Summary"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:181
+msgid ""
+"Indignation and dislike men who are so beguiled and demoralized by the charms of "
+"pleasure of the <br> moment, so blinded by desire, that they cannot foresee."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:212
+#: elementor-addons/addons/goodsoul_whychoose.php:77
+msgid "Icon image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:224
+#: elementor-addons/addons/goodsoul_funfact.php:407
+msgid "Beneficiaries"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:232
+#: elementor-addons/addons/goodsoul_funfact.php:322
+#: elementor-addons/addons/goodsoul_funfact.php:415
+msgid "Over 25600 directly beneficiaries of our foundation programme."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:244
+#: elementor-addons/addons/goodsoul_funfact.php:250
+#: elementor-addons/addons/goodsoul_funfact.php:332
+#: elementor-addons/addons/goodsoul_funfact.php:338
+#: elementor-addons/addons/goodsoul_funfact.php:424
+#: elementor-addons/addons/goodsoul_funfact.php:430
+msgid "Prefix"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:252
+#: elementor-addons/addons/goodsoul_funfact.php:340
+#: elementor-addons/addons/goodsoul_funfact.php:432
+msgid "$"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:260
+#: elementor-addons/addons/goodsoul_funfact.php:266
+#: elementor-addons/addons/goodsoul_funfact.php:348
+#: elementor-addons/addons/goodsoul_funfact.php:354
+#: elementor-addons/addons/goodsoul_funfact.php:440
+#: elementor-addons/addons/goodsoul_funfact.php:446
+msgid "Data"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:268
+#: elementor-addons/addons/goodsoul_funfact.php:356
+#: elementor-addons/addons/goodsoul_funfact.php:448
+msgid "2.6"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:276
+#: elementor-addons/addons/goodsoul_funfact.php:282
+#: elementor-addons/addons/goodsoul_funfact.php:364
+#: elementor-addons/addons/goodsoul_funfact.php:370
+#: elementor-addons/addons/goodsoul_funfact.php:456
+#: elementor-addons/addons/goodsoul_funfact.php:462
+msgid "Affix"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:284
+#: elementor-addons/addons/goodsoul_funfact.php:372
+#: elementor-addons/addons/goodsoul_funfact.php:464
+msgid "M"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_funfact.php:292
+#: elementor-addons/addons/goodsoul_funfact.php:380
+#: elementor-addons/addons/goodsoul_funfact.php:474
+msgid "Funfact List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:14
+msgid "GoodSoul Gallery"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:50
+msgid "select_show"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:59
+msgid "OUR GALLERY"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:69
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:73
+msgid "Gallery of our works"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:78
+msgid "More from Gallery"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:97
+msgid "Zoom Button name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:99
+msgid "Zoom"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:108
+msgid "Choose image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:121
+msgid "Environment"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:130
+msgid "tagline_show"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:137
+msgid "Caption"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:139
+msgid "Clean Kamilo Beach"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:146
+msgid "Caption Link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_gallery.php:172
+msgid "Image #3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:19
+msgid "Goodsoul History"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:31
+msgid "History"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:53
+msgid "A small charity has a big impact"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:60
+msgid "Left Content"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:62
+msgid ""
+"<h4>With more than <span>3,900 staff of 50 nationalities,</span> Concern operates in "
+"25 of the world’s poor countries, helping people to achieve major in their lives.</h4>"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:69
+msgid "Experience Title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:71
+msgid "More than 32 years experience"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:77
+#: elementor-addons/addons/goodsoul_intro.php:134
+msgid "Experience Summary"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:79
+msgid ""
+"Beguiled and demoralized by the charms of pleasure of the moment, so by desire, that "
+"they cannot foresee the pain and trouble that are bound to ensue   to those who fail "
+"in their shrinking."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:99
+msgid "Year"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:101
+msgid "1978"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:108
+msgid "Some Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:110
+msgid ""
+"In the summer of 1980, Jonathan, Richard, Mark and Craig <br>met to discuss how they "
+"could use their skills to raise money to the  daily <br>life of the poor people."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:117
+msgid "Experience Years"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:122
+msgid "Year #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_history.php:126
+msgid "Year #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:8
+msgid "Goodsoul How Contribute"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:21
+msgid "Contribute"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:40
+msgid "Video url"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:56
+#: elementor-addons/addons/goodsoul_project.php:76
+msgid "Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:58
+#: elementor-addons/addons/goodsoul_slider.php:44
+#: elementor-addons/addons/goodsoul_volunteer.php:35
+msgid "Volunteer"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:79
+#: elementor-addons/addons/goodsoul_recent_donor.php:33
+msgid "Indignation & dislike men who sed <br>are like beguiled."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:86
+msgid "Link Text"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:95
+msgid "Url"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_how_to_contribute.php:109
+#: elementor-addons/addons/goodsoul_recent_donor.php:87
+msgid "Items"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:20
+msgid "GoodSoul Intro"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:50
+msgid "Intro"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:101
+msgid "Welcome to Goodsoul"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:110
+msgid "Our mission is save environment from <br>plastic and pollution"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:118
+msgid ""
+"To take a trivial example, which of us ever undertakes laborious physical exercise, "
+"except to obtain some advantage from it? But who has any right to find fault with a "
+"man who chooses to enjoy a pleasure."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:125
+msgid "Experienced"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:127
+msgid "13 <br> <span>Years Service</span>"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:137
+msgid ""
+"<h4>Goodsoul Protect</h4>\n"
+"\t\t\t\t<h1>26,845 m2</h1>\n"
+"\t\t\t\t<h4>Gas Emission Around The World.</h4>"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:149
+msgid "Continue Reading"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:169
+msgid "Campage Button Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:171
+msgid "Learn More"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:192
+msgid "Select The Proper Cost"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:202
+msgid "Summary"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:204
+msgid "Our power of choice is untrammelled and <br/>nothing prevents like best."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_intro.php:211
+msgid "Campaigns"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_payment.php:15
+msgid "Goodsoul Payment"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_payment.php:27
+msgid "Payment"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_payment.php:47
+msgid "HOW CAN YOU DONATE"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_payment.php:56
+msgid "OUR DONARS CAN DONATE ONLINE<br> IN DIFFERENT WAYS"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_payment.php:64
+msgid "Methode Logo"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_payment.php:86
+msgid " Mathode List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio.php:12
+msgid "Goodsoul Portfolio"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio.php:24
+msgid "Protfolio list area"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio.php:31
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:81
+msgid "View All Button"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio.php:33
+msgid "All"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio.php:40
+msgid "Single Service name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio.php:42
+msgid "Category 1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio.php:58
+msgid "About count list"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:27
+msgid "GoodSoul Portfolio Grid"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:39
+msgid "Grid View"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:64
+msgid "OUR WORKS"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:83
+msgid "View All"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:107
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:196
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:62
+msgid "Awareness"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:115
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:204
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:71
+msgid "Cancer Network"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:125
+msgid "Enter categories with comma separated for multi entries"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:155
+#: elementor-addons/addons/goodsoul_portfolio_grid.php:234
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:120
+msgid "Portfolio List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:15
+msgid "GoodSoul Portfolio Masonry"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:27
+msgid "Masonry view"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:51
+msgid "Show Tagline"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:91
+msgid "Column Size"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:97
+msgid "6"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:98
+msgid "8"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:99
+msgid "10"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_portfolio_masonry.php:100
+msgid "12"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:15
+msgid "GoodSoul Project"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:27
+msgid "Projects"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:53
+msgid "Project image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:99
+msgid "Display Style"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:104
+msgid "Grid"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:114
+msgid "project List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:119
+msgid "Project #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:123
+msgid "Project #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:127
+msgid "Project #3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:131
+msgid "Project #4"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_project.php:135
+msgid "Project #5"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_recent_donor.php:8
+msgid "Goodsoul Recent Donors"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_recent_donor.php:40
+msgid "Donor Image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:19
+msgid "Good Soul Slider"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:32
+msgid "Banner Slider Content"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:39
+msgid "Banner Slider Designs"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:43
+msgid "Main"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:45
+msgid "Charity"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:46
+msgid "Ecology"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:47
+msgid "Education"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:48
+msgid "Corona"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:56
+msgid "Inside Slider Designs"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:88
+msgid "Banner Title"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:90
+msgid "Children out of school"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:91
+#: elementor-addons/addons/goodsoul_slider.php:110
+#: elementor-addons/addons/goodsoul_slider.php:129
+#: elementor-addons/addons/goodsoul_slider.php:140
+#: elementor-addons/addons/goodsoul_slider.php:183
+#: elementor-addons/addons/goodsoul_slider.php:223
+#: elementor-addons/header-settings.php:28 elementor-addons/header-settings.php:36
+#: elementor-addons/header-settings.php:44 elementor-addons/header-settings.php:63
+#: elementor-addons/header-settings.php:99 elementor-addons/image-setting-one.php:28
+#: elementor-addons/image-setting-one.php:36 elementor-addons/image-setting-one.php:44
+#: elementor-addons/image-setting-one.php:63
+msgid "Type your content here"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:98
+msgid "Show Heading"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:107
+#: elementor-addons/addons/goodsoul_slider.php:127
+msgid "Banner Tag Line"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:109
+msgid "6 million out of 36 million Nigerian"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:118
+msgid "Show Heading two"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:137
+msgid "Banner content"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:139
+msgid ""
+"To improve the learning environment in primary schools by holistically creating world-"
+"class <br/>basic education systems to the community."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:147
+msgid "Alignment"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:155
+#: elementor-addons/header-settings.php:18 elementor-addons/image-setting-one.php:18
+msgid "Center"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:174
+msgid "First Button"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:205
+msgid "Second Button"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:211
+msgid "Show Second Button"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:247
+msgid "Slider list"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:252
+msgid "Slide #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:256
+msgid "Slide #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_slider.php:260
+msgid "Slide #3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:16
+msgid "Goodsoul sponsors"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:28
+msgid "sponsors List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:77
+msgid "Our Partners"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:89
+msgid "Those who contributed to this <br>excellent service"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:101
+#, php-format
+msgid ""
+"The following  list of people contributed their 100%  support to help our thousands "
+"of causes."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:109
+msgid "sponsors image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:119
+msgid "Sponsor Page link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:131
+msgid "sponsors list"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:136
+msgid "Sponser #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:140
+msgid "Sponser #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:151
+msgid "Footer"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:153
+msgid ""
+"To learn about becoming a partner, contact us at: <a href=\"mailto:support@goodsoul."
+"com\">support@goodsoul.com</a> or <a href=\"tel:+8889991234\">1-888-999-1234</a>"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_sponsors.php:188
+#: elementor-addons/addons/goodsoul_sponsors.php:224
+#: elementor-addons/addons/goodsoul_sponsors.php:262
+#: elementor-addons/addons/goodsoul_sponsors.php:303
+msgid "media partner"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:18
+msgid "GoodSoul Team Home"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:30
+msgid "Team"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:91
+msgid "Our work would not be possible without the work of our dedicated volunteers."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:129
+#: elementor-addons/addons/goodsoul_team_home.php:253
+#: elementor-addons/addons/goodsoul_team_page.php:74
+#: elementor-addons/addons/goodsoul_team_page.php:143
+msgid "Member image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:140
+#: elementor-addons/addons/goodsoul_team_home.php:264
+#: elementor-addons/addons/goodsoul_team_page.php:85
+#: elementor-addons/addons/goodsoul_team_page.php:154
+msgid "Member Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:148
+#: elementor-addons/addons/goodsoul_team_home.php:272
+#: elementor-addons/addons/goodsoul_team_page.php:93
+#: elementor-addons/addons/goodsoul_team_page.php:162
+msgid "Member designation"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:157
+#: elementor-addons/addons/goodsoul_team_home.php:281
+#: elementor-addons/addons/goodsoul_team_page.php:171
+msgid "Member Facebook link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:170
+#: elementor-addons/addons/goodsoul_team_home.php:295
+#: elementor-addons/addons/goodsoul_team_page.php:185
+msgid "Member Twitter link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:183
+msgid "Member Skype link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:196
+#: elementor-addons/addons/goodsoul_team_home.php:309
+#: elementor-addons/addons/goodsoul_team_page.php:198
+msgid "Member LinkedIn link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:210
+#: elementor-addons/addons/goodsoul_team_home.php:323
+#: elementor-addons/addons/goodsoul_team_page.php:212
+msgid "Member Page link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:226
+#: elementor-addons/addons/goodsoul_team_home.php:339
+#: elementor-addons/addons/goodsoul_team_page.php:101
+msgid "Member List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:231
+#: elementor-addons/addons/goodsoul_team_home.php:344
+#: elementor-addons/addons/goodsoul_team_page.php:106
+#: elementor-addons/addons/goodsoul_team_page.php:231
+msgid "Member #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:235
+#: elementor-addons/addons/goodsoul_team_home.php:348
+#: elementor-addons/addons/goodsoul_team_page.php:110
+#: elementor-addons/addons/goodsoul_team_page.php:235
+msgid "Member #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_home.php:239
+#: elementor-addons/addons/goodsoul_team_home.php:352
+#: elementor-addons/addons/goodsoul_team_page.php:114
+#: elementor-addons/addons/goodsoul_team_page.php:239
+msgid "Member #3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:15
+msgid "GoodSoul Team Page"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:27
+msgid "Team List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:39
+msgid "Join our team"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:47
+msgid "We are always looking for volunteers"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:55
+msgid "Join Now"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:125
+msgid "Team Slider"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:132
+msgid "Show Slider"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:226
+msgid "Members"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:243
+msgid "Member #4"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_team_page.php:247
+msgid "Member #5"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:16
+msgid "GoodSoul Testimonial"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:28
+msgid "Testimonial"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:66
+msgid "Background First Image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:105
+msgid "FEEDBACKS"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:163
+#: elementor-addons/addons/goodsoul_testimonial.php:286
+msgid "It’s helped me so much. Now I can <br>really get around office."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:169
+#: elementor-addons/addons/goodsoul_testimonial.php:292
+msgid "What said"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:171
+#: elementor-addons/addons/goodsoul_testimonial.php:294
+msgid ""
+"Goodsoul! charities provided the jump <br>start we needed to expand our all efforts "
+"<br>and train more volunteers."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:178
+#: elementor-addons/addons/goodsoul_testimonial.php:301
+msgid "Author Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:180
+#: elementor-addons/addons/goodsoul_testimonial.php:303
+msgid "Ollie Reuben"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:186
+#: elementor-addons/addons/goodsoul_testimonial.php:309
+msgid "Author Designation"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:188
+#: elementor-addons/addons/goodsoul_testimonial.php:311
+msgid "CEO & Founder "
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:195
+#: elementor-addons/addons/goodsoul_testimonial.php:318
+msgid "Company Name"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:197
+#: elementor-addons/addons/goodsoul_testimonial.php:320
+msgid "Sun Life"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:204
+#: elementor-addons/addons/goodsoul_testimonial.php:327
+msgid "Company link"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:217
+msgid "Given Stars"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_testimonial.php:224
+#: elementor-addons/addons/goodsoul_testimonial.php:227
+msgid "5"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_volunteer.php:19
+msgid "GoodSoul Volunteer"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_volunteer.php:55
+msgid "Volunteer image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_volunteer.php:80
+msgid "Caring is the gift of making <br>the ordinary special."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_volunteer.php:95
+msgid "List content"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_volunteer.php:98
+msgid ""
+"<li>With righteous indignation and dislike</li>\n"
+"\t\t\t\t<li>Perfectly simple and easy</li>\n"
+"\t\t\t\t<li>Have to be repudiated & annoyances</li>"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_volunteer.php:109
+msgid "Volunteer List"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_volunteer.php:114
+msgid "Volunteer #1"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_volunteer.php:118
+msgid "Volunteer #2"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_volunteer.php:122
+msgid "Volunteer #3"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_whychoose.php:15
+#: elementor-addons/addons/goodsoul_whychoose.php:27
+msgid "Why Choose Us"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_whychoose.php:50
+msgid "Why sign up as a giver on <br>the goodsoul?"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_whychoose.php:59
+msgid ""
+"We have a deep passion for the work that we do to improve the efficiency and "
+"effectiveness of the non-profit sector."
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_whychoose.php:66
+msgid "Choose Image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_whychoose.php:87
+msgid "Youtube image"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_whychoose.php:112
+msgid "Let’s Start"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_whychoose.php:146
+msgid "Need assitant for join with us?"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_whychoose.php:176
+msgid "It’s super simple"
+msgstr ""
+
+#: elementor-addons/addons/goodsoul_whychoose.php:185
+msgid ""
+"Indignation and dislike men who are so beguiled and demoral <br>the charms of "
+"pleasure of the moment."
+msgstr ""
+
+#: elementor-addons/functions.php:13
+msgid "cameron"
+msgstr ""
+
+#: elementor-addons/functions.php:51
+msgid "No contact forms found"
+msgstr ""
+
+#: elementor-addons/functions.php:69
+msgid "No content From 7 form found"
+msgstr ""
+
+#: elementor-addons/functions.php:90
+msgid "No Pages Found!"
+msgstr ""
+
+#: elementor-addons/functions.php:171 elementor-addons/register-categories.php:32
+msgid "Animation Class"
+msgstr ""
+
+#: elementor-addons/functions.php:180
+msgid "Delay Time (ms)"
+msgstr ""
+
+#: elementor-addons/goodsoul-addons.php:224
+#, php-format
+msgid "\"%1$s\" requires \"%2$s\" to be installed and activated."
+msgstr ""
+
+#: elementor-addons/goodsoul-addons.php:225 elementor-addons/goodsoul-addons.php:251
+#: elementor-addons/goodsoul-addons.php:280
+msgid "Goodsoul Core"
+msgstr ""
+
+#: elementor-addons/goodsoul-addons.php:226 elementor-addons/goodsoul-addons.php:252
+msgid "Elementor"
+msgstr ""
+
+#: elementor-addons/goodsoul-addons.php:250 elementor-addons/goodsoul-addons.php:279
+#, php-format
+msgid "\"%1$s\" requires \"%2$s\" version %3$s or greater."
+msgstr ""
+
+#: elementor-addons/goodsoul-addons.php:281
+msgid "PHP"
+msgstr ""
+
+#: elementor-addons/header-settings.php:13 elementor-addons/image-setting-one.php:13
+msgid "Header text Position"
+msgstr ""
+
+#: elementor-addons/header-settings.php:26 elementor-addons/image-setting-one.php:26
+msgid "Section Sub-title"
+msgstr ""
+
+#: elementor-addons/header-settings.php:34 elementor-addons/image-setting-one.php:34
+msgid "Section title"
+msgstr ""
+
+#: elementor-addons/header-settings.php:42 elementor-addons/image-setting-one.php:42
+msgid "Section Content"
+msgstr ""
+
+#: elementor-addons/header-settings.php:51 elementor-addons/image-setting-one.php:51
+msgid "Button Hide or Show"
+msgstr ""
+
+#: elementor-addons/header-settings.php:53 elementor-addons/header-settings.php:89
+#: elementor-addons/image-setting-one.php:53
+msgid "Show"
+msgstr ""
+
+#: elementor-addons/header-settings.php:54 elementor-addons/header-settings.php:90
+#: elementor-addons/image-setting-one.php:54
+msgid "Hide"
+msgstr ""
+
+#: elementor-addons/header-settings.php:61 elementor-addons/image-setting-one.php:61
+msgid "Button text"
+msgstr ""
+
+#: elementor-addons/header-settings.php:87
+msgid "Button two Hide or Show"
+msgstr ""
+
+#: elementor-addons/header-settings.php:97
+msgid "Button two text"
+msgstr ""
+
+#: elementor-addons/header-settings.php:107
+msgid "Button two link"
+msgstr ""
+
+#: elementor-addons/register-categories.php:9
+msgid "Good Soule"
+msgstr ""
+
+#: elementor-addons/register-categories.php:23
+msgid "Animation Options"
+msgstr ""
+
+#: elementor-addons/register-categories.php:41
+msgid "Delay Time(ms)"
+msgstr ""
+
+#: elementor-addons/register-categories.php:50
+msgid "Duration Time(ms)"
+msgstr ""
+
+#: meta-box/config-meta-box.php:16 meta-box/config-meta-box.php:90
+msgid "Design Settings"
+msgstr ""
+
+#: meta-box/config-meta-box.php:25
+msgid "Event Header Image"
+msgstr ""
+
+#: meta-box/config-meta-box.php:32
+msgid "Event Advertisement Image"
+msgstr ""
+
+#: meta-box/config-meta-box.php:39
+msgid "Event date counter, please input like 2019/12/30"
+msgstr ""
+
+#: meta-box/config-meta-box.php:45
+msgid "Event Where"
+msgstr ""
+
+#: meta-box/config-meta-box.php:52
+msgid "Event when"
+msgstr ""
+
+#: meta-box/config-meta-box.php:59
+msgid "Event description"
+msgstr ""
+
+#: meta-box/config-meta-box.php:66
+msgid "Event Organizer"
+msgstr ""
+
+#: meta-box/config-meta-box.php:73
+msgid "Event Phone"
+msgstr ""
+
+#: meta-box/config-meta-box.php:80
+msgid "Event Email"
+msgstr ""
+
+#: meta-box/config-meta-box.php:99 meta-box/config-meta-box.php:135
+#: post-type/events.php:22
+msgid "Featured Image"
+msgstr ""
+
+#: meta-box/config-meta-box.php:106 meta-box/config-meta-box.php:142
+msgid "Featured content"
+msgstr ""
+
+#: meta-box/config-meta-box.php:117
+msgid "Event Country"
+msgstr ""
+
+#: meta-box/config-meta-box.php:153
+msgid "Advertisement Image"
+msgstr ""
+
+#: post-type/events.php:6
+msgctxt "Post Type General Name"
+msgid "Events"
+msgstr ""
+
+#: post-type/events.php:7
+msgctxt "Post Type Singular Name"
+msgid "Event"
+msgstr ""
+
+#: post-type/events.php:8 post-type/events.php:9
+msgid "Event"
+msgstr ""
+
+#: post-type/events.php:10
+msgid "Item Event"
+msgstr ""
+
+#: post-type/events.php:11
+msgid "Parent Item:"
+msgstr ""
+
+#: post-type/events.php:12
+msgid "All Event"
+msgstr ""
+
+#: post-type/events.php:13 post-type/events.php:14
+msgid "Add New Event"
+msgstr ""
+
+#: post-type/events.php:15
+msgid "New Event Item"
+msgstr ""
+
+#: post-type/events.php:16
+msgid "Edit Event Item"
+msgstr ""
+
+#: post-type/events.php:17
+msgid "Update Event Item"
+msgstr ""
+
+#: post-type/events.php:18
+msgid "View Event Item"
+msgstr ""
+
+#: post-type/events.php:19
+msgid "Search Item"
+msgstr ""
+
+#: post-type/events.php:20
+msgid "Not found"
+msgstr ""
+
+#: post-type/events.php:21
+msgid "Not found in Trash"
+msgstr ""
+
+#: post-type/events.php:23
+msgid "Set featured image"
+msgstr ""
+
+#: post-type/events.php:24
+msgid "Remove featured image"
+msgstr ""
+
+#: post-type/events.php:25
+msgid "Use as featured image"
+msgstr ""
+
+#: post-type/events.php:26
+msgid "Insert into item"
+msgstr ""
+
+#: post-type/events.php:27
+msgid "Uploaded to this item"
+msgstr ""
+
+#: post-type/events.php:28
+msgid "Items list"
+msgstr ""
+
+#: post-type/events.php:29
+msgid "Items list navigation"
+msgstr ""
+
+#: post-type/events.php:30
+msgid "Filter items list"
+msgstr ""
+
+#: post-type/events.php:35
+msgid "Description."
+msgstr ""
+
+#: share/share-function.php:23
+msgid "Share This Post"
+msgstr ""
+
+#: widgets/goodsoul-sidebar-latest-post-widget.php:14
+msgid "Latest News"
+msgstr ""
+
+#: widgets/goodsoul-sidebar-latest-post-widget.php:17
+msgid "LoveUs Latest News"
+msgstr ""
+
+#: widgets/goodsoul-sidebar-latest-post-widget.php:33
+msgid "Title:"
+msgstr ""
+
+#: widgets/goodsoul-sidebar-latest-post-widget.php:37
+msgid "Number of posts:"
+msgstr ""
