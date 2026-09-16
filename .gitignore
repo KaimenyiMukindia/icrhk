@@ -1,0 +1,29 @@
+# Local environment secrets.
+.env
+wp-config.php
+laravel-engine/.env
+
+# Runtime state, caches, logs, and backup-plugin output.
+wp-content/ai1wm-backups/
+wp-content/aiowps_backups/
+wp-content/jetpack-waf/
+wp-content/litespeed/
+wp-content/logs/
+wp-content/maintenance/
+wp-content/wflogs/
+wp-content/wpvivid_staging/
+wp-content/wpvividbackups/
+wp-content/temp-write-test-*
+laravel-engine/bootstrap/cache/
+laravel-engine/storage/
+
+# Dependencies are restored from lock files.
+**/node_modules/
+laravel-engine/vendor/
+
+# Full site data and media are release artifacts, not Git objects.
+db-backups/*
+replication-artifacts/
+wp-content/uploads/
+
+Thumbs.db
