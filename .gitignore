@@ -29,3 +29,9 @@ wp-content/uploads/
 Thumbs.db
 
 wp-content/aiowps_backups/
+
+# Ignore vendor/third-party plugins
+wp-content/plugins/*
+!wp-content/plugins/index.php
+wp-content/plugins2/
+!wp-content/plugins/custom-event-registration/

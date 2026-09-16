@@ -1,1 +1,0 @@
-08-07-2020 08:25:56 - ERROR - v: 6.6.2 - m: 93.0 MB, u: 0 - Blocked by transient newsletter_main_engine set 4 seconds ago by /home/icrhk/public_html/;host05.safaricombusiness.co.ke

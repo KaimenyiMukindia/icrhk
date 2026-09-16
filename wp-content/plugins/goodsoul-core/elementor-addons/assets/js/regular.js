@@ -1,6 +1,0 @@
-{
-    "icons": [
-        "flaticon-devil","  flaticon-mail","  flaticon-phone","  flaticon-menu","  flaticon-multimedia","  flaticon-next","  flaticon-heart","  flaticon-fruit","  flaticon-reward","  flaticon-shield","  flaticon-point","  flaticon-eye","  flaticon-comment","  flaticon-arrow","  flaticon-menu-1","  flaticon-maid","  flaticon-multimedia-1","  flaticon-clock","  flaticon-love","  flaticon-login","  flaticon-user","  flaticon-tattoo","  flaticon-for-sale-1","  flaticon-world","  flaticon-hands-and-gestures","  flaticon-tick","  flaticon-phone-1","  flaticon-heart-1","  flaticon-refresh","  flaticon-search","  flaticon-arrow-1","  flaticon-lgtb-1","  flaticon-money-1","  flaticon-pin","  flaticon-heart-2","  flaticon-comment-1","  flaticon-folder","  flaticon-logo","  flaticon-minus","  flaticon-europe","  flaticon-arrow-2","  flaticon-ecology-and-environment","  flaticon-more","  flaticon-link","  flaticon-more-1","  flaticon-user-1","  flaticon-avatar","  flaticon-search-1","  flaticon-bag","  flaticon-next-1","  flaticon-book","  flaticon-share","  flaticon-quote","  flaticon-plus","  flaticon-close","  flaticon-cross","  flaticon-shop-1","  flaticon-check","  flaticon-cancel"
-    ]
-}
-
