@@ -27,3 +27,5 @@ replication-artifacts/
 wp-content/uploads/
 
 Thumbs.db
+
+wp-content/aiowps_backups/
