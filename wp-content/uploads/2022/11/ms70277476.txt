@@ -1,5 +1,0 @@
-﻿{
-  "Description": "Domain ownership verification file for Microsoft 365 - place in the website root",
-  "Domain": "icrhk.org",
-  "Id": "744a8eb9-5632-42c8-86ff-8df8c6677335"
-}

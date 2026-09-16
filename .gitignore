@@ -35,3 +35,9 @@ wp-content/plugins/*
 !wp-content/plugins/index.php
 wp-content/plugins2/
 !wp-content/plugins/custom-event-registration/
+
+# Media and server configs
+wp-content/uploads/
+wp-content/gallery/
+wp-content/debug.log
+.htaccess
