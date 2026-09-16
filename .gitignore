@@ -1,9 +1,9 @@
-# Local environment secrets.
+# Environment & Secrets
 .env
 wp-config.php
 laravel-engine/.env
 
-# Runtime state, caches, logs, and backup-plugin output.
+# Cache, Logs, Runtime & Backups
 wp-content/ai1wm-backups/
 wp-content/aiowps_backups/
 wp-content/jetpack-waf/
@@ -14,35 +14,29 @@ wp-content/wflogs/
 wp-content/wpvivid_staging/
 wp-content/wpvividbackups/
 wp-content/temp-write-test-*
+wp-content/debug.log
 laravel-engine/bootstrap/cache/
 laravel-engine/storage/
 
-# Dependencies are restored from lock files.
+# Dependencies
 **/node_modules/
 laravel-engine/vendor/
 
-# Full site data and media are release artifacts, not Git objects.
+# Database & Media Artifacts
 db-backups/*
 replication-artifacts/
 wp-content/uploads/
-
+wp-content/gallery/
+.htaccess
 Thumbs.db
 
-wp-content/aiowps_backups/
-
-# Ignore vendor/third-party plugins
+# Plugins (Ignore all except custom-event-registration)
 wp-content/plugins/*
 !wp-content/plugins/index.php
-wp-content/plugins2/
 !wp-content/plugins/custom-event-registration/
+wp-content/plugins2/
 
-# Media and server configs
-wp-content/uploads/
-wp-content/gallery/
-wp-content/debug.log
-.htaccess
-
-# Theme overrides (keep only goodsoul)
+# Themes (Ignore all except goodsoul)
 wp-content/themes/*
-!wp-content/themes/goodsoul/
 !wp-content/themes/index.php
+!wp-content/themes/goodsoul/
