@@ -193,20 +193,34 @@
         }
 
         if ('partners' === type) {
-            row = '<div class="cer-repeater-row cer-speaker-row" data-row-index="' + index + '">' +
+            row = '<div class="cer-repeater-row cer-speaker-row cer-partner-row" data-row-index="' + index + '">' +
                 '<input type="hidden" name="partners[' + index + '][id]" value="" />' +
                 '<div class="cer-speaker-photo-col">' +
                     '<input type="hidden" name="partners[' + index + '][logo_id]" id="partner-logo-' + index + '" value="" />' +
                     '<div id="partner-logo-preview-' + index + '" class="cer-speaker-photo-thumb"></div>' +
                 '</div>' +
-                '<div class="cer-speaker-fields-col">' +
+                '<div class="cer-speaker-fields-col cer-partner-fields-col">' +
                     '<div class="cer-field">' +
                         '<label>Partner Name</label>' +
                         '<input type="text" name="partners[' + index + '][name]" value="" placeholder="Ministry of Health" />' +
                     '</div>' +
                     '<div class="cer-field">' +
                         '<label>Website Link</label>' +
-                        '<input type="url" name="partners[' + index + '][link_url]" value="" placeholder="https://example.org" />' +
+                        '<input type="url" name="partners[' + index + '][url]" value="" placeholder="https://example.org" />' +
+                    '</div>' +
+                    '<div class="cer-partner-contact-group">' +
+                        '<div class="cer-field">' +
+                            '<label>Tel No</label>' +
+                            '<input type="tel" name="partners[' + index + '][tel_no]" value="" placeholder="+254 20 123 4567" />' +
+                        '</div>' +
+                        '<div class="cer-field">' +
+                            '<label>Email</label>' +
+                            '<input type="email" name="partners[' + index + '][email]" value="" placeholder="hello@example.org" />' +
+                        '</div>' +
+                        '<div class="cer-field cer-partner-address-field">' +
+                            '<label>Address</label>' +
+                            '<input type="text" name="partners[' + index + '][address]" value="" placeholder="Nairobi, Kenya" />' +
+                        '</div>' +
                     '</div>' +
                     '<div class="cer-field cer-speaker-field-full">' +
                         '<label class="cer-toggle"><input type="checkbox" name="partners[' + index + '][is_visible]" value="1" checked /></label>' +

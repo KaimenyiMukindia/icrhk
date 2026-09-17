@@ -207,7 +207,22 @@ function cer_maybe_ensure_event_schema() {
 	global $wpdb;
 	$registrations_table = $wpdb->prefix . 'evt_registrations';
 	$events_table = $wpdb->prefix . 'evt_events';
-	if ( '6' === get_option( 'cer_schema_version', '' ) ) {
+	$partners_table = $wpdb->prefix . 'evt_partners';
+	$schema_version = get_option( 'cer_schema_version', '' );
+
+	if ( '6' === $schema_version ) {
+		cer_install_event_schema();
+		cer_add_column_if_missing( $partners_table, 'url', 'VARCHAR(500) NULL', 'logo_id' );
+		cer_add_column_if_missing( $partners_table, 'tel_no', 'VARCHAR(50) NULL', 'url' );
+		cer_add_column_if_missing( $partners_table, 'email', 'VARCHAR(255) NULL', 'tel_no' );
+		cer_add_column_if_missing( $partners_table, 'address', 'VARCHAR(255) NULL', 'email' );
+		if ( cer_column_exists( $partners_table, 'link_url' ) && ! cer_column_exists( $partners_table, 'url' ) ) {
+			$wpdb->query( "ALTER TABLE {$partners_table} CHANGE link_url url VARCHAR(500) NULL" );
+		}
+		if ( cer_column_exists( $partners_table, 'link_url' ) && cer_column_exists( $partners_table, 'url' ) ) {
+			$wpdb->query( "UPDATE {$partners_table} SET url = IFNULL(url, link_url) WHERE url IS NULL OR url = ''" );
+			$wpdb->query( "ALTER TABLE {$partners_table} DROP COLUMN link_url" );
+		}
 		return;
 	}
 
@@ -540,7 +555,10 @@ function cer_install_event_schema() {
 		event_id BIGINT(20) UNSIGNED NOT NULL,
 		name VARCHAR(255) NOT NULL,
 		logo_id BIGINT(20) UNSIGNED,
-		link_url VARCHAR(255),
+		url VARCHAR(500),
+		tel_no VARCHAR(50),
+		email VARCHAR(255),
+		address VARCHAR(255),
 		is_visible TINYINT(1) NOT NULL DEFAULT 1,
 		order_index INT UNSIGNED DEFAULT 0,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -669,9 +687,20 @@ function cer_install_event_schema() {
 	cer_add_column_if_missing( $events_table, 'location_lat', 'VARCHAR(50) NULL', 'location_link' );
 	cer_add_column_if_missing( $events_table, 'location_lng', 'VARCHAR(50) NULL', 'location_lat' );
 	cer_add_column_if_missing( $events_table, 'location_address', 'VARCHAR(500) NULL', 'location_lng' );
+	cer_add_column_if_missing( $partners_table, 'url', 'VARCHAR(500) NULL', 'logo_id' );
+	cer_add_column_if_missing( $partners_table, 'tel_no', 'VARCHAR(50) NULL', 'url' );
+	cer_add_column_if_missing( $partners_table, 'email', 'VARCHAR(255) NULL', 'tel_no' );
+	cer_add_column_if_missing( $partners_table, 'address', 'VARCHAR(255) NULL', 'email' );
 	cer_add_column_if_missing( $objectives_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'icon' );
 	cer_add_column_if_missing( $summit_structure_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'icon' );
-	cer_add_column_if_missing( $partners_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'link_url' );
+	cer_add_column_if_missing( $partners_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'address' );
+	if ( cer_column_exists( $partners_table, 'link_url' ) && ! cer_column_exists( $partners_table, 'url' ) ) {
+		$wpdb->query( "ALTER TABLE {$partners_table} CHANGE link_url url VARCHAR(500) NULL" );
+	}
+	if ( cer_column_exists( $partners_table, 'link_url' ) && cer_column_exists( $partners_table, 'url' ) ) {
+		$wpdb->query( "UPDATE {$partners_table} SET url = IFNULL(url, link_url) WHERE url IS NULL OR url = ''" );
+		$wpdb->query( "ALTER TABLE {$partners_table} DROP COLUMN link_url" );
+	}
 	cer_add_column_if_missing( $faqs_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'answer' );
 	cer_add_index_if_missing( $events_table, 'event_date', 'event_date' );
 	cer_add_index_if_missing( $registrations_table, 'created_at', 'created_at' );

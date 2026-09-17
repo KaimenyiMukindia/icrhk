@@ -403,6 +403,29 @@ body.cer-share-modal-open {
   gap: 10px 14px;
 }
 
+.cer-partner-fields-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cer-partner-contact-group {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(120px, 170px) minmax(180px, 1fr) minmax(180px, 1.6fr);
+  gap: 10px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--cer-border);
+  border-radius: 10px;
+  background: rgba(28, 166, 164, 0.03);
+}
+
+.cer-partner-contact-group .cer-field {
+  margin: 0;
+}
+
+.cer-partner-address-field {
+  grid-column: auto;
+}
+
 .cer-speaker-field-full {
   grid-column: 1 / -1;
 }
@@ -432,6 +455,14 @@ body.cer-share-modal-open {
     justify-content: flex-start;
   }
 
+  .cer-partner-contact-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cer-partner-address-field {
+    grid-column: 1 / -1;
+  }
+
   .cer-speaker-actions-col {
     flex-direction: row;
     flex-wrap: wrap;
@@ -439,6 +470,12 @@ body.cer-share-modal-open {
 
   .cer-speaker-actions-col .button-small {
     width: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .cer-partner-contact-group {
+    grid-template-columns: 1fr;
   }
 }
 
