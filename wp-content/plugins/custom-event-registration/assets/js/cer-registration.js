@@ -627,6 +627,7 @@
         { selector: '.cer-kamgc-section-title, .cer-kamgc-pillar-header', animations: ['fade-down'], duration: 600 },
         { selector: '.cer-kamgc-divider-center', animations: ['zoom-in'], duration: 500 },
         { selector: '.cer-kamgc-hero-summary', animations: ['fade-left'], duration: 800 },
+        { selector: '.cer-kamgc-organiser', animations: ['zoom-in', 'fade-down', 'zoom-in-up', 'fade-up'], stagger: 90, duration: 600 },
         { selector: '.cer-kamgc-feature-list li', animations: ['fade-up', 'zoom-in-up', 'fade-up-right', 'flip-up'], stagger: 70, duration: 600 },
         { selector: '.cer-kamgc-speaker-grid > *', animations: ['flip-left', 'zoom-in-up', 'flip-right'], stagger: 90, duration: 750 },
         { selector: '.cer-kamgc-pillar-grid > *', animations: ['zoom-in-up', 'flip-left', 'fade-down', 'flip-right', 'zoom-in-down'], stagger: 80, duration: 700 },
