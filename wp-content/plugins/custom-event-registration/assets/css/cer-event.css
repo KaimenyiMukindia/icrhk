@@ -7243,3 +7243,70 @@ footer.elementor-location-footer > .elementor-element-1dc9942 {
 footer.elementor-location-footer > .elementor-element-3be4cff {
     display: block; /* or your preferred layout display */
 }
+/* Organiser logo strip */
+body .cer-kamgc-page .cer-kamgc-organisers {
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+    padding: clamp(1rem, 2vw, 1.5rem) clamp(1.25rem, 3vw, 2.5rem);
+    border-radius: var(--cl-card-radius, 18px);
+    background: #fff;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, .12);
+}
+
+body .cer-kamgc-page .cer-kamgc-organiser-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    align-items: center;
+    justify-items: center;
+    gap: 1.1rem clamp(1.5rem, 4vw, 3.5rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+body .cer-kamgc-page .cer-kamgc-organiser {
+    display: grid;
+    place-items: center;
+    margin: 0;
+}
+
+body .cer-kamgc-page .cer-kamgc-organiser img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 56px;
+    object-fit: contain;
+}
+
+body .cer-kamgc-page .cer-kamgc-organiser img[alt="Council of Governors"] {
+    max-height: 72px;
+}
+
+@media (max-width: 560px) {
+    body .cer-kamgc-page .cer-kamgc-organisers {
+        padding: 1rem;
+    }
+
+    body .cer-kamgc-page .cer-kamgc-organiser-list {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+    }
+
+    body .cer-kamgc-page .cer-kamgc-organiser {
+        width: 100%;
+        min-height: 76px;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--cl-line, #E3E9EF);
+        border-radius: 12px;
+        background: #FCFDFE;
+    }
+
+    body .cer-kamgc-page .cer-kamgc-organiser img {
+        max-height: 44px;
+        max-width: 100%;
+    }
+
+    body .cer-kamgc-page .cer-kamgc-organiser img[alt="Council of Governors"] {
+        max-height: 56px;
+    }
+}

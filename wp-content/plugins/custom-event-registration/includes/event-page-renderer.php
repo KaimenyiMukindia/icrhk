@@ -124,6 +124,18 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 					<div class="cer-event-page cer-kamgc-page">
 						<div class="cer-event-shell cer-kamgc-shell">
 							<section class="cer-kamgc-hero" id="home">
+								<?php $organiser_logos = cer_event_page_organiser_logos( $current_event ); ?>
+								<?php if ( ! empty( $organiser_logos ) ) : ?>
+									<div class="cer-kamgc-organisers">
+										<ul class="cer-kamgc-organiser-list">
+											<?php foreach ( $organiser_logos as $organiser_logo ) : ?>
+												<li class="cer-kamgc-organiser">
+													<img src="<?php echo esc_url( $organiser_logo['url'] ); ?>"<?php if ( $organiser_logo['width'] && $organiser_logo['height'] ) : ?> width="<?php echo (int) $organiser_logo['width']; ?>" height="<?php echo (int) $organiser_logo['height']; ?>"<?php endif; ?> alt="<?php echo esc_attr( $organiser_logo['name'] ); ?>" loading="lazy" decoding="async" />
+												</li>
+											<?php endforeach; ?>
+										</ul>
+									</div>
+								<?php endif; ?>
 								<div class="cer-kamgc-hero-inner">
 									<div class="cer-kamgc-hero-copy">
 										<div class="cer-kamgc-hero-badges">
@@ -582,6 +594,59 @@ if ( ! function_exists( 'cer_event_page_table_has_visibility' ) ) {
 if ( ! function_exists( 'cer_event_page_format_datetime' ) ) {
 	function cer_event_page_format_datetime( $value ) {
 		return ! empty( $value ) ? date_i18n( 'M j, Y \a\t g:i a', strtotime( $value ) ) : 'To be confirmed';
+	}
+}
+
+if ( ! function_exists( 'cer_event_page_organiser_logos' ) ) {
+	/*
+	 * Organiser / partner logos for the strip above the hero.
+	 *
+	 * Reads an optional `organiser_logo_ids` column (comma-separated media
+	 * library IDs, the same shape as secondary_logo_id) so the strip becomes
+	 * editable once the backend adds the field. Until then it falls back to
+	 * the logos bundled with the plugin, which is also what a fresh checkout
+	 * gets, since media IDs are database state and do not travel with code.
+	 */
+	function cer_event_page_organiser_logos( $event ) {
+		$logos = array();
+
+		$ids = $event && isset( $event->organiser_logo_ids ) ? array_filter( array_map( 'absint', explode( ',', (string) $event->organiser_logo_ids ) ) ) : array();
+		foreach ( $ids as $id ) {
+			$src = wp_get_attachment_image_src( $id, 'medium' );
+			if ( $src ) {
+				$logos[] = array(
+					'url'    => $src[0],
+					'width'  => (int) $src[1],
+					'height' => (int) $src[2],
+					'name'   => get_the_title( $id ),
+				);
+			}
+		}
+
+		if ( ! empty( $logos ) ) {
+			return $logos;
+		}
+
+		$bundled = array(
+			'icrhk.png'                    => 'International Centre for Reproductive Health Kenya',
+			'council-of-governors.png'     => 'Council of Governors',
+			'state-department-gender.png'  => 'State Department for Gender and Affirmative Action',
+			'nsdcc.png'                    => 'National Syndemic Diseases Control Council',
+		);
+
+		foreach ( $bundled as $file => $name ) {
+			if ( defined( 'CER_PLUGIN_DIR' ) && file_exists( CER_PLUGIN_DIR . 'assets/img/organisers/' . $file ) ) {
+				$size = getimagesize( CER_PLUGIN_DIR . 'assets/img/organisers/' . $file );
+				$logos[] = array(
+					'url'    => CER_PLUGIN_URL . 'assets/img/organisers/' . $file,
+					'width'  => $size ? (int) $size[0] : 0,
+					'height' => $size ? (int) $size[1] : 0,
+					'name'   => $name,
+				);
+			}
+		}
+
+		return $logos;
 	}
 }
 
