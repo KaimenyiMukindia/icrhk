@@ -40,3 +40,16 @@ wp-content/plugins2/
 wp-content/themes/*
 !wp-content/themes/index.php
 !wp-content/themes/goodsoul/
+
+
+# WordPress core
+/wp-admin/
+/wp-includes/
+/wp-*.php
+/index.php
+/license.txt
+/readme.html
+/xmlrpc.php
+
+# Standard WordPress content index
+/wp-content/index.php
