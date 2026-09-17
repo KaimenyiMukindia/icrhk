@@ -276,8 +276,7 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	}
 	foreach ( $partner_rows as $key => $partner ) {
 		$partner_name = sanitize_text_field( wp_unslash( $partner['name'] ?? '' ) );
-		$partner_url = isset( $partner['url'] ) ? $partner['url'] : ( isset( $partner['link_url'] ) ? $partner['link_url'] : '' );
-		if ( empty( $partner_name ) && ( ! empty( $partner['logo_id'] ) || ! empty( $partner_url ) ) ) {
+		if ( empty( $partner_name ) && ( ! empty( $partner['logo_id'] ) || ! empty( $partner['link_url'] ) ) ) {
 			$errors[ 'partner_name_' . $key ] = __( 'Partner name is required.', 'custom-event-registration' );
 		}
 	}
@@ -615,23 +614,19 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 			if ( $partner_id && ! $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}evt_partners WHERE id = %d AND event_id = %d", $partner_id, $event_id ) ) ) {
 				$partner_id = 0;
 			}
-			$partner_url = isset( $partner['url'] ) ? $partner['url'] : ( isset( $partner['link_url'] ) ? $partner['link_url'] : '' );
 			$partner_data = array(
 				'event_id' => $event_id,
 				'name' => $partner_name,
 				'logo_id' => absint( $partner['logo_id'] ?? 0 ),
-				'url' => esc_url_raw( wp_unslash( $partner_url ) ),
-				'tel_no' => sanitize_text_field( wp_unslash( $partner['tel_no'] ?? '' ) ),
-				'email' => sanitize_email( wp_unslash( $partner['email'] ?? '' ) ),
-				'address' => sanitize_text_field( wp_unslash( $partner['address'] ?? '' ) ),
+				'link_url' => esc_url_raw( wp_unslash( $partner['link_url'] ?? '' ) ),
 				'is_visible' => empty( $partner['is_visible'] ) ? 0 : 1,
 				'order_index' => $index,
 				'updated_at' => current_time( 'mysql' ),
 			);
 			if ( $partner_id ) {
-				$wpdb->update( $wpdb->prefix . 'evt_partners', $partner_data, array( 'id' => $partner_id ), array( '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s' ), array( '%d' ) );
+				$wpdb->update( $wpdb->prefix . 'evt_partners', $partner_data, array( 'id' => $partner_id ), array( '%d', '%s', '%d', '%s', '%d', '%d', '%s' ), array( '%d' ) );
 			} else {
-				$wpdb->insert( $wpdb->prefix . 'evt_partners', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $partner_data ), array( '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s' ) );
+				$wpdb->insert( $wpdb->prefix . 'evt_partners', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $partner_data ), array( '%s', '%d', '%s', '%d', '%s', '%d', '%d', '%s' ) );
 			}
 		}
 
@@ -751,7 +746,7 @@ if ( empty( $summit_rows ) ) {
 	$summit_rows = array( array( 'id' => '', 'title' => '', 'description' => '', 'icon' => '', 'is_visible' => 1 ) );
 }
 if ( empty( $partner_rows ) ) {
-	$partner_rows = array( array( 'id' => '', 'name' => '', 'logo_id' => '', 'url' => '', 'tel_no' => '', 'email' => '', 'address' => '', 'is_visible' => 1 ) );
+	$partner_rows = array( array( 'id' => '', 'name' => '', 'logo_id' => '', 'link_url' => '', 'is_visible' => 1 ) );
 }
 if ( empty( $faq_rows ) ) {
 	$faq_rows = array( array( 'id' => '', 'question' => '', 'answer' => '', 'is_visible' => 1 ) );
@@ -1295,7 +1290,7 @@ if ( empty( $faq_rows ) ) {
 									<?php if ( ! empty( $partner['logo_id'] ) ) : ?><?php echo wp_get_attachment_image( $partner['logo_id'], 'thumbnail' ); ?><?php else : ?><span class="dashicons dashicons-format-image"></span><?php endif; ?>
 								</div>
 							</div>
-							<div class="cer-speaker-fields-col cer-partner-fields-col">
+							<div class="cer-speaker-fields-col">
 								<div class="cer-field">
 									<label><?php esc_html_e( 'Partner Name', 'custom-event-registration' ); ?></label>
 									<input type="text" name="partners[<?php echo esc_attr( $index ); ?>][name]" value="<?php echo esc_attr( $partner['name'] ?? '' ); ?>" placeholder="Ministry of Health" />
@@ -1303,21 +1298,7 @@ if ( empty( $faq_rows ) ) {
 								</div>
 								<div class="cer-field">
 									<label><?php esc_html_e( 'Website Link', 'custom-event-registration' ); ?></label>
-									<input type="url" name="partners[<?php echo esc_attr( $index ); ?>][url]" value="<?php echo esc_attr( isset( $partner['url'] ) ? $partner['url'] : ( isset( $partner['link_url'] ) ? $partner['link_url'] : '' ) ); ?>" placeholder="https://example.org" />
-								</div>
-								<div class="cer-partner-contact-group">
-									<div class="cer-field">
-										<label><?php esc_html_e( 'Tel No', 'custom-event-registration' ); ?></label>
-										<input type="tel" name="partners[<?php echo esc_attr( $index ); ?>][tel_no]" value="<?php echo esc_attr( $partner['tel_no'] ?? '' ); ?>" placeholder="+254 20 123 4567" />
-									</div>
-									<div class="cer-field">
-										<label><?php esc_html_e( 'Email', 'custom-event-registration' ); ?></label>
-										<input type="email" name="partners[<?php echo esc_attr( $index ); ?>][email]" value="<?php echo esc_attr( $partner['email'] ?? '' ); ?>" placeholder="hello@example.org" />
-									</div>
-									<div class="cer-field cer-partner-address-field">
-										<label><?php esc_html_e( 'Address', 'custom-event-registration' ); ?></label>
-										<input type="text" name="partners[<?php echo esc_attr( $index ); ?>][address]" value="<?php echo esc_attr( $partner['address'] ?? '' ); ?>" placeholder="Nairobi, Kenya" />
-									</div>
+									<input type="url" name="partners[<?php echo esc_attr( $index ); ?>][link_url]" value="<?php echo esc_attr( $partner['link_url'] ?? '' ); ?>" placeholder="https://example.org" />
 								</div>
 								<div class="cer-field cer-speaker-field-full">
 									<label class="cer-toggle" for="partner-visible-<?php echo esc_attr( $index ); ?>"><span><?php esc_html_e( 'Visible on front-end', 'custom-event-registration' ); ?></span><input id="partner-visible-<?php echo esc_attr( $index ); ?>" type="checkbox" name="partners[<?php echo esc_attr( $index ); ?>][is_visible]" value="1" <?php checked( empty( $partner['is_visible'] ) ? 0 : 1, 1 ); ?> /></label>

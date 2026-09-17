@@ -112,6 +112,7 @@
     --cer-glass-border: rgba(255, 255, 255, 0.5);
     --cer-glass-blur: 16px;
 }
+
 /* ==========================================================================
    MOTION PRIMITIVES
    Contents-only by design. Never animate transform/opacity on an element
@@ -211,14 +212,14 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     border: 1px solid rgba(0, 110, 172, 0.18);
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.9);
-    color: #FAA41A;
+    color: #006eac;
     text-decoration: none;
     transition: color var(--cer-dur-micro) var(--cer-ease-out), background-color var(--cer-dur-micro) var(--cer-ease-out), transform var(--cer-dur-micro) var(--cer-ease-out);
 }
 
 .cer-share-bar a:hover,
 .cer-share-bar a:focus {
-    background: #800080;
+    background: #006eac;
     color: #fff;
     outline: none;
     transform: translateY(-1px);
@@ -670,7 +671,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 
 /* Modern KAMGC layout integrated with the theme header/footer */
 .cer-event-page {
-    --cer-icrblue: #FAA41A;
+    --cer-icrblue: #006EAC;
     --cer-icrorange: #FAA41A;
     --cer-surface: #FFFFFF;
     --cer-surface-low: #F8F9FA;
@@ -2786,11 +2787,11 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     cursor: pointer;
 }
 
-/*.cer-payment-toggle-btn.is-active {*/
-/*    background: #006eac;*/
-/*    border-color: #006eac;*/
-/*    color: #ffffff;*/
-/*}*/
+.cer-payment-toggle-btn.is-active {
+    background: #006eac;
+    border-color: #006eac;
+    color: #ffffff;
+}
 
 .cer-registration-form {
     display: block;
@@ -3226,7 +3227,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 /* Layer 1: background image  */
 body:has(.cer-event-page) {
     background-image:
-        url(../../../../uploads/2026/09/png-bg.png);
+        url(../../../../uploads/2026/09/2000px-by-2000px.png);
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
@@ -3427,7 +3428,6 @@ body:has(.cer-event-page) {
 .cer-kamgc-partner-card {
     display: flex;
     align-items: center;
-    text-transform: capitalize;
     justify-content: center;
     min-height: 90px;
     padding: 1rem;
@@ -3448,7 +3448,7 @@ body:has(.cer-event-page) {
 
 .cer-kamgc-partner-card img {
     max-width: 100%;
-    max-height: 160px;
+    max-height: 60px;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -3588,9 +3588,8 @@ body:has(.cer-event-page) {
 .cer-kamgc-page {
     --kamgc-navy: #0f172a;
     --kamgc-body: #475569;
-    --kamgc-blue: #800080;
-    --kamgc-orang: #FAA41A;
-    --kamgc-blue-dark: #800080;
+    --kamgc-blue: #2563eb;
+    --kamgc-blue-dark: #1d4ed8;
     font-family: 'Plus Jakarta Sans', 'Open Sans', sans-serif;
 }
 
@@ -3790,11 +3789,7 @@ body:has(.cer-event-page) {
 }
 
 .cer-kamgc-summary-metadata a {
-    color: var(--kamgc-orang);
-}
-
-.cer-kamgc-summary-metadata a:hover{
-    color: #800080 !important;
+    color: var(--kamgc-blue-dark);
 }
 
 .cer-kamgc-metadata-icon,
@@ -3807,7 +3802,7 @@ body:has(.cer-event-page) {
     height: 40px;
     border-radius: 12px;
     background: rgba(59, 130, 246, 0.1);
-    color: var(--kamgc-orang);
+    color: var(--kamgc-blue);
 }
 
 .cer-kamgc-heading-with-icon {
@@ -5658,12 +5653,12 @@ html.cer-js .cer-reveal.is-visible {
 .cer-kamgc-page .cer-kamgc-button-primary:hover,
 .cer-kamgc-page .cer-primary-button:hover,
 .cer-kamgc-page .cer-payment-toggle-btn.is-active {
-    background: #800080 !important;
+    background: #006eac !important;
 }
 
 .cer-kamgc-button-secondary {
-    border-color: #FAA41A !important;
-    color: #FAA41A !important;
+    border-color: #006eac !important;
+    color: #006eac !important;
 }
 
 /* ==========================================================================
@@ -6500,7 +6495,7 @@ body.cer-pillar-pop-lock {
    block reverts the page.
    ========================================================================== */
 .cer-kamgc-page {
-    --cl-blue: purple;
+    --cl-blue: #006EAC;
     --cl-orange: #FAA41A;
     --cl-ink: #14202B;
     --cl-body: #3F4B59;
@@ -6735,12 +6730,12 @@ body .cer-kamgc-page .cer-kamgc-pillar-grid {
 
 body .cer-kamgc-page .cer-kamgc-pillar-grid {
     display: grid !important;
-    /* Dynamically stretches items up to a maximum of 5 columns */
-    grid-template-columns: repeat(auto-fit, minmax(max(180px, calc((100% - 64px) / 5)), 1fr)) !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     gap: 16px !important;
     padding: 0 !important;
     align-items: stretch !important;
 }
+
 body .cer-kamgc-page .cer-kamgc-pillar-grid > .cer-kamgc-pillars-card {
     flex: none !important;
     display: grid !important;
@@ -6829,7 +6824,7 @@ body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card::before
     box-shadow: none !important;
 }
 
-body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card h3 { color: #fff !important; border-bottom: 2px solid orange; padding-bottom: 8px; }
+body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card h3 { color: #fff !important; }
 body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card h3::after { display: none !important; }
 body .cer-kamgc-page .cer-kamgc-summit-structure .cer-kamgc-compact-card p { color: rgba(255, 255, 255, .88) !important; }
 
@@ -7095,151 +7090,88 @@ body .cer-kamgc-page .cer-kamgc-speakers-card .cer-kamgc-blobs i:nth-child(3) {
     body .cer-kamgc-page .cer-kamgc-blobs i { animation: none !important; }
 }
 
-/* --- Partner footer carousel ------------------------------------------- */
-body .cer-kamgc-page .cer-kamgc-partners {
-    order: 11;
-    background: #fff !important;
-    color: var(--cl-ink);
+/* ==========================================================================
+   ORGANISER LOGO STRIP — above the hero's copy and summary card
+   --------------------------------------------------------------------------
+   The convening organisations had nowhere to appear. A white card across the
+   top of the hero carries them, above both the emblem badge on the left and
+   the Conference Summary card on the right, so it reads as the page's
+   letterhead rather than a footer credit. The marks speak for themselves, so
+   the card carries no label and the logos use its full width.
+
+   The four marks have very different proportions (a round Council seal at 1:1
+   next to a 5.8:1 wordmark), so each is capped by height and width and
+   centred in an equal track: the row stays even however many logos the
+   backend supplies.
+   ========================================================================== */
+body .cer-kamgc-page .cer-kamgc-organisers {
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+    padding: clamp(1rem, 2vw, 1.5rem) clamp(1.25rem, 3vw, 2.5rem);
+    border-radius: var(--cl-card-radius, 18px);
+    background: #fff;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, .12);
 }
 
-body .cer-kamgc-page .cer-kamgc-partners-card,
-body .cer-kamgc-page .cer-kamgc-partners-card:hover {
-    background: #fff !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-}
-
-body .cer-kamgc-page .cer-kamgc-partners-card .cer-kamgc-section-title h2 { color: var(--cl-ink) !important; }
-body .cer-kamgc-page .cer-kamgc-partners-card .cer-kamgc-section-title p { color: var(--cl-body) !important; }
-
-body .cer-kamgc-page .cer-kamgc-partner-grid {
-    display: flex !important;
-    justify-content: flex-start !important;
-    gap: 0 !important;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0 0 1rem !important;
-    scroll-snap-type: x mandatory;
-    scrollbar-color: var(--cl-blue) rgba(0, 40, 70, .1);
-    scrollbar-width: thin;
-}
-
-body .cer-kamgc-page .cer-kamgc-partner-grid::-webkit-scrollbar { height: 6px; }
-body .cer-kamgc-page .cer-kamgc-partner-grid::-webkit-scrollbar-track { background: rgba(0, 40, 70, .1); }
-body .cer-kamgc-page .cer-kamgc-partner-grid::-webkit-scrollbar-thumb { background: var(--cl-blue); border-radius: 999px; }
-
-body .cer-kamgc-page .cer-kamgc-partner-card,
-body .cer-kamgc-page .cer-kamgc-partner-card:hover {
-    position: relative;
-    flex: 0 0 33.333%;
-    min-height: 250px;
-    display: flex;
-    flex-direction: column;
+body .cer-kamgc-page .cer-kamgc-organiser-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     align-items: center;
-    justify-content: flex-start;
-    gap: .45rem;
-    padding: 1rem 2rem 1.25rem;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: #fff !important;
-    box-shadow: none !important;
-    color: var(--cl-ink) !important;
-    text-align: center;
-    scroll-snap-align: start;
+    justify-items: center;
+    gap: 1.1rem clamp(1.5rem, 4vw, 3.5rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
-body .cer-kamgc-page .cer-kamgc-partner-card:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 10%;
-    right: 0;
-    width: 1px;
-    height: 80%;
-    background: rgba(0, 40, 70, .18);
-}
-
-body .cer-kamgc-page .cer-kamgc-partner-logo {
+body .cer-kamgc-page .cer-kamgc-organiser {
     display: grid;
     place-items: center;
-    width: 100%;
-    height: 142px;
-    margin-bottom: .45rem;
+    margin: 0;
 }
 
-body .cer-kamgc-page .cer-kamgc-partner-logo img {
+body .cer-kamgc-page .cer-kamgc-organiser img {
     display: block;
-    max-width: 150px;
-    max-height: 150px;
     width: auto;
+    max-width: 100%;
     height: auto;
+    max-height: 56px;
     object-fit: contain;
 }
 
-body .cer-kamgc-page .cer-kamgc-partner-logo .material-symbols-outlined {
-    color: var(--cl-orange);
-    font-size: 42px;
+/* The round seal reads far smaller than a wordmark at the same height, so it
+   gets a little more room. */
+body .cer-kamgc-page .cer-kamgc-organiser img[alt="Council of Governors"] {
+    max-height: 72px;
 }
 
-body .cer-kamgc-page .cer-kamgc-partner-card h3 {
-    width: 100%;
-    margin: 0;
-    color: var(--cl-ink) !important;
-    font-size: 1rem;
-    line-height: 1.35;
-    overflow-wrap: anywhere;
-}
-
-body .cer-kamgc-page .cer-kamgc-partner-detail {
-    display: block;
-    max-width: 100%;
-    margin: 0;
-    color: var(--cl-body) !important;
-    font-size: 1rem;
-    line-height: 1.45;
-    overflow-wrap: anywhere;
-    text-decoration: none;
-}
-
-body .cer-kamgc-page .cer-kamgc-partner-card h3 {
-    font-size: 1.4rem !important;
-}
-
-body .cer-kamgc-page .cer-kamgc-partner-detail {
-    font-size: 0.8rem !important;
-}
-
-body .cer-kamgc-page a.cer-kamgc-partner-detail:hover,
-body .cer-kamgc-page a.cer-kamgc-partner-detail:focus-visible {
-    color: var(--cl-blue) !important;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-@media (max-width: 900px) {
-    body .cer-kamgc-page .cer-kamgc-partner-card { flex-basis: 50%; }
-}
-
-@media (max-width: 640px) {
-    body .cer-kamgc-page .cer-kamgc-partners-card { padding-inline: 1rem !important; }
-    body .cer-kamgc-page .cer-kamgc-partner-card {
-        flex-basis: 100%;
-        min-height: 230px;
-        padding-inline: 1.5rem;
+/* Phones: two columns leave ~138px per logo, which renders a 5.8:1 wordmark
+   24px tall and unreadable. One per row gives each the full card width — and
+   because the marks are all different widths, centring them alone left a
+   ragged stack. Each sits in its own tile instead: same edges, same height,
+   logo centred inside. */
+@media (max-width: 560px) {
+    body .cer-kamgc-page .cer-kamgc-organisers {
+        padding: 1rem;
     }
-}
 
-#cer-registration-form .cer-primary-button {
-  pointer-events: none !important;
-}
+    body .cer-kamgc-page .cer-kamgc-organiser-list {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+    }
 
-footer.elementor-location-footer > .elementor-element-1dc9942 {
-    display: none;
-}
+    body .cer-kamgc-page .cer-kamgc-organiser {
+        width: 100%;
+        min-height: 76px;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--cl-line, #E3E9EF);
+        border-radius: 12px;
+        background: #FCFDFE;
+    }
 
-/* Ensure the copyright section remains visible */
-footer.elementor-location-footer > .elementor-element-3be4cff {
-    display: block; /* or your preferred layout display */
+    body .cer-kamgc-page .cer-kamgc-organiser img {
+        max-height: 44px;
+        max-width: 100%;
+    }
+
+    body .cer-kamgc-page .cer-kamgc-organiser img[alt="Council of Governors"] { max-height: 56px; }
 }
