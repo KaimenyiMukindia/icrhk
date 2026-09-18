@@ -51,6 +51,7 @@ jobs:
 
       - name: Prepare deployment directory
         run: |
+          rm -rf release
           mkdir -p release
 
           rsync -a \
@@ -60,6 +61,7 @@ jobs:
             --exclude='laravel-engine/.env' \
             --exclude='laravel-engine/storage/logs/*' \
             --exclude='wp-content/uploads/*' \
+            --exclude='release/' \
             ./ release/
 
       - name: Verify Laravel vendor directory
