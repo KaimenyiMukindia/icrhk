@@ -33,6 +33,12 @@ jobs:
         working-directory: laravel-engine
         run: composer validate --no-check-publish --strict
 
+      - name: Prepare Laravel writable directories
+        working-directory: laravel-engine
+        run: |
+          mkdir -p bootstrap/cache
+          chmod -R u+rwX bootstrap/cache
+
       - name: Install production dependencies
         working-directory: laravel-engine
         run: |
