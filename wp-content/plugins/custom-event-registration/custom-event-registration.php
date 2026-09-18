@@ -20,6 +20,7 @@ if ( ! defined( 'CER_PLUGIN_URL' ) ) {
 
 require_once CER_PLUGIN_DIR . 'includes/class-laravel-connector.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-security.php';
+require_once CER_PLUGIN_DIR . 'includes/class-cer-mail-smtp-resolver.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-mailer.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-ticket-service.php';
 require_once CER_PLUGIN_DIR . 'admin/admin-functions.php';
@@ -210,8 +211,28 @@ function cer_maybe_ensure_event_schema() {
 	$partners_table = $wpdb->prefix . 'evt_partners';
 	$schema_version = get_option( 'cer_schema_version', '' );
 
+	if ( '7' === $schema_version ) {
+		cer_install_event_schema();
+		cer_add_column_if_missing( $events_table, 'mail_sender_email', 'VARCHAR(255) NULL', 'location_address' );
+		cer_add_column_if_missing( $events_table, 'mail_password_encrypted', 'TEXT NULL', 'mail_sender_email' );
+		cer_add_column_if_missing( $events_table, 'mail_smtp_host', 'VARCHAR(255) NULL', 'mail_password_encrypted' );
+		cer_add_column_if_missing( $events_table, 'mail_smtp_port', 'VARCHAR(10) NULL', 'mail_smtp_host' );
+		cer_add_column_if_missing( $events_table, 'mail_smtp_secure', 'VARCHAR(20) NULL', 'mail_smtp_port' );
+		cer_add_column_if_missing( $events_table, 'mail_from_name', 'VARCHAR(255) NULL', 'mail_smtp_secure' );
+		cer_add_column_if_missing( $events_table, 'mail_notification_email', 'VARCHAR(255) NULL', 'mail_from_name' );
+		return;
+	}
+
 	if ( '6' === $schema_version ) {
 		cer_install_event_schema();
+		cer_add_column_if_missing( $events_table, 'mail_sender_email', 'VARCHAR(255) NULL', 'location_address' );
+		cer_add_column_if_missing( $events_table, 'mail_password_encrypted', 'TEXT NULL', 'mail_sender_email' );
+		cer_add_column_if_missing( $events_table, 'mail_smtp_host', 'VARCHAR(255) NULL', 'mail_password_encrypted' );
+		cer_add_column_if_missing( $events_table, 'mail_smtp_port', 'VARCHAR(10) NULL', 'mail_smtp_host' );
+		cer_add_column_if_missing( $events_table, 'mail_smtp_secure', 'VARCHAR(20) NULL', 'mail_smtp_port' );
+		cer_add_column_if_missing( $events_table, 'mail_from_name', 'VARCHAR(255) NULL', 'mail_smtp_secure' );
+		cer_add_column_if_missing( $events_table, 'mail_notification_email', 'VARCHAR(255) NULL', 'mail_from_name' );
+		update_option( 'cer_schema_version', '7', false );
 		cer_add_column_if_missing( $partners_table, 'url', 'VARCHAR(500) NULL', 'logo_id' );
 		cer_add_column_if_missing( $partners_table, 'tel_no', 'VARCHAR(50) NULL', 'url' );
 		cer_add_column_if_missing( $partners_table, 'email', 'VARCHAR(255) NULL', 'tel_no' );
@@ -244,6 +265,13 @@ function cer_maybe_ensure_event_schema() {
 	}
 
 	cer_install_event_schema();
+	cer_add_column_if_missing( $events_table, 'mail_sender_email', 'VARCHAR(255) NULL', 'location_address' );
+	cer_add_column_if_missing( $events_table, 'mail_password_encrypted', 'TEXT NULL', 'mail_sender_email' );
+	cer_add_column_if_missing( $events_table, 'mail_smtp_host', 'VARCHAR(255) NULL', 'mail_password_encrypted' );
+	cer_add_column_if_missing( $events_table, 'mail_smtp_port', 'VARCHAR(10) NULL', 'mail_smtp_host' );
+	cer_add_column_if_missing( $events_table, 'mail_smtp_secure', 'VARCHAR(20) NULL', 'mail_smtp_port' );
+	cer_add_column_if_missing( $events_table, 'mail_from_name', 'VARCHAR(255) NULL', 'mail_smtp_secure' );
+	cer_add_column_if_missing( $events_table, 'mail_notification_email', 'VARCHAR(255) NULL', 'mail_from_name' );
 	cer_add_column_if_missing( $registrations_table, 'user_access_key', 'VARCHAR(64) NULL', 'registration_uuid' );
 	cer_add_column_if_missing( $registrations_table, 'user_id', 'BIGINT(20) UNSIGNED NULL', 'event_id' );
 	cer_add_column_if_missing( $registrations_table, 'payment_uuid', 'VARCHAR(64) NULL', 'registration_uuid' );
@@ -261,6 +289,7 @@ function cer_maybe_ensure_event_schema() {
 	cer_add_index_if_missing( $registrations_table, 'full_name_search_hash', 'full_name_search_hash' );
 	cer_add_index_if_missing( $registrations_table, 'email_search_hash', 'email_search_hash' );
 	cer_add_index_if_missing( $registrations_table, 'phone_search_hash', 'phone_search_hash' );
+	update_option( 'cer_schema_version', '7', false );
 	$wpdb->query( "ALTER TABLE {$registrations_table} MODIFY full_name VARCHAR(512) NOT NULL, MODIFY email VARCHAR(512) NOT NULL, MODIFY phone VARCHAR(256) NOT NULL, MODIFY notes LONGTEXT NULL" );
 	$rows = $wpdb->get_results( "SELECT id, user_access_key, full_name, email, phone, notes FROM {$registrations_table}", ARRAY_A );
 	foreach ( $rows as $row ) {
@@ -687,6 +716,13 @@ function cer_install_event_schema() {
 	cer_add_column_if_missing( $events_table, 'location_lat', 'VARCHAR(50) NULL', 'location_link' );
 	cer_add_column_if_missing( $events_table, 'location_lng', 'VARCHAR(50) NULL', 'location_lat' );
 	cer_add_column_if_missing( $events_table, 'location_address', 'VARCHAR(500) NULL', 'location_lng' );
+	cer_add_column_if_missing( $events_table, 'mail_sender_email', 'VARCHAR(255) NULL', 'location_address' );
+	cer_add_column_if_missing( $events_table, 'mail_password_encrypted', 'TEXT NULL', 'mail_sender_email' );
+	cer_add_column_if_missing( $events_table, 'mail_smtp_host', 'VARCHAR(255) NULL', 'mail_password_encrypted' );
+	cer_add_column_if_missing( $events_table, 'mail_smtp_port', 'VARCHAR(10) NULL', 'mail_smtp_host' );
+	cer_add_column_if_missing( $events_table, 'mail_smtp_secure', 'VARCHAR(20) NULL', 'mail_smtp_port' );
+	cer_add_column_if_missing( $events_table, 'mail_from_name', 'VARCHAR(255) NULL', 'mail_smtp_secure' );
+	cer_add_column_if_missing( $events_table, 'mail_notification_email', 'VARCHAR(255) NULL', 'mail_from_name' );
 	cer_add_column_if_missing( $partners_table, 'url', 'VARCHAR(500) NULL', 'logo_id' );
 	cer_add_column_if_missing( $partners_table, 'tel_no', 'VARCHAR(50) NULL', 'url' );
 	cer_add_column_if_missing( $partners_table, 'email', 'VARCHAR(255) NULL', 'tel_no' );
@@ -1192,9 +1228,9 @@ function cer_process_registration_submission( $payload = array() ) {
 		// Phone is required for both methods; full name is only collected for M-Pesa.
 		// Card intentionally never collects a name — Paystack supplies it from the charge.
 		$phone_digits = preg_replace( '/\D+/', '', $phone );
-		if ( preg_match( '/^0?7\d{8}$/', $phone_digits ) ) {
+		if ( preg_match( '/^0?[17]\d{8}$/', $phone_digits ) ) {
 			$phone = '254' . ( '0' === $phone_digits[0] ? substr( $phone_digits, 1 ) : $phone_digits );
-		} elseif ( preg_match( '/^2547\d{8}$/', $phone_digits ) ) {
+		} elseif ( preg_match( '/^254[17]\d{8}$/', $phone_digits ) ) {
 			$phone = $phone_digits;
 		} else {
 			$phone = '';

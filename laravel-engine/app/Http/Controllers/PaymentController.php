@@ -30,6 +30,15 @@ final class PaymentController extends Controller
             'ticket_type_id' => ['nullable', 'integer'],
         ]);
 
+        $registration = DB::table('wp_evt_registrations')
+            ->where('registration_uuid', $payload['registration_uuid'])
+            ->where('payment_uuid', $payload['payment_uuid'])
+            ->first(['amount']);
+        if (! $registration || abs((float) $registration->amount - (float) $payload['amount']) > 0.01) {
+            return response()->json(['status' => 'failed', 'message' => 'The payment amount does not match the registration.'], 422);
+        }
+        $payload['amount'] = (float) $registration->amount;
+
         if ($payload['payment_method'] === 'mpesa') {
             if (empty($payload['full_name']) || empty($payload['phone'])) {
                 return response()->json(['status' => 'failed', 'message' => 'Full name and phone number are required for M-Pesa.'], 422);
@@ -121,10 +130,21 @@ final class PaymentController extends Controller
             return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'IPN logged without payment confirmation.']);
         }
 
-        $payerName = trim((string) data_get($payload, 'customer.first_name', '') . ' ' . (string) data_get($payload, 'customer.last_name', ''));
+        $paymentChannel = strtolower((string) ($data['channel'] ?? ''));
+        $payerName = PaystackService::extractPayerName($payload);
+        if ('card' === $paymentChannel && '' === $payerName && '' !== $reference) {
+            $verification = $this->service->verifyTransaction($reference);
+            if (($verification['ok'] ?? false) === true && 'success' === strtolower((string) ($verification['status'] ?? ''))) {
+                $payerName = PaystackService::extractPayerName((array) ($verification['response'] ?? []));
+            }
+            logger()->info('IPN Processing: Cardholder name lookup completed', [
+                'reference' => $reference,
+                'name_found' => '' !== $payerName,
+            ]);
+        }
         $receiptNumber = (string) ($data['receipt_number'] ?? '');
         $serialNumber = '';
-        $confirmationCode = (string) ($data['authorization.code'] ?? '');
+        $confirmationCode = (string) data_get($payload, 'authorization.authorization_code', data_get($payload, 'authorization.code', ''));
         $confirmedAmount = isset($data['amount']) ? ((float) $data['amount'] / 100) : '';
         $updates = [
             'status' => 'paid',
@@ -168,7 +188,7 @@ final class PaymentController extends Controller
                     'ticket_pending' => empty($registration->ticket_generated_at) || empty($registration->ticket_sent_at),
                 ];
             }
-            $expectedAmount = strtolower((string) env('PAYSTACK_ENV', 'live')) === 'sandbox'
+            $expectedAmount = PaystackService::isSandboxEnvironment()
                 ? 1.00
                 : (float) $registration->amount;
             if ($confirmedAmount === '' || abs($expectedAmount - (float) $confirmedAmount) > 0.01) {
@@ -214,9 +234,9 @@ final class PaymentController extends Controller
         }
         if ($confirmation['state'] === 'duplicate') {
             if (($confirmation['ticket_pending'] ?? false) === true) {
-                $wordpressUrl = (string) env('WORDPRESS_URL', 'http://localhost/icrhk');
+                $wordpressUrl = (string) config('services.wordpress.url', 'http://localhost/icrhk');
                 $ticketTimestamp = (string) time();
-                $ticketSecret = (string) env('CER_TICKET_CALLBACK_SECRET', '');
+                $ticketSecret = (string) config('services.wordpress.ticket_callback_secret', '');
                 $ticketResponse = Http::timeout(30)
                     ->asForm()
                     ->withHeaders([
@@ -256,10 +276,10 @@ final class PaymentController extends Controller
             return response()->json(['status' => 'ok', 'payment_uuid' => $paymentUuid, 'message' => 'Payment recorded for manual capacity review.']);
         }
 
-        $wordpressUrl = (string) env('WORDPRESS_URL', 'http://localhost/icrhk');
+        $wordpressUrl = (string) config('services.wordpress.url', 'http://localhost/icrhk');
         logger()->info('IPN Processing: Making WordPress ticket callback', ['registration_id' => $confirmation['registration_id'], 'wordpress_url' => $wordpressUrl]);
         $ticketTimestamp = (string) time();
-        $ticketSecret = (string) env('CER_TICKET_CALLBACK_SECRET', '');
+        $ticketSecret = (string) config('services.wordpress.ticket_callback_secret', '');
         try {
             $ticketResponse = Http::timeout(30)
                 ->asForm()

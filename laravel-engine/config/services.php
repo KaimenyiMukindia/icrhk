@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'paystack' => [
+        'public_key' => env('PAYSTACK_PUBLIC_KEY'),
+        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+        'environment' => env('PAYSTACK_ENV', 'live'),
+        'currency' => env('PAYSTACK_CURRENCY', 'KES'),
+    ],
+
+    'wordpress' => [
+        'url' => env('WORDPRESS_URL', 'http://localhost/icrhk'),
+        'ticket_callback_secret' => env('CER_TICKET_CALLBACK_SECRET'),
+    ],
+
 ];

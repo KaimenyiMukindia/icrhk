@@ -11,7 +11,7 @@ final class PaystackService
 
     public function __construct()
     {
-        $this->secretKey = self::getConfiguredValue('PAYSTACK_SECRET_KEY', '');
+        $this->secretKey = (string) config('services.paystack.secret_key', '');
     }
 
     public function initializeTransaction(string $email, float $amount, array $metadata = [], array $channels = ['card', 'mobile_money']): array
@@ -28,8 +28,8 @@ final class PaystackService
         $gatewayPhone = self::resolveGatewayPhone((string) ($metadata['phone'] ?? ''));
         $payload = [
             'email' => $email,
-            'amount' => (int) round($amount * 100),
-            'currency' => 'KES',
+            'amount' => self::amountToSubunit($amount),
+            'currency' => (string) config('services.paystack.currency', 'KES'),
             'reference' => (string) ($metadata['payment_uuid'] ?? ''),
             'first_name' => $fullName,
             'channels' => array_values($channels),
@@ -109,8 +109,8 @@ final class PaystackService
             ->acceptJson()
             ->post($this->baseUrl . '/charge', [
                 'email' => $email,
-                'amount' => (int) round($amount * 100),
-                'currency' => 'KES',
+                'amount' => self::amountToSubunit($amount),
+                'currency' => (string) config('services.paystack.currency', 'KES'),
                 'reference' => $reference,
                 'mobile_money' => [
                     'phone' => $gatewayPhone,
@@ -185,6 +185,21 @@ final class PaystackService
         return '+254' . $normalized;
     }
 
+    public static function amountToSubunit(float $amount): int
+    {
+        return (int) round($amount * 100, 0, PHP_ROUND_HALF_UP);
+    }
+
+    public static function extractPayerName(array $data): string
+    {
+        $accountName = trim((string) data_get($data, 'authorization.account_name', ''));
+        if ($accountName !== '') {
+            return $accountName;
+        }
+
+        return trim((string) data_get($data, 'customer.first_name', '') . ' ' . (string) data_get($data, 'customer.last_name', ''));
+    }
+
     private function sandboxAmount(float $amount): float
     {
         return self::isSandboxEnvironment() ? 1.00 : $amount;
@@ -192,7 +207,7 @@ final class PaystackService
 
     public static function isSandboxEnvironment(): bool
     {
-        return strtolower(self::getConfiguredValue('PAYSTACK_ENV', 'live')) === 'sandbox';
+        return strtolower((string) config('services.paystack.environment', 'live')) === 'sandbox';
     }
 
     public static function getConfiguredValue(string $key, string $default = ''): string

@@ -94,10 +94,14 @@ function cer_send_ticket_for_registration( int $registration_id ): bool {
 	$view_url = add_query_arg( 'cer_ticket', rawurlencode( $registration['user_access_key'] ), home_url( '/' ) );
 	$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 	$body = '<p>Dear ' . esc_html( $name ) . ',</p><p>Your ' . esc_html( $payment_method ) . ' payment is confirmed. Your ticket for <strong>' . esc_html( $event_name ) . '</strong> is attached.</p><p>You can also view your ticket online: <a href="' . esc_url( $view_url ) . '">' . esc_html( $view_url ) . '</a></p><p>We look forward to seeing you.</p>';
+	$event_id = (int) ( $registration['event_id'] ?? 0 );
+	$context = cer_set_current_mail_config( $event_id, $event_name );
 	if ( ! wp_mail( $email, 'Your Ticket for ' . $event_name . ' - ' . $payment_method, $body, $headers, array( $path ) ) ) {
-		error_log( 'CER ticket email failed for registration ' . $registration_id . ' to ' . $email );
+		error_log( 'CER ticket email failed for registration ' . $registration_id . ' to ' . $email . ' event ' . $event_id );
+		cer_clear_current_mail_config();
 		return false;
 	}
+	cer_clear_current_mail_config();
 
 	$wpdb->update( $table, array( 'ticket_sent_at' => current_time( 'mysql' ) ), array( 'id' => $registration_id ), array( '%s' ), array( '%d' ) );
 	return true;
@@ -105,7 +109,16 @@ function cer_send_ticket_for_registration( int $registration_id ): bool {
 
 function cer_log_mail_failure( $error ): void {
 	if ( is_wp_error( $error ) ) {
-		error_log( 'CER wp_mail failed: ' . $error->get_error_message() );
+		$context = $GLOBALS['cer_current_mail_config'] ?? array();
+		$event_id = isset( $context['event_id'] ) ? (int) $context['event_id'] : 0;
+		$sender = isset( $context['from_email'] ) ? $context['from_email'] : 'unknown';
+		$message = 'CER wp_mail failed for event ' . $event_id . ' sender ' . $sender . ': ' . $error->get_error_message();
+		$data = $error->get_error_data();
+		$phpmailer = is_object( $data ) ? $data : ( is_array( $data ) && isset( $data['phpmailer'] ) ? $data['phpmailer'] : null );
+		if ( is_object( $phpmailer ) && isset( $phpmailer->ErrorInfo ) ) {
+			$message .= ' PHPMailer: ' . $phpmailer->ErrorInfo;
+		}
+		error_log( $message );
 	}
 }
 

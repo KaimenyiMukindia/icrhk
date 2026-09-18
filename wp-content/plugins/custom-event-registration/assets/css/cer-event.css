@@ -7277,9 +7277,7 @@ body .cer-kamgc-page a.cer-kamgc-partner-detail:focus-visible {
     }
 }
 
-#cer-registration-form .cer-primary-button {
-  pointer-events: none !important;
-}
+
 
 footer.elementor-location-footer > .elementor-element-1dc9942 {
     display: none;

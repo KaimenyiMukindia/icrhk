@@ -113,6 +113,8 @@ if ( $event_id ) {
 	$default_event['event_date'] = $event->event_date;
 	$default_event['event_end_date'] = $event->event_end_date;
 	$default_event['venue'] = $event->venue;
+	$default_event['mail_sender_email'] = isset( $event->mail_sender_email ) ? $event->mail_sender_email : '';
+	$default_event['mail_password_placeholder'] = '••••••••';
 	$default_event['status'] = $event->status;
 	$default_event['show_event_information'] = isset( $event->show_event_information ) ? (int) $event->show_event_information : 1;
 	$default_event['show_speakers'] = isset( $event->show_speakers ) ? (int) $event->show_speakers : 1;
@@ -211,6 +213,21 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	$default_event['location_lat'] = sanitize_text_field( wp_unslash( $_POST['location_lat'] ?? '' ) );
 	$default_event['location_lng'] = sanitize_text_field( wp_unslash( $_POST['location_lng'] ?? '' ) );
 	$default_event['location_address'] = sanitize_text_field( wp_unslash( $_POST['location_address'] ?? '' ) );
+	$default_event['mail_sender_email'] = sanitize_email( wp_unslash( $_POST['mail_sender_email'] ?? '' ) );
+	$submitted_mail_password = isset( $_POST['mail_password'] ) ? wp_unslash( $_POST['mail_password'] ) : '';
+	$default_event['mail_password_placeholder'] = '••••••••';
+	$existing_encrypted_password = $event_id ? $wpdb->get_var( $wpdb->prepare( "SELECT mail_password_encrypted FROM {$wpdb->prefix}evt_events WHERE id = %d LIMIT 1", $event_id ) ) : '';
+	if ( is_string( $existing_encrypted_password ) && '' !== $existing_encrypted_password && ( '' === $submitted_mail_password || '••••••••' === $submitted_mail_password ) ) {
+		$default_event['mail_password_encrypted'] = $existing_encrypted_password;
+	} elseif ( '' !== $submitted_mail_password && '••••••••' !== $submitted_mail_password ) {
+		$normalized_password = cer_normalize_mail_password( $submitted_mail_password );
+		$encryption_key = cer_get_encryption_key();
+		if ( '' !== trim( (string) $encryption_key ) ) {
+			$default_event['mail_password_encrypted'] = cer_encrypt_pii( $normalized_password );
+		} else {
+			wp_die( esc_html__( 'Mail encryption key is missing. Configure CER_ENCRYPTION_KEY or ensure AUTH_KEY is defined before saving event email settings.', 'custom-event-registration' ) );
+		}
+	}
 
 	// Single source of truth for the venue: the Location / Map display address.
 	// The front end reads `venue`, so deriving it here keeps every existing
@@ -309,6 +326,9 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 			}
 		}
 
+		$mail_sender_email = sanitize_email( wp_unslash( $_POST['mail_sender_email'] ?? '' ) );
+		$mail_from_name = trim( (string) get_option( 'blogname', 'ICRHK Events' ) );
+		$mail_resolver = class_exists( 'CerMailSmtpResolver' ) ? CerMailSmtpResolver::resolve( $mail_sender_email, $mail_from_name ) : array();
 		$event_data = array(
 			'name' => $default_event['title'],
 			'slug' => $default_event['slug'],
@@ -362,6 +382,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 			'location_lat' => $default_event['location_lat'],
 			'location_lng' => $default_event['location_lng'],
 			'location_address' => $default_event['location_address'],
+			'mail_sender_email' => $mail_sender_email,
+			'mail_password_encrypted' => $default_event['mail_password_encrypted'] ?? '',
+			'mail_smtp_host' => ! empty( $mail_resolver['host'] ) ? $mail_resolver['host'] : ( $default_event['mail_smtp_host'] ?? '' ),
+			'mail_smtp_port' => ! empty( $mail_resolver['port'] ) ? (string) $mail_resolver['port'] : ( $default_event['mail_smtp_port'] ?? '' ),
+			'mail_smtp_secure' => ! empty( $mail_resolver['secure'] ) ? $mail_resolver['secure'] : ( $default_event['mail_smtp_secure'] ?? 'tls' ),
+			'mail_from_name' => ! empty( $mail_resolver['from_name'] ) ? $mail_resolver['from_name'] : ( $default_event['mail_from_name'] ?? '' ),
+			'mail_notification_email' => $mail_sender_email,
 			'updated_at' => current_time( 'mysql' ),
 		);
 
@@ -729,6 +756,8 @@ $event_data = array(
 	'location_lat' => $default_event['location_lat'],
 	'location_lng' => $default_event['location_lng'],
 	'location_address' => $default_event['location_address'],
+	'mail_sender_email' => $default_event['mail_sender_email'] ?? '',
+	'mail_password_placeholder' => '••••••••',
 	'event_uuid' => $default_event['uuid'],
 );
 
@@ -787,6 +816,18 @@ if ( empty( $faq_rows ) ) {
 				$slug.data('manual', $(this).val().trim() !== '');
 			});
 		}
+
+		$('.cer-toggle-password').on('click', function(){
+			var $button = $(this);
+			var targetId = $button.data('target');
+			var $input = $('#' + targetId);
+			if ( !$input.length ) {
+				return;
+			}
+			var isPassword = $input.attr('type') === 'password';
+			$input.attr('type', isPassword ? 'text' : 'password');
+			$button.find('.dashicons').toggleClass('dashicons-visibility', ! isPassword).toggleClass('dashicons-hidden', isPassword);
+		});
 	});
 	</script>
 
@@ -1403,6 +1444,31 @@ if ( empty( $faq_rows ) ) {
 					</div>
 					<div class="cer-field cer-full">
 						<button type="button" class="button" id="cer-open-map-search"><?php esc_html_e( 'Search on Map', 'custom-event-registration' ); ?></button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="cer-panel" style="margin-top: 24px;">
+			<div class="cer-panel-header">
+				<h2><?php esc_html_e( 'Event Mail Settings', 'custom-event-registration' ); ?></h2>
+				<div class="cer-panel-header-actions"></div>
+			</div>
+			<div class="cer-panel-body">
+				<div class="cer-field-grid">
+					<div class="cer-field">
+						<label for="mail-sender-email"><?php esc_html_e( 'Sender Email', 'custom-event-registration' ); ?></label>
+						<input type="email" id="mail-sender-email" name="mail_sender_email" value="<?php echo esc_attr( $event_data['mail_sender_email'] ); ?>" placeholder="organizer@example.com" />
+					</div>
+					<div class="cer-field">
+						<label for="mail-password"><?php esc_html_e( 'App Password', 'custom-event-registration' ); ?></label>
+						<div class="cer-password-wrap" style="position:relative;">
+							<input type="password" id="mail-password" name="mail_password" value="" placeholder="••••••••" autocomplete="new-password" style="padding-right: 42px;" />
+							<button type="button" class="button button-small cer-toggle-password" data-target="mail-password" aria-label="<?php esc_attr_e( 'Show or hide app password', 'custom-event-registration' ); ?>" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);padding:0 8px;line-height:28px;height:28px;">
+								<span class="dashicons dashicons-visibility" aria-hidden="true"></span>
+							</button>
+						</div>
+						<p class="cer-help-text"><?php esc_html_e( 'Leave blank to keep the existing encrypted password.', 'custom-event-registration' ); ?></p>
 					</div>
 				</div>
 			</div>
