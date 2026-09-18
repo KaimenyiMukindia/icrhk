@@ -1039,7 +1039,11 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 }
 
 .cer-registration-form.cer-card-selected .cer-form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cer-registration-form.cer-card-selected .cer-email-group {
+    grid-column: 1 / -1;
 }
 
 .cer-registration-form.cer-card-selected .cer-full-name-group {
@@ -5194,6 +5198,48 @@ html.cer-js .cer-reveal.is-visible {
     border-color: rgba(90, 42, 140, .20) !important;
     color: var(--k-purple) !important;
     font-weight: 700;
+}
+
+/* Uniform field height/alignment: the phone input inherited its own border from
+   the generic input rule above, doubling up with the wrapper's border. */
+.cer-registration-form .cer-field-group input,
+.cer-registration-form .cer-field-group select,
+.cer-registration-form .cer-phone-field {
+    height: 52px;
+    min-height: 52px;
+    box-sizing: border-box;
+}
+
+/* Keep each label/field row at its natural size instead of letting the grid's
+   default stretch unevenly split leftover row height between columns. */
+.cer-registration-form .cer-field-group {
+    align-content: start;
+}
+
+.cer-registration-form .cer-phone-field {
+    align-items: stretch;
+}
+
+.cer-registration-form .cer-phone-field input {
+    border: none !important;
+    height: auto;
+    min-height: 0;
+}
+
+.cer-registration-form .cer-phone-prefix {
+    box-sizing: border-box;
+}
+
+/* Card mode: don't force the phone/ticket pair into 2 cramped columns on
+   narrow screens — stack them like every other breakpoint does. */
+@media (max-width: 767px) {
+    .cer-registration-form.cer-card-selected .cer-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cer-registration-form.cer-card-selected .cer-email-group {
+        grid-column: auto;
+    }
 }
 
 /* Primary submit — the one orange action on the page. */

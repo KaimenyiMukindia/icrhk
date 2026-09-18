@@ -34,7 +34,7 @@ function cer_get_registration_form_markup( $event_id = null ) {
 				<label for="cer-full-name">Full Name</label>
 				<input id="cer-full-name" name="full_name" placeholder="Jane Doe" required type="text" />
 			</div>
-			<div class="cer-field-group">
+			<div class="cer-field-group cer-email-group">
 				<label for="cer-email">Email Address</label>
 				<input id="cer-email" name="email" placeholder="jane@example.com" required type="email" />
 			</div>
@@ -45,7 +45,7 @@ function cer_get_registration_form_markup( $event_id = null ) {
 					<input id="cer-phone" name="phone" placeholder="712 345 678" required type="tel" />
 				</div>
 			</div>
-			<div class="cer-field-group cer-span-2">
+			<div class="cer-field-group">
 				<label for="cer-ticket-type">Ticket / Event Type</label>
 				<select id="cer-ticket-type" name="ticket_type" required>
 					<option value="">Select a ticket</option>
