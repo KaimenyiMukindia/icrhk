@@ -19,11 +19,13 @@ if ( false === $metrics ) {
 
 	$event_metrics = $wpdb->get_row( "SELECT COUNT(*) AS total_events, SUM(status = 'published') AS published_events FROM {$events_table}", ARRAY_A );
 	$registration_metrics = $wpdb->get_row( "SELECT COUNT(*) AS total_registrations, SUM(status IN ('paid','confirmed')) AS tickets_sold, COALESCE(SUM(CASE WHEN status IN ('paid','confirmed') THEN amount ELSE 0 END), 0) AS revenue_collected FROM {$registrations_table}", ARRAY_A );
+	$inventory_metrics = $wpdb->get_row( "SELECT COALESCE(SUM(CASE WHEN quantity_available IS NULL THEN 0 ELSE GREATEST(quantity_available - quantity_sold, 0) END), 0) AS tickets_available FROM {$wpdb->prefix}evt_ticket_types", ARRAY_A );
 	$sponsorship_packages = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$sponsorships_table}" );
 	$total_events = (int) ( $event_metrics['total_events'] ?? 0 );
 	$published_events = (int) ( $event_metrics['published_events'] ?? 0 );
 	$total_registrations = (int) ( $registration_metrics['total_registrations'] ?? 0 );
 	$tickets_sold = (int) ( $registration_metrics['tickets_sold'] ?? 0 );
+	$tickets_available = (int) ( $inventory_metrics['tickets_available'] ?? 0 );
 	$revenue_collected = (float) ( $registration_metrics['revenue_collected'] ?? 0 );
 
 	$metrics = array(
@@ -31,6 +33,7 @@ if ( false === $metrics ) {
 		'published_events' => $published_events,
 		'total_registrations' => $total_registrations,
 		'tickets_sold' => $tickets_sold,
+		'tickets_available' => $tickets_available,
 		'revenue_collected' => $revenue_collected,
 		'sponsorship_packages' => $sponsorship_packages,
 	);
@@ -70,6 +73,11 @@ $recent_registrations = array_map( 'cer_decrypt_registration_row', $recent_regis
 			<span class="label"><?php esc_html_e( 'Tickets Sold', 'custom-event-registration' ); ?></span>
 			<p class="value"><?php echo esc_html( number_format_i18n( $metrics['tickets_sold'] ) ); ?></p>
 			<span class="trend"><?php esc_html_e( 'Paid or confirmed', 'custom-event-registration' ); ?></span>
+		</div>
+		<div class="cer-metric-card">
+			<span class="label"><?php esc_html_e( 'Tickets Available', 'custom-event-registration' ); ?></span>
+			<p class="value"><?php echo esc_html( number_format_i18n( $metrics['tickets_available'] ) ); ?></p>
+			<span class="trend"><?php esc_html_e( 'Currently remaining', 'custom-event-registration' ); ?></span>
 		</div>
 		<div class="cer-metric-card">
 			<span class="label"><?php esc_html_e( 'Revenue Collected', 'custom-event-registration' ); ?></span>

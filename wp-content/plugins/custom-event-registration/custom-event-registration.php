@@ -34,6 +34,9 @@ add_action( 'wp_ajax_cer_submit_registration', 'cer_handle_ajax_submission' );
 add_action( 'wp_ajax_nopriv_cer_submit_registration', 'cer_handle_ajax_submission' );
 add_action( 'rest_api_init', 'cer_register_rest_routes' );
 add_action( 'cer_sync_registration', 'cer_sync_registration_async' );
+add_action( 'cer_release_expired_registrations', 'cer_release_expired_registrations' );
+add_action( 'init', 'cer_schedule_registration_expiry_cleanup' );
+add_action( 'wp_loaded', 'cer_maybe_release_expired_registrations_on_load' );
 add_action( 'wp_enqueue_scripts', 'cer_enqueue_frontend_assets' );
 add_action( 'admin_enqueue_scripts', 'cer_enqueue_admin_assets' );
 add_action( 'wp_head', 'cer_maybe_output_event_seo_meta', 20 );
@@ -209,7 +212,16 @@ function cer_maybe_ensure_event_schema() {
 	$registrations_table = $wpdb->prefix . 'evt_registrations';
 	$events_table = $wpdb->prefix . 'evt_events';
 	$partners_table = $wpdb->prefix . 'evt_partners';
+	$ticket_types_table = $wpdb->prefix . 'evt_ticket_types';
 	$schema_version = get_option( 'cer_schema_version', '' );
+
+	if ( '8' === $schema_version ) {
+		cer_install_event_schema();
+		cer_add_column_if_missing( $registrations_table, 'reserved_until', 'DATETIME NULL', 'status' );
+		cer_add_column_if_missing( $registrations_table, 'release_notified_at', 'DATETIME NULL', 'reserved_until' );
+		cer_backfill_paid_ticket_inventory();
+		return;
+	}
 
 	if ( '7' === $schema_version ) {
 		cer_install_event_schema();
@@ -220,6 +232,10 @@ function cer_maybe_ensure_event_schema() {
 		cer_add_column_if_missing( $events_table, 'mail_smtp_secure', 'VARCHAR(20) NULL', 'mail_smtp_port' );
 		cer_add_column_if_missing( $events_table, 'mail_from_name', 'VARCHAR(255) NULL', 'mail_smtp_secure' );
 		cer_add_column_if_missing( $events_table, 'mail_notification_email', 'VARCHAR(255) NULL', 'mail_from_name' );
+		cer_add_column_if_missing( $registrations_table, 'reserved_until', 'DATETIME NULL', 'status' );
+		cer_add_column_if_missing( $registrations_table, 'release_notified_at', 'DATETIME NULL', 'reserved_until' );
+		cer_backfill_paid_ticket_inventory();
+		update_option( 'cer_schema_version', '8', false );
 		return;
 	}
 
@@ -272,6 +288,8 @@ function cer_maybe_ensure_event_schema() {
 	cer_add_column_if_missing( $events_table, 'mail_smtp_secure', 'VARCHAR(20) NULL', 'mail_smtp_port' );
 	cer_add_column_if_missing( $events_table, 'mail_from_name', 'VARCHAR(255) NULL', 'mail_smtp_secure' );
 	cer_add_column_if_missing( $events_table, 'mail_notification_email', 'VARCHAR(255) NULL', 'mail_from_name' );
+	cer_add_column_if_missing( $registrations_table, 'reserved_until', 'DATETIME NULL', 'status' );
+	cer_add_column_if_missing( $registrations_table, 'release_notified_at', 'DATETIME NULL', 'reserved_until' );
 	cer_add_column_if_missing( $registrations_table, 'user_access_key', 'VARCHAR(64) NULL', 'registration_uuid' );
 	cer_add_column_if_missing( $registrations_table, 'user_id', 'BIGINT(20) UNSIGNED NULL', 'event_id' );
 	cer_add_column_if_missing( $registrations_table, 'payment_uuid', 'VARCHAR(64) NULL', 'registration_uuid' );
@@ -289,7 +307,8 @@ function cer_maybe_ensure_event_schema() {
 	cer_add_index_if_missing( $registrations_table, 'full_name_search_hash', 'full_name_search_hash' );
 	cer_add_index_if_missing( $registrations_table, 'email_search_hash', 'email_search_hash' );
 	cer_add_index_if_missing( $registrations_table, 'phone_search_hash', 'phone_search_hash' );
-	update_option( 'cer_schema_version', '7', false );
+	cer_backfill_paid_ticket_inventory();
+	update_option( 'cer_schema_version', '8', false );
 	$wpdb->query( "ALTER TABLE {$registrations_table} MODIFY full_name VARCHAR(512) NOT NULL, MODIFY email VARCHAR(512) NOT NULL, MODIFY phone VARCHAR(256) NOT NULL, MODIFY notes LONGTEXT NULL" );
 	$rows = $wpdb->get_results( "SELECT id, user_access_key, full_name, email, phone, notes FROM {$registrations_table}", ARRAY_A );
 	foreach ( $rows as $row ) {
@@ -318,6 +337,147 @@ function cer_maybe_ensure_event_schema() {
 	cer_add_column_if_missing( $events_table, 'meta_title', 'VARCHAR(255) NULL', 'slug' );
 	cer_add_column_if_missing( $events_table, 'meta_description', 'TEXT NULL', 'meta_title' );
 	cer_add_column_if_missing( $events_table, 'meta_keywords', 'TEXT NULL', 'meta_description' );
+}
+
+function cer_get_registration_hold_seconds(): int {
+	return 1800;
+}
+
+function cer_registration_hold_is_expired( $registration ): bool {
+	if ( ! is_object( $registration ) && ! is_array( $registration ) ) {
+		return false;
+	}
+	$reserved_until = is_object( $registration ) ? ( $registration->reserved_until ?? null ) : ( $registration['reserved_until'] ?? null );
+	if ( empty( $reserved_until ) ) {
+		return false;
+	}
+	return strtotime( (string) $reserved_until ) <= time();
+}
+
+function cer_should_allow_late_payment_confirmation( $registration, $ticket = null ): bool {
+	if ( ! cer_registration_hold_is_expired( $registration ) ) {
+		return false;
+	}
+	if ( is_object( $registration ) && isset( $registration->status ) && 'paid' === $registration->status ) {
+		return false;
+	}
+	if ( is_array( $registration ) && isset( $registration['status'] ) && 'paid' === $registration['status'] ) {
+		return false;
+	}
+	return true;
+}
+
+function cer_send_registration_release_notifications( int $registration_id ): void {
+	global $wpdb;
+	$table = $wpdb->prefix . 'evt_registrations';
+	$registration = $wpdb->get_row( $wpdb->prepare( "SELECT r.*, e.name AS event_name, e.mail_notification_email, e.mail_sender_email, e.mail_from_name FROM {$table} r LEFT JOIN {$wpdb->prefix}evt_events e ON e.id = r.event_id WHERE r.id = %d LIMIT 1", $registration_id ), ARRAY_A );
+	if ( ! $registration || ! empty( $registration['release_notified_at'] ) ) {
+		return;
+	}
+	$event_id = (int) ( $registration['event_id'] ?? 0 );
+	$event_name = ! empty( $registration['event_name'] ) ? (string) $registration['event_name'] : 'ICRHK Event';
+	$recipient = cer_get_event_mail_recipient( $registration_id );
+	if ( '' === $recipient ) {
+		return;
+	}
+	$config = cer_get_mail_config_from_event( $event_id, $event_name );
+	if ( empty( $config ) ) {
+		return;
+	}
+	$registrant_name = function_exists( 'cer_decrypt_pii' ) ? cer_decrypt_pii( $registration['full_name'] ?? '' ) : (string) ( $registration['full_name'] ?? '' );
+	$body = '<p>Registration hold expired for <strong>' . esc_html( $event_name ) . '</strong>.</p><p><strong>Attendee:</strong> ' . esc_html( $registrant_name ) . '<br><strong>Email:</strong> ' . esc_html( (string) ( $registration['email'] ?? '' ) ) . '<br><strong>Ticket:</strong> ' . esc_html( (string) ( $registration['ticket_type'] ?? '' ) ) . '</p><p>The reserved ticket has been released back to inventory due to a timed-out payment hold.</p>';
+	$context = cer_set_current_mail_config( $event_id, $event_name );
+	$headers = array( 'Content-Type: text/html; charset=UTF-8', 'From: ' . $config['from_email'] . ' <' . $config['from_email'] . '>', 'Reply-To: ' . $config['from_email'] );
+	$sent = wp_mail( $recipient, 'Reservation release for ' . $event_name, $body, $headers );
+	cer_clear_current_mail_config();
+	if ( $sent ) {
+		$wpdb->update( $table, array( 'release_notified_at' => current_time( 'mysql' ) ), array( 'id' => $registration_id ), array( '%s' ), array( '%d' ) );
+	}
+}
+
+function cer_backfill_paid_ticket_inventory(): void {
+	global $wpdb;
+	$registrations_table = $wpdb->prefix . 'evt_registrations';
+	$ticket_types_table = $wpdb->prefix . 'evt_ticket_types';
+	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT ticket_type_id, COUNT(*) AS paid_count FROM {$registrations_table} WHERE status = %s AND ticket_type_id IS NOT NULL GROUP BY ticket_type_id", 'paid' ) );
+	if ( empty( $rows ) ) {
+		return;
+	}
+	foreach ( $rows as $row ) {
+		$ticket_id = (int) $row->ticket_type_id;
+		$paid_count = (int) $row->paid_count;
+		$wpdb->query( $wpdb->prepare( "UPDATE {$ticket_types_table} SET quantity_sold = %d, updated_at = %s WHERE id = %d", $paid_count, current_time( 'mysql' ), $ticket_id ) );
+	}
+}
+
+function cer_schedule_registration_expiry_cleanup(): void {
+	if ( ! wp_next_scheduled( 'cer_release_expired_registrations' ) ) {
+		wp_schedule_event( time() + 300, 'every_5_minutes', 'cer_release_expired_registrations' );
+	}
+}
+
+function cer_register_inventory_cleanup_schedule( $schedules ) {
+	$schedules['every_5_minutes'] = array(
+		'interval' => 300,
+		'display'  => 'Every 5 Minutes',
+	);
+	return $schedules;
+}
+
+add_filter( 'cron_schedules', 'cer_register_inventory_cleanup_schedule' );
+
+function cer_maybe_release_expired_registrations_on_load(): void {
+	if ( is_admin() ) {
+		return;
+	}
+	cer_release_expired_registrations( 25 );
+}
+
+function cer_release_expired_registrations( $limit = 100 ): int {
+	global $wpdb;
+	$registrations_table = $wpdb->prefix . 'evt_registrations';
+	$ticket_types_table = $wpdb->prefix . 'evt_ticket_types';
+	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$registrations_table} WHERE reserved_until IS NOT NULL AND reserved_until < NOW() AND status IN ('pending', 'awaiting_payment') ORDER BY reserved_until ASC LIMIT %d", (int) $limit ) );
+	if ( empty( $rows ) ) {
+		return 0;
+	}
+
+	$released = 0;
+	foreach ( $rows as $registration ) {
+		$registration_id = (int) $registration->id;
+		$wpdb->query( 'START TRANSACTION' );
+		try {
+			$current = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$registrations_table} WHERE id = %d FOR UPDATE", $registration_id ) );
+			if ( ! $current || empty( $current->reserved_until ) || $current->reserved_until >= current_time( 'mysql' ) || ! in_array( $current->status, array( 'pending', 'awaiting_payment' ), true ) ) {
+				$wpdb->query( 'COMMIT' );
+				continue;
+			}
+
+			$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, quantity_sold, quantity_available FROM {$ticket_types_table} WHERE id = %d AND event_id = %d FOR UPDATE", $current->ticket_type_id, $current->event_id ) );
+			if ( $ticket ) {
+				$wpdb->query( $wpdb->prepare( "UPDATE {$ticket_types_table} SET quantity_sold = GREATEST( quantity_sold - 1, 0 ), updated_at = %s WHERE id = %d", current_time( 'mysql' ), $ticket->id ) );
+			}
+			$wpdb->update(
+				$registrations_table,
+				array(
+					'status' => 'expired',
+					'reserved_until' => null,
+					'updated_at' => current_time( 'mysql' ),
+				),
+				array( 'id' => $registration_id ),
+				array( '%s', '%s', '%s' ),
+				array( '%d' )
+			);
+			$wpdb->query( 'COMMIT' );
+			$released++;
+			cer_send_registration_release_notifications( $registration_id );
+		} catch ( Exception $e ) {
+			$wpdb->query( 'ROLLBACK' );
+			error_log( 'CER expired registration release failed: ' . $e->getMessage() );
+		}
+	}
+
+	return $released;
 }
 
 function cer_register_rewrite_rules() {
@@ -1158,12 +1318,46 @@ function cer_confirm_registration_paid( int $registration_id ): array {
 		if ( ! empty( $event->max_attendees ) && $paid_registrations >= (int) $event->max_attendees ) {
 			throw new Exception( 'This event has reached its attendance capacity.' );
 		}
+
+		$reservation_active = ! empty( $registration->reserved_until ) && strtotime( $registration->reserved_until ) > time();
+		if ( $reservation_active ) {
+			$registration_updated = $wpdb->update(
+				$registrations_table,
+				array( 'status' => 'paid', 'reserved_until' => null, 'updated_at' => current_time( 'mysql' ) ),
+				array( 'id' => $registration->id ),
+				array( '%s', '%s', '%s' ),
+				array( '%d' )
+			);
+			if ( false === $registration_updated ) {
+				throw new Exception( 'Could not confirm the registration.' );
+			}
+			$wpdb->query( 'COMMIT' );
+			delete_transient( 'cer_dashboard_metrics' );
+			return array( 'ok' => true, 'already_paid' => false );
+		}
+
+		if ( cer_should_allow_late_payment_confirmation( $registration, $ticket ) ) {
+			$registration_updated = $wpdb->update( $registrations_table, array( 'status' => 'paid', 'reserved_until' => null, 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $registration->id ), array( '%s', '%s', '%s' ), array( '%d' ) );
+			if ( false === $registration_updated ) {
+				throw new Exception( 'Could not confirm the registration.' );
+			}
+			$wpdb->query( 'COMMIT' );
+			delete_transient( 'cer_dashboard_metrics' );
+			return array( 'ok' => true, 'already_paid' => false, 'late_payment' => true );
+		}
+
 		if ( null !== $ticket->quantity_available && (int) $ticket->quantity_sold >= (int) $ticket->quantity_available ) {
-			throw new Exception( 'This ticket type is sold out.' );
+			$registration_updated = $wpdb->update( $registrations_table, array( 'status' => 'paid', 'reserved_until' => null, 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $registration->id ), array( '%s', '%s', '%s' ), array( '%d' ) );
+			if ( false === $registration_updated ) {
+				throw new Exception( 'Could not confirm the registration.' );
+			}
+			$wpdb->query( 'COMMIT' );
+			delete_transient( 'cer_dashboard_metrics' );
+			return array( 'ok' => true, 'already_paid' => false, 'oversold' => true );
 		}
 
 		$ticket_updated = $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_types_table} SET quantity_sold = quantity_sold + 1, updated_at = %s WHERE id = %d", current_time( 'mysql' ), $ticket->id ) );
-		$registration_updated = $wpdb->update( $registrations_table, array( 'status' => 'paid', 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $registration->id ), array( '%s', '%s' ), array( '%d' ) );
+		$registration_updated = $wpdb->update( $registrations_table, array( 'status' => 'paid', 'reserved_until' => null, 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $registration->id ), array( '%s', '%s', '%s' ), array( '%d' ) );
 		if ( false === $ticket_updated || false === $registration_updated ) {
 			throw new Exception( 'Could not confirm the registration.' );
 		}
@@ -1262,24 +1456,56 @@ function cer_process_registration_submission( $payload = array() ) {
 	$registration_uuid = wp_generate_uuid4();
 	$payment_uuid = wp_generate_uuid4();
 	$registrations_table = $wpdb->prefix . 'evt_registrations';
-	$inserted = $wpdb->insert(
-		$registrations_table,
-		cer_prepare_registration_row( array(
-			'registration_uuid' => $registration_uuid,
-			'payment_uuid' => $payment_uuid,
-			'event_id' => $event_id ? $event_id : null,
-			'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
-			'full_name' => $full_name,
-			'email' => $email,
-			'phone' => $phone,
-			'ticket_type' => $ticket_type,
-			'payment_method' => $payment_method,
-			'amount' => $amount,
-			'notes' => $notes,
-			'status' => 'awaiting_payment',
-		) ),
-		array( '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s' )
-	);
+
+	$wpdb->query( 'START TRANSACTION' );
+	try {
+		$locked_ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d FOR UPDATE", $ticket_type_id, $event_id ) );
+		if ( ! $locked_ticket ) {
+			throw new Exception( 'The selected ticket is no longer available.' );
+		}
+		if ( null !== $locked_ticket->quantity_available && (int) $locked_ticket->quantity_sold >= (int) $locked_ticket->quantity_available ) {
+			throw new Exception( 'This ticket type is sold out.' );
+		}
+
+		$reserved_until = gmdate( 'Y-m-d H:i:s', time() + cer_get_registration_hold_seconds() );
+		$inserted = $wpdb->insert(
+			$registrations_table,
+			cer_prepare_registration_row( array(
+				'registration_uuid' => $registration_uuid,
+				'payment_uuid' => $payment_uuid,
+				'event_id' => $event_id ? $event_id : null,
+				'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
+				'full_name' => $full_name,
+				'email' => $email,
+				'phone' => $phone,
+				'ticket_type' => $ticket_type,
+				'payment_method' => $payment_method,
+				'amount' => $amount,
+				'notes' => $notes,
+				'status' => 'pending',
+				'reserved_until' => $reserved_until,
+			) ),
+			array( '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s' )
+		);
+		if ( ! $inserted ) {
+			throw new Exception( 'The registration could not be saved.' );
+		}
+
+		$wpdb->update(
+			$wpdb->prefix . 'evt_ticket_types',
+			array(
+				'quantity_sold' => (int) $locked_ticket->quantity_sold + 1,
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => (int) $locked_ticket->id ),
+			array( '%d', '%s' ),
+			array( '%d' )
+		);
+		$wpdb->query( 'COMMIT' );
+	} catch ( Exception $e ) {
+		$wpdb->query( 'ROLLBACK' );
+		return array( 'success' => false, 'message' => $e->getMessage() );
+	}
 
 	if ( $wpdb->last_error ) {
 		error_log( 'CER registration insert failed: ' . $wpdb->last_error );

@@ -44,7 +44,8 @@ if ( $month_filter ) {
 $where_sql = $where ? ' WHERE ' . implode( ' AND ', $where ) : '';
 
 $select_sql = "SELECT e.*, COALESCE(reg.total_registrations, 0) AS total_registrations,
-	COALESCE(reg.tickets_sold, 0) AS tickets_sold, COALESCE(reg.revenue, 0) AS revenue
+	COALESCE(reg.tickets_sold, 0) AS tickets_sold, COALESCE(reg.revenue, 0) AS revenue,
+	COALESCE(ticket_inventory.tickets_available, 0) AS tickets_available
 	FROM {$events_table} e
 	LEFT JOIN (
 		SELECT event_id,
@@ -53,7 +54,13 @@ $select_sql = "SELECT e.*, COALESCE(reg.total_registrations, 0) AS total_registr
 			SUM(CASE WHEN status IN ('paid','confirmed') THEN amount ELSE 0 END) AS revenue
 		FROM {$registrations_table}
 		GROUP BY event_id
-	) reg ON reg.event_id = e.id";
+	) reg ON reg.event_id = e.id
+	LEFT JOIN (
+		SELECT event_id,
+			SUM(CASE WHEN quantity_available IS NULL THEN 0 ELSE GREATEST(quantity_available - quantity_sold, 0) END) AS tickets_available
+		FROM {$wpdb->prefix}evt_ticket_types
+		GROUP BY event_id
+	) ticket_inventory ON ticket_inventory.event_id = e.id";
 
 $query = $select_sql . $where_sql . ' ORDER BY e.event_date DESC LIMIT %d OFFSET %d';
 $prepared_query = $wpdb->prepare( $query, array_merge( $bindings, array( $per_page, $offset ) ) );
@@ -131,6 +138,7 @@ if ( ! empty( $event_ids ) && ! empty( $bulk_action ) && check_admin_referer( 'c
 						<th><?php esc_html_e( 'Date', 'custom-event-registration' ); ?></th>
 						<th><?php esc_html_e( 'Venue', 'custom-event-registration' ); ?></th>
 						<th><?php esc_html_e( 'Tickets Sold', 'custom-event-registration' ); ?></th>
+						<th><?php esc_html_e( 'Available', 'custom-event-registration' ); ?></th>
 						<th><?php esc_html_e( 'Revenue', 'custom-event-registration' ); ?></th>
 						<th><?php esc_html_e( 'Registrations', 'custom-event-registration' ); ?></th>
 						<th><?php esc_html_e( 'Status', 'custom-event-registration' ); ?></th>
@@ -149,6 +157,7 @@ if ( ! empty( $event_ids ) && ! empty( $bulk_action ) && check_admin_referer( 'c
 								<td><?php echo esc_html( date_i18n( 'M j, Y', strtotime( $event->event_date ) ) ); ?></td>
 								<td><?php echo esc_html( $event->venue ?: '—' ); ?></td>
 								<td><?php echo esc_html( number_format_i18n( (int) $event->tickets_sold ) ); ?></td>
+								<td><?php echo esc_html( number_format_i18n( (int) $event->tickets_available ) ); ?></td>
 								<td><?php echo esc_html( 'KES ' . number_format_i18n( (float) $event->revenue, 2 ) ); ?></td>
 								<td><?php echo esc_html( number_format_i18n( (int) $event->total_registrations ) ); ?></td>
 								<td><span class="cer-status-badge cer-status-<?php echo esc_attr( $event->status ); ?>"><?php echo esc_html( ucfirst( $event->status ) ); ?></span></td>
