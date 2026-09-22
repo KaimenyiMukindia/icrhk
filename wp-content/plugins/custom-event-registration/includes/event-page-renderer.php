@@ -313,7 +313,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 							<?php endif; ?>
 
 							<?php if ( $show_speakers && ! empty( $event_speakers ) ) : ?>
-								<section class="cer-kamgc-speakers">
+								<section class="cer-kamgc-speakers" id="speakers">
 									<div class="cer-kamgc-card cer-kamgc-speakers-card">
 										<span class="cer-kamgc-blobs" aria-hidden="true"><i></i><i></i><i></i></span>
 										<div class="cer-kamgc-section-title">

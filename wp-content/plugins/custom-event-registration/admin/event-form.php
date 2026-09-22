@@ -828,6 +828,48 @@ if ( empty( $faq_rows ) ) {
 			$input.attr('type', isPassword ? 'text' : 'password');
 			$button.find('.dashicons').toggleClass('dashicons-visibility', ! isPassword).toggleClass('dashicons-hidden', isPassword);
 		});
+
+		$('.cer-section-link-btn').on('click', function(){
+			var $button = $(this);
+			var sectionId = $button.data('sectionId');
+			var slug = $('#event-slug').val().trim();
+			var baseUrl = '<?php echo esc_js( home_url( '/' ) ); ?>';
+			var routeBase = '<?php echo esc_js( cer_get_event_route_base() ); ?>';
+			var url = baseUrl.replace(/\/$/, '') + '/' + routeBase + '/' + slug + '/#' + sectionId;
+
+			if ( ! slug ) {
+				alert('<?php echo esc_js( __( 'Set a slug before copying the section link.', 'custom-event-registration' ) ); ?>');
+				return;
+			}
+
+			var fallbackCopy = function(text){
+				var $helper = $('<textarea>', {
+					readonly: 'readonly',
+					style: 'position:fixed;left:-9999px;top:-9999px'
+				}).val(text).appendTo('body');
+				$helper[0].focus();
+				$helper[0].select();
+				try {
+					document.execCommand('copy');
+				} catch (err) {
+					console.warn('CER section link copy failed', err);
+				}
+				$helper.remove();
+			};
+
+			if ( navigator.clipboard && window.isSecureContext ) {
+				navigator.clipboard.writeText(url).then(function(){
+					var originalText = $button.text();
+					$button.text('<?php echo esc_js( __( 'Copied!', 'custom-event-registration' ) ); ?>');
+					setTimeout(function(){ $button.text(originalText); }, 1200);
+				}).catch(function(){ fallbackCopy(url); });
+			} else {
+				fallbackCopy(url);
+				var originalText = $button.text();
+				$button.text('<?php echo esc_js( __( 'Copied!', 'custom-event-registration' ) ); ?>');
+				setTimeout(function(){ $button.text(originalText); }, 1200);
+			}
+		});
 	});
 	</script>
 
@@ -1097,6 +1139,7 @@ if ( empty( $faq_rows ) ) {
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Speakers', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
+					<button type="button" class="button button-small cer-section-link-btn" data-section-id="speakers"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
 					<label class="cer-toggle cer-toggle-compact" for="show-speakers"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-speakers" type="checkbox" name="show_speakers" value="1" <?php checked( (int) $event_data['show_speakers'], 1 ); ?> /></label>
 				</div>
 			</div>
@@ -1149,6 +1192,7 @@ if ( empty( $faq_rows ) ) {
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Sponsorship Packages', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
+					<button type="button" class="button button-small cer-section-link-btn" data-section-id="registration"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
 					<label class="cer-toggle cer-toggle-compact" for="show-sponsors"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-sponsors" type="checkbox" name="show_sponsors" value="1" <?php checked( (int) $event_data['show_sponsors'], 1 ); ?> /></label>
 				</div>
 			</div>
@@ -1195,6 +1239,7 @@ if ( empty( $faq_rows ) ) {
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Thematic Pillars', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
+					<button type="button" class="button button-small cer-section-link-btn" data-section-id="pillars"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
 					<label class="cer-toggle cer-toggle-compact" for="show-pillars"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-pillars" type="checkbox" name="show_pillars" value="1" <?php checked( (int) $event_data['show_pillars'], 1 ); ?> /></label>
 				</div>
 			</div>
@@ -1237,6 +1282,7 @@ if ( empty( $faq_rows ) ) {
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Objectives', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
+					<button type="button" class="button button-small cer-section-link-btn" data-section-id="objectives"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
 					<label class="cer-toggle cer-toggle-compact" for="show-objectives"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-objectives" type="checkbox" name="show_objectives" value="1" <?php checked( (int) $event_data['show_objectives'], 1 ); ?> /></label>
 				</div>
 			</div>
@@ -1279,6 +1325,7 @@ if ( empty( $faq_rows ) ) {
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Summit Structure', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
+					<button type="button" class="button button-small cer-section-link-btn" data-section-id="summit-structure"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
 					<label class="cer-toggle cer-toggle-compact" for="show-summit-structure"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-summit-structure" type="checkbox" name="show_summit_structure" value="1" <?php checked( (int) $event_data['show_summit_structure'], 1 ); ?> /></label>
 				</div>
 			</div>
@@ -1321,6 +1368,7 @@ if ( empty( $faq_rows ) ) {
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Partners', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
+					<button type="button" class="button button-small cer-section-link-btn" data-section-id="partners"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
 					<label class="cer-toggle cer-toggle-compact" for="show-partners"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-partners" type="checkbox" name="show_partners" value="1" <?php checked( (int) $event_data['show_partners'], 1 ); ?> /></label>
 				</div>
 			</div>
@@ -1383,6 +1431,7 @@ if ( empty( $faq_rows ) ) {
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'FAQ', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
+					<button type="button" class="button button-small cer-section-link-btn" data-section-id="faq"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
 					<label class="cer-toggle cer-toggle-compact" for="show-faq"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-faq" type="checkbox" name="show_faq" value="1" <?php checked( (int) $event_data['show_faq'], 1 ); ?> /></label>
 				</div>
 			</div>
