@@ -1,4 +1,9 @@
 ---
 deployment:
   tasks:
+    - export DEPLOYPATH=/home/lrnzwljz/icrhk.nyimuki.com/
+    - /bin/mkdir -p $DEPLOYPATH/laravel-engine/routes $DEPLOYPATH/laravel-engine/bootstrap $DEPLOYPATH/laravel-engine/vendor
+    - /bin/cp -f laravel-engine/routes/api.php $DEPLOYPATH/laravel-engine/routes/api.php
+    - /bin/cp -f laravel-engine/bootstrap/app.php $DEPLOYPATH/laravel-engine/bootstrap/app.php
+    - /bin/cp -f laravel-engine/vendor/autoload.php $DEPLOYPATH/laravel-engine/vendor/autoload.php
     - bash deploy-cpanel.sh
