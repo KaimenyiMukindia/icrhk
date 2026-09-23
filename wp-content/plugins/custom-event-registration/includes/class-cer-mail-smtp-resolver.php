@@ -14,17 +14,26 @@ class CerMailSmtpResolver {
 		if ( '' === $site_name ) {
 			$site_name = 'ICRHK Events';
 		}
+		$provider = self::known_provider_map()[ $domain ] ?? array(
+			'host' => 'mail.' . $domain,
+			'port' => 587,
+			'secure' => 'tls',
+		);
 
-		return array(
+		return array_merge(
+			$provider,
+			array(
 			'from_email' => $email,
 			'from_name' => $site_name,
-		); 
+			)
+		);
 	}
 
 	public static function known_provider_map(): array {
 		return array(
 			'gmail.com' => array( 'host' => 'smtp.gmail.com', 'port' => 587, 'secure' => 'tls' ),
 			'googlemail.com' => array( 'host' => 'smtp.gmail.com', 'port' => 587, 'secure' => 'tls' ),
+			'workspace.example.com' => array( 'host' => 'smtp.gmail.com', 'port' => 587, 'secure' => 'tls' ),
 			'outlook.com' => array( 'host' => 'smtp.office365.com', 'port' => 587, 'secure' => 'tls' ),
 			'live.com' => array( 'host' => 'smtp.office365.com', 'port' => 587, 'secure' => 'tls' ),
 			'microsoft.com' => array( 'host' => 'smtp.office365.com', 'port' => 587, 'secure' => 'tls' ),

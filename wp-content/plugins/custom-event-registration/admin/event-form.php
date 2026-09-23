@@ -334,6 +334,7 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 		}
 
 		$mail_sender_email = sanitize_email( wp_unslash( $_POST['mail_sender_email'] ?? '' ) );
+		$mail_resolver = CerMailSmtpResolver::resolve( $mail_sender_email, trim( (string) get_option( 'blogname', 'ICRHK Events' ) ) );
 		$mail_from_name = trim( (string) get_option( 'blogname', 'ICRHK Events' ) );
 		$event_data = array(
 			'name' => $default_event['title'],
@@ -390,9 +391,9 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 			'location_address' => $default_event['location_address'],
 			'mail_sender_email' => $mail_sender_email,
 			'mail_password_encrypted' => $default_event['mail_password_encrypted'] ?? '',
-			'mail_smtp_host' => $default_event['mail_smtp_host'] ?? '',
-			'mail_smtp_port' => $default_event['mail_smtp_port'] ?? '',
-			'mail_smtp_secure' => $default_event['mail_smtp_secure'] ?? '',
+			'mail_smtp_host' => '' !== trim( (string) ( $default_event['mail_smtp_host'] ?? '' ) ) ? $default_event['mail_smtp_host'] : $mail_resolver['host'],
+			'mail_smtp_port' => '' !== trim( (string) ( $default_event['mail_smtp_port'] ?? '' ) ) ? $default_event['mail_smtp_port'] : $mail_resolver['port'],
+			'mail_smtp_secure' => '' !== trim( (string) ( $default_event['mail_smtp_secure'] ?? '' ) ) ? $default_event['mail_smtp_secure'] : $mail_resolver['secure'],
 			'mail_from_name' => ! empty( $mail_resolver['from_name'] ) ? $mail_resolver['from_name'] : ( $default_event['mail_from_name'] ?? '' ),
 			'mail_notification_email' => $mail_sender_email,
 			'updated_at' => current_time( 'mysql' ),
