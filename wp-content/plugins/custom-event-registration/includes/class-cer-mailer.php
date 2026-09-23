@@ -31,7 +31,12 @@ function cer_get_mail_config_from_event( ?int $event_id = null, string $default_
 						'from_name' => $from_name,
 					);
 				}
+				error_log( 'CER SMTP config unavailable: event password decryption failed for event ' . $event_id );
+			} else {
+				error_log( 'CER SMTP config unavailable: sender email or encrypted password missing for event ' . $event_id );
 			}
+		} else {
+			error_log( 'CER SMTP config unavailable: event not found for event ' . $event_id );
 		}
 	}
 
@@ -64,9 +69,11 @@ function cer_configure_smtp( $phpmailer ): void {
 			'from_email' => defined( 'CER_SMTP_FROM' ) ? CER_SMTP_FROM : CER_SMTP_USERNAME,
 			'from_name' => defined( 'CER_SMTP_FROM_NAME' ) ? CER_SMTP_FROM_NAME : 'ICRHK Events',
 		);
+		error_log( 'CER SMTP config source: global constants' );
 	}
 
 	if ( empty( $config['username'] ) || empty( $config['host'] ) ) {
+		error_log( 'CER SMTP not enabled: missing username or host' );
 		return;
 	}
 
@@ -78,9 +85,7 @@ function cer_configure_smtp( $phpmailer ): void {
 	$phpmailer->Username = $config['username'];
 	$phpmailer->Password = (string) ( $config['password'] ?? '' );
 	$phpmailer->setFrom( $config['from_email'], $config['from_name'] );
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		error_log( 'CER SMTP prepared username ' . $phpmailer->Username . ' password length ' . strlen( $phpmailer->Password ) . ' password base64 ' . base64_encode( $phpmailer->Password ) );
-	}
+	error_log( 'CER SMTP enabled for event ' . (int) ( $config['event_id'] ?? 0 ) . ' using host ' . $phpmailer->Host . ' and port ' . (int) $phpmailer->Port );
 }
 
 function cer_mail_from_address( string $from ): string {
