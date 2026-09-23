@@ -84,13 +84,18 @@ function cer_configure_smtp( $phpmailer ): void {
 	$phpmailer->SMTPAuth = true;
 	$phpmailer->Username = $config['username'];
 	$phpmailer->Password = (string) ( $config['password'] ?? '' );
-	$phpmailer->SMTPOptions = array(
+
+	$smtp_options = array(
 		'ssl' => array(
-			'verify_peer' => true,
-			'verify_peer_name' => true,
-			'allow_self_signed' => false,
+			'verify_peer' => defined( 'CER_SMTP_VERIFY_PEER' ) ? (bool) CER_SMTP_VERIFY_PEER : true,
+			'verify_peer_name' => defined( 'CER_SMTP_VERIFY_PEER_NAME' ) ? (bool) CER_SMTP_VERIFY_PEER_NAME : true,
+			'allow_self_signed' => defined( 'CER_SMTP_ALLOW_SELF_SIGNED' ) ? (bool) CER_SMTP_ALLOW_SELF_SIGNED : false,
 		),
 	);
+	if ( defined( 'CER_SMTP_SSL_OPTIONS' ) && is_array( CER_SMTP_SSL_OPTIONS ) ) {
+		$smtp_options = array_replace_recursive( $smtp_options, CER_SMTP_SSL_OPTIONS );
+	}
+	$phpmailer->SMTPOptions = $smtp_options;
 	$phpmailer->setFrom( $config['from_email'], $config['from_name'] );
 	error_log( 'CER SMTP enabled for event ' . (int) ( $config['event_id'] ?? 0 ) . ' using host ' . $phpmailer->Host . ' and port ' . (int) $phpmailer->Port );
 }
