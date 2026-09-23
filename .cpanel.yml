@@ -6,6 +6,6 @@ deployment:
     - /bin/mkdir -p laravel-engine/bootstrap/cache
     - /bin/mkdir -p laravel-engine/storage/framework/cache laravel-engine/storage/framework/sessions laravel-engine/storage/framework/views laravel-engine/storage/logs
     - /bin/chmod -R 775 laravel-engine/storage laravel-engine/bootstrap/cache
-    - if [ -f laravel-engine/.env ]; then cd laravel-engine && php artisan migrate --force --no-interaction; fi
+    - if [ -s laravel-engine/.env ] && grep -q '^APP_KEY=[^[:space:]]' laravel-engine/.env && grep -q '^DB_DATABASE=[^[:space:]]' laravel-engine/.env && grep -q '^DB_USERNAME=[^[:space:]]' laravel-engine/.env && grep -q '^WP_DB_DATABASE=[^[:space:]]' laravel-engine/.env; then cd laravel-engine && php artisan migrate --force --no-interaction; fi
     - cd laravel-engine && php artisan storage:link || true
     - cd laravel-engine && php artisan config:clear
