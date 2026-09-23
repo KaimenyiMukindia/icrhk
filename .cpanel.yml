@@ -1,4 +1,18 @@
 ---
 deployment:
   tasks:
-    - /bin/bash deploy-cpanel.sh
+    - export DEPLOYPATH=/home/lrnzwljz/icrhk.nyimuki.com/
+    - /bin/mkdir -p $DEPLOYPATH/laravel-engine
+    - /bin/mkdir -p $DEPLOYPATH/wp-content/plugins/custom-event-registration
+    - /bin/mkdir -p $DEPLOYPATH/wp-content/themes/goodsoul
+    - /bin/cp -Rf laravel-engine/. $DEPLOYPATH/laravel-engine/
+    - /bin/cp -Rf wp-content/plugins/custom-event-registration/. $DEPLOYPATH/wp-content/plugins/custom-event-registration/
+    - /bin/cp -Rf wp-content/themes/goodsoul/. $DEPLOYPATH/wp-content/themes/goodsoul/
+    - /bin/mkdir -p $DEPLOYPATH/laravel-engine/bootstrap/cache
+    - /bin/mkdir -p $DEPLOYPATH/laravel-engine/storage/framework/cache
+    - /bin/mkdir -p $DEPLOYPATH/laravel-engine/storage/framework/sessions
+    - /bin/mkdir -p $DEPLOYPATH/laravel-engine/storage/framework/views
+    - /bin/mkdir -p $DEPLOYPATH/laravel-engine/storage/logs
+    - /bin/chmod -R 775 $DEPLOYPATH/laravel-engine/storage $DEPLOYPATH/laravel-engine/bootstrap/cache
+    - /bin/sh -c 'if [ -f "$DEPLOYPATH/laravel-engine/.env" ]; then cd "$DEPLOYPATH/laravel-engine" || exit 1; php artisan migrate --force --no-interaction || exit 1; php artisan storage:link || true; fi'
+    - /bin/sh -c 'if [ -f "$DEPLOYPATH/laravel-engine/.env" ]; then cd "$DEPLOYPATH/laravel-engine" && php artisan config:clear; fi'
