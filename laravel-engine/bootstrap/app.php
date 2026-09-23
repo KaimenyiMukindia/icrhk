@@ -1,5 +1,7 @@
 <?php
 
+// Deployment marker: this bootstrap file is part of the Laravel production payload.
+
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;

@@ -1,5 +1,7 @@
 <?php declare(strict_types=1);
 
+// Deployment marker: this route file is part of the Laravel production payload.
+
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
