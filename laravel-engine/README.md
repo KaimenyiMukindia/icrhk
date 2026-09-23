@@ -40,7 +40,7 @@ Do not add `.env`, `wp-config.php`, logs, uploads, cache, `node_modules/`, or da
 
 ## Configure the server
 
-After the first pull, create `laravel-engine/.env` from `.env.example` and edit every deployment value. Set `APP_KEY`, `APP_URL`, the Laravel-owned `DB_*` values, the WordPress `WP_DB_*` values, `CER_ENCRYPTION_KEY`, `CER_TICKET_CALLBACK_SECRET`, `WORDPRESS_URL`, and the Paystack keys. Use `APP_DEBUG=false` in production. Never commit `.env`.
+After the first pull, create `laravel-engine/.env` from `.env.example` and edit every deployment value. Set `APP_KEY`, `APP_URL`, the Laravel-owned `DB_*` values, the WordPress `WP_DB_*` values, `WP_DB_PREFIX` exactly as `$table_prefix` in the live `wp-config.php` (for this site it is `wp9b_`), `CER_ENCRYPTION_KEY`, `CER_TICKET_CALLBACK_SECRET`, `WORDPRESS_URL`, and the Paystack keys. Use `APP_DEBUG=false` in production. Never commit `.env`.
 
 The deployment hook creates the writable directories automatically. To repair an older installation:
 
@@ -79,7 +79,7 @@ The cPanel deployment uses the tracked Laravel release, including `vendor/` and 
 
 ## Paystack payments
 
-This application uses Paystack for card and M-Pesa payments. Set `PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY`, `PAYSTACK_ENV`, and `PAYSTACK_CURRENCY` in `.env`. Keep `PAYSTACK_ENV=live` for production. Also set `WORDPRESS_URL`, `CER_ENCRYPTION_KEY`, and `CER_TICKET_CALLBACK_SECRET`; these are required for payment fulfillment and ticket delivery.
+This application uses Paystack for card and M-Pesa payments. Set `PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY`, `PAYSTACK_ENV`, and `PAYSTACK_CURRENCY` in `.env`. Keep `PAYSTACK_ENV=live` for production. Also set `WORDPRESS_URL`, `CER_ENCRYPTION_KEY`, and `CER_TICKET_CALLBACK_SECRET`; these are required for payment fulfillment and ticket delivery. Add matching `CER_ENCRYPTION_KEY` and `CER_TICKET_CALLBACK_SECRET` constants to the live `wp-config.php`; the plugin and Laravel must share both values.
 
 Configure this HTTPS callback in Paystack:
 
