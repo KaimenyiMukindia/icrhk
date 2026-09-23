@@ -4,7 +4,7 @@ This directory is the Laravel payment and registration service used by the ICRHK
 
 ## Deployment shape
 
-WordPress remains the existing public site. The Laravel application is deployed beside it at `laravel-engine/` and is served through `laravel-engine/public/`. The root `.cpanel.yml` assumes cPanel's deployment path is already the existing website document root; it does not copy or replace WordPress core. Laravel reads the WordPress `wp_evt_*` tables through its `wordpress` database connection.
+WordPress remains the existing public site. cPanel checks out this repository under its `repositories/` directory, then `deploy-cpanel.sh` copies the tracked Laravel application beside WordPress at `laravel-engine/` and updates only the custom plugin and theme. WordPress core is never copied or replaced. Laravel is served through `laravel-engine/public/` and reads the WordPress `wp_evt_*` tables through its `wordpress` database connection.
 
 ## Requirements
 
@@ -33,7 +33,7 @@ Do not add `.env`, `wp-config.php`, logs, uploads, cache, `node_modules/`, or da
 ## cPanel setup
 
 1. In **Git Version Control**, clone this repository.
-2. Set the deployment path once in cPanel to the website document root. That directory must contain the checked-out repository root, including `laravel-engine/`; do not edit `.cpanel.yml` per account.
+2. Set the repository's cPanel deployment path to the existing website document root's parent repository layout used by this account: the checkout must be at `repositories/icrhk` and the live document root must be its sibling `icrhk.nyimuki.com`. Do not point the deployment path directly at WordPress core or edit the YAML.
 3. Select PHP 8.2 or 8.3 in **MultiPHP Manager** and enable the extensions listed above. The cPanel PHP CLI must be available as `php` on the deployment hook's PATH.
 4. Confirm Apache `mod_rewrite` is enabled. The Laravel front controller is `laravel-engine/public/index.php`.
 5. Confirm the cPanel database user can read and update the WordPress event tables.
@@ -52,7 +52,7 @@ chmod -R 775 bootstrap/cache storage
 
 ## Automated deployment tasks
 
-The root `.cpanel.yml` uses only paths relative to the configured deployment directory. On every deployment it creates `storage/framework/{cache,sessions,views}`, `storage/logs`, and `bootstrap/cache`, applies `775` permissions, runs `php artisan migrate --force` when `laravel-engine/.env` already exists, creates the storage link, and clears the configuration cache. It never copies or overwrites `.env`.
+The root `.cpanel.yml` runs `deploy-cpanel.sh`. The script uses the relative path from `repositories/icrhk` to the sibling `icrhk.nyimuki.com` document root, copies Laravel and the tracked custom WordPress integration, creates `storage/framework/{cache,sessions,views}`, `storage/logs`, and `bootstrap/cache`, and applies `775` permissions. It never copies or overwrites `.env` or WordPress core. Once a configured `.env` exists, it runs migrations, creates the storage link, and clears configuration.
 
 The migration command is intentional: Laravel owns `users`, `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, and `payment_logs`. The WordPress plugin owns all `wp_evt_*` tables and continues to manage those separately. On a brand-new Laravel installation where `.env` did not exist during the first pull, edit `.env` and run the migration command once from the `laravel-engine` directory; subsequent pulls run it automatically.
 
