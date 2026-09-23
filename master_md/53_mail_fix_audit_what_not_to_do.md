@@ -202,7 +202,9 @@ The following constraints are the working rules for this project:
 ---
 
 ## Final audit conclusion
-The correct working fix is not a broad rewrite; it is the narrow runtime adjustment in the actual PHPMailer hook, with safe defaults and an explicit override path already aligned with the existing admin SMTP settings.
+The preferred delivery path is now a narrow transactional API adapter at WordPress's `pre_wp_mail` boundary. It sends the existing HTML and PDF attachment through Resend when `CER_RESEND_API_KEY` and `CER_RESEND_FROM` are configured, and keeps the repaired SMTP path as fallback when they are not. The payment, PDF, encryption, and idempotency paths are unchanged.
+
+The adapter was exercised locally with a stubbed WordPress HTTP client. It produced an accepted Resend payload containing the verified sender, recipient, reply-to address, HTML body, and ticket attachment. This is payload validation only; a live Resend acceptance still requires deployment with a real API key and verified sender domain.
 
 ## Root cause found after this audit was written
 
@@ -225,18 +227,5 @@ The real lesson for this thread is:
 - do not invent a second config surface;
 - do not normalize user secrets destructively;
 - do not claim success until the live email actually leaves the system.
-
-## Transactional provider integration
-
-The WordPress mail path now supports Resend through the existing `wp_mail()` calls. The adapter is registered in `custom-event-registration.php` and implemented in `class-cer-mailer.php` using the `pre_wp_mail` hook. It sends the existing HTML body, Reply-To header, and ticket PDF attachment through `https://api.resend.com/emails`.
-
-Enable it in the deployment's untracked `wp-config.php` custom configuration section:
-
-```php
-define( 'CER_RESEND_API_KEY', 're_...' );
-define( 'CER_RESEND_FROM', 'ICRHK Events <tickets@verified-domain.example>' );
-```
-
-Both values are required. When either is absent, the adapter returns control to the existing SMTP path. The API key must never be committed, and the sender domain must be verified in Resend. A successful provider API response is the condition under which WordPress marks `ticket_sent_at`; provider inbox delivery remains subject to Resend delivery status.
 
 This document exists as the audit record of those failed and rejected attempts so the team can avoid repeating them.

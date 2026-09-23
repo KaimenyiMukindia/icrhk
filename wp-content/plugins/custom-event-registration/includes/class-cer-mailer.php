@@ -54,23 +54,39 @@ function cer_clear_current_mail_config(): void {
 	unset( $GLOBALS['cer_current_mail_config'] );
 }
 
-function cer_get_resend_from_email(): string {
+function cer_get_resend_from(): string {
 	$from = defined( 'CER_RESEND_FROM' ) ? trim( (string) CER_RESEND_FROM ) : '';
 	if ( preg_match( '/<([^>]+)>/', $from, $matches ) ) {
-		$from = $matches[1];
+		$from = trim( $matches[1] );
 	}
 
-	return sanitize_email( $from );
+	return is_email( $from ) ? $from : '';
+}
+
+function cer_get_mail_addresses( $value ): array {
+	$values = is_array( $value ) ? $value : preg_split( '/[,\r\n]+/', (string) $value );
+	$addresses = array();
+	foreach ( $values as $item ) {
+		$item = trim( (string) $item );
+		if ( preg_match( '/<([^>]+)>/', $item, $matches ) ) {
+			$item = trim( $matches[1] );
+		}
+		if ( is_email( $item ) ) {
+			$addresses[] = $item;
+		}
+	}
+
+	return array_values( array_unique( $addresses ) );
 }
 
 function cer_maybe_send_via_resend( $pre, array $atts ) {
 	$api_key = defined( 'CER_RESEND_API_KEY' ) ? trim( (string) CER_RESEND_API_KEY ) : '';
-	$from = defined( 'CER_RESEND_FROM' ) ? trim( (string) CER_RESEND_FROM ) : '';
+	$from = cer_get_resend_from();
 	if ( '' === $api_key || '' === $from ) {
 		return $pre;
 	}
 
-	$to = is_array( $atts['to'] ?? null ) ? array_values( $atts['to'] ) : array_filter( array_map( 'trim', explode( ',', (string) ( $atts['to'] ?? '' ) ) ) );
+	$to = cer_get_mail_addresses( $atts['to'] ?? '' );
 	if ( empty( $to ) ) {
 		return new WP_Error( 'cer_resend_recipient_missing', 'Resend recipient is missing.' );
 	}
@@ -84,9 +100,18 @@ function cer_maybe_send_via_resend( $pre, array $atts ) {
 	$headers = $atts['headers'] ?? array();
 	$headers = is_array( $headers ) ? $headers : preg_split( '/\r?\n/', (string) $headers );
 	foreach ( $headers as $header ) {
-		if ( preg_match( '/^Reply-To:\s*(.+)$/i', (string) $header, $matches ) ) {
-			$payload['reply_to'] = array( trim( $matches[1] ) );
-			break;
+		$header = (string) $header;
+		if ( preg_match( '/^Reply-To:\s*(.+)$/i', $header, $matches ) ) {
+			$reply_to = cer_get_mail_addresses( $matches[1] );
+			if ( ! empty( $reply_to ) ) {
+				$payload['reply_to'] = $reply_to;
+			}
+		}
+		if ( preg_match( '/^(Cc|Bcc):\s*(.+)$/i', $header, $matches ) ) {
+			$addresses = cer_get_mail_addresses( $matches[2] );
+			if ( ! empty( $addresses ) ) {
+				$payload[ strtolower( $matches[1] ) ] = $addresses;
+			}
 		}
 	}
 
@@ -120,9 +145,14 @@ function cer_maybe_send_via_resend( $pre, array $atts ) {
 
 	$status = (int) wp_remote_retrieve_response_code( $response );
 	if ( $status < 200 || $status >= 300 ) {
-		return new WP_Error( 'cer_resend_rejected', 'Resend rejected the message.', array( 'status' => $status, 'body' => wp_remote_retrieve_body( $response ) ) );
+		return new WP_Error(
+			'cer_resend_rejected',
+			'Resend rejected the message.',
+			array( 'status' => $status, 'body' => wp_remote_retrieve_body( $response ) )
+		);
 	}
 
+	error_log( 'CER Resend accepted message for ' . count( $to ) . ' recipient(s).' );
 	return true;
 }
 
@@ -217,24 +247,20 @@ function cer_send_admin_receipt_for_registration( int $registration_id ): bool {
 		return false;
 	}
 	$config = cer_get_mail_config_from_event( $event_id, $registration['event_name'] ?? '' );
-	if ( empty( $config ) ) {
-		if ( ! defined( 'CER_RESEND_API_KEY' ) || ! defined( 'CER_RESEND_FROM' ) ) {
-			return false;
-		}
-		$config = array(
-			'from_email' => cer_get_resend_from_email(),
-			'from_name' => 'ICRHK Events',
-		);
+	if ( empty( $config ) && '' === cer_get_resend_from() ) {
+		return false;
 	}
+	$from_email = ! empty( $config['from_email'] ) ? $config['from_email'] : cer_get_resend_from();
+	$from_name = ! empty( $config['from_name'] ) ? $config['from_name'] : 'ICRHK Events';
 	$registrant_name = function_exists( 'cer_decrypt_pii' ) ? cer_decrypt_pii( $registration['full_name'] ?? '' ) : (string) ( $registration['full_name'] ?? '' );
 	$event_name = ! empty( $registration['event_name'] ) ? (string) $registration['event_name'] : 'ICRHK Event';
 	$body = '<p>New registration received for <strong>' . esc_html( $event_name ) . '</strong>.</p><p><strong>Attendee:</strong> ' . esc_html( $registrant_name ) . '<br><strong>Email:</strong> ' . esc_html( (string) ( $registration['email'] ?? '' ) ) . '<br><strong>Payment:</strong> ' . esc_html( (string) ( $registration['payment_method'] ?? '' ) ) . '</p>';
 	$context = cer_set_current_mail_config( $event_id, $event_name );
-	$headers = array( 'Content-Type: text/html; charset=UTF-8', 'From: ' . $config['from_email'] . ' <' . $config['from_email'] . '>', 'Reply-To: ' . $config['from_email'] );
+	$headers = array( 'Content-Type: text/html; charset=UTF-8', 'From: ' . $from_name . ' <' . $from_email . '>', 'Reply-To: ' . $from_email );
 	$sent = wp_mail( $recipient, 'New registration for ' . $event_name, $body, $headers );
 	cer_clear_current_mail_config();
 	if ( ! $sent ) {
-		error_log( 'CER admin receipt failed for event ' . $event_id . ' sender ' . $config['from_email'] );
+		error_log( 'CER admin receipt failed for event ' . $event_id . ' sender ' . $from_email );
 	}
 	return $sent;
 }

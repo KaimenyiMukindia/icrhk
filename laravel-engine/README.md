@@ -42,6 +42,15 @@ Do not add `.env`, `wp-config.php`, logs, uploads, cache, `node_modules/`, or da
 
 After the first pull, create `laravel-engine/.env` from `.env.example` and edit every deployment value. Set `APP_KEY`, `APP_URL`, the Laravel-owned `DB_*` values, the WordPress `WP_DB_*` values, `CER_ENCRYPTION_KEY`, `CER_TICKET_CALLBACK_SECRET`, `WORDPRESS_URL`, and the Paystack keys. Use `APP_DEBUG=false` in production. Never commit `.env`.
 
+For transactional ticket email, add these constants to the live WordPress `wp-config.php` without committing the API key:
+
+```php
+define( 'CER_RESEND_API_KEY', 're_...' );
+define( 'CER_RESEND_FROM', 'ICRHK Events <tickets@your-verified-domain.example>' );
+```
+
+The sender domain must be verified in Resend. When both constants exist, the plugin sends through Resend's HTTPS API and does not use SMTP. When either constant is absent, the existing event SMTP path remains the fallback.
+
 The deployment hook creates the writable directories automatically. To repair an older installation:
 
 ```bash
