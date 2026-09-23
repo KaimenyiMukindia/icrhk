@@ -6,6 +6,7 @@ use App\Services\Payment\PaystackService;
 use App\Services\WordPress\RegistrationCrypto;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Database\Connection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,6 +14,11 @@ final class PaymentController extends Controller
 {
     public function __construct(private readonly PaystackService $service)
     {
+    }
+
+    private function wordpress(): Connection
+    {
+        return DB::connection('wordpress');
     }
 
     public function initiate(Request $request): JsonResponse
@@ -30,7 +36,7 @@ final class PaymentController extends Controller
             'ticket_type_id' => ['nullable', 'integer'],
         ]);
 
-        $registration = DB::table('wp_evt_registrations')
+        $registration = $this->wordpress()->table('wp_evt_registrations')
             ->where('registration_uuid', $payload['registration_uuid'])
             ->where('payment_uuid', $payload['payment_uuid'])
             ->first(['amount']);
@@ -167,8 +173,8 @@ final class PaymentController extends Controller
             $updates['confirmed_amount'] = (float) $confirmedAmount;
         }
         logger()->info('IPN Processing: Starting transaction', ['payment_uuid' => $paymentUuid, 'reference' => $reference]);
-        $confirmation = DB::transaction(function () use ($paymentUuid, $reference, $confirmedAmount, $updates): array {
-            $registration = DB::table('wp_evt_registrations')
+        $confirmation = $this->wordpress()->transaction(function () use ($paymentUuid, $reference, $confirmedAmount, $updates): array {
+            $registration = $this->wordpress()->table('wp_evt_registrations')
                 ->where(function ($query) use ($paymentUuid, $reference): void {
                     $query->where('payment_uuid', $paymentUuid);
                     if ($reference !== '') {
@@ -195,8 +201,8 @@ final class PaymentController extends Controller
                 return ['state' => 'amount_mismatch'];
             }
 
-            $event = DB::table('wp_evt_events')->where('id', $registration->event_id)->lockForUpdate()->first(['id', 'max_attendees']);
-            $ticket = DB::table('wp_evt_ticket_types')
+            $event = $this->wordpress()->table('wp_evt_events')->where('id', $registration->event_id)->lockForUpdate()->first(['id', 'max_attendees']);
+            $ticket = $this->wordpress()->table('wp_evt_ticket_types')
                 ->where('id', $registration->ticket_type_id)
                 ->where('event_id', $registration->event_id)
                 ->lockForUpdate()
@@ -205,7 +211,7 @@ final class PaymentController extends Controller
                 return ['state' => 'unavailable'];
             }
 
-            $paidCount = DB::table('wp_evt_registrations')
+            $paidCount = $this->wordpress()->table('wp_evt_registrations')
                 ->where('event_id', $event->id)
                 ->where('status', 'paid')
                 ->count();
@@ -216,13 +222,13 @@ final class PaymentController extends Controller
                 return ['state' => 'ticket_sold_out'];
             }
 
-            DB::table('wp_evt_ticket_types')->where('id', $ticket->id)->update([
-                'quantity_sold' => DB::raw('quantity_sold + 1'),
+            $this->wordpress()->table('wp_evt_ticket_types')->where('id', $ticket->id)->update([
+                'quantity_sold' => $this->wordpress()->raw('quantity_sold + 1'),
                 'updated_at' => now(),
             ]);
             $registrationUpdates = $updates;
             $registrationUpdates['gateway_reference'] = $reference ?: $registration->gateway_reference;
-            DB::table('wp_evt_registrations')->where('id', $registration->id)->update($registrationUpdates);
+            $this->wordpress()->table('wp_evt_registrations')->where('id', $registration->id)->update($registrationUpdates);
 
             return ['state' => 'confirmed', 'registration_id' => (int) $registration->id];
         });
@@ -244,7 +250,7 @@ final class PaymentController extends Controller
                         'X-CER-Ticket-Signature' => hash_hmac('sha256', $confirmation['registration_id'] . '|' . $ticketTimestamp, $ticketSecret),
                     ])->post(rtrim($wordpressUrl, '/') . '/', ['cer_process_ticket' => $confirmation['registration_id']]);
 
-                $ticketState = DB::table('wp_evt_registrations')
+                $ticketState = $this->wordpress()->table('wp_evt_registrations')
                     ->where('id', $confirmation['registration_id'])
                     ->first(['ticket_generated_at', 'ticket_sent_at']);
                 if (! $ticketResponse->successful() || ! $ticketState || empty($ticketState->ticket_generated_at) || empty($ticketState->ticket_sent_at)) {
@@ -294,7 +300,7 @@ final class PaymentController extends Controller
             $ticketResponse = null;
         }
 
-        $ticketState = DB::table('wp_evt_registrations')
+        $ticketState = $this->wordpress()->table('wp_evt_registrations')
             ->where('id', $confirmation['registration_id'])
             ->first(['ticket_generated_at', 'ticket_sent_at']);
         if (! $ticketResponse || ! $ticketResponse->successful() || ! $ticketState || empty($ticketState->ticket_generated_at) || empty($ticketState->ticket_sent_at)) {
@@ -335,7 +341,7 @@ final class PaymentController extends Controller
             return response()->json(['status' => 'failed', 'message' => $result['message'] ?? 'Unable to verify payment.'], 422);
         }
 
-        $existingRegistration = DB::table('wp_evt_registrations')
+        $existingRegistration = $this->wordpress()->table('wp_evt_registrations')
             ->where('gateway_reference', $reference)
             ->first(['id', 'status', 'ticket_generated_at', 'ticket_sent_at']);
         $needsReconciliation = ! $existingRegistration
@@ -354,7 +360,7 @@ final class PaymentController extends Controller
             $this->ipn($reconciliationRequest);
         }
 
-        $registration = DB::table('wp_evt_registrations')->where('gateway_reference', $reference)->first(['status']);
+        $registration = $this->wordpress()->table('wp_evt_registrations')->where('gateway_reference', $reference)->first(['status']);
         return response()->json([
             'status' => $result['status'] ?? 'unknown',
             'registration_status' => $registration ? $registration->status : 'awaiting_payment',

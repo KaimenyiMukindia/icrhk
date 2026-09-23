@@ -20,7 +20,10 @@ laravel-engine/storage/
 
 # Dependencies
 **/node_modules/
-laravel-engine/vendor/
+!laravel-engine/vendor/
+!laravel-engine/vendor/**
+!laravel-engine/public/build/
+!laravel-engine/public/build/**
 
 # Database & Media Artifacts
 db-backups/*

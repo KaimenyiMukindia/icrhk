@@ -1,59 +1,133 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ICRHK Laravel engine
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This directory is the Laravel payment and registration service used by the ICRHK WordPress site. Production Composer dependencies and Vite assets are committed, so cPanel does not need Composer, npm, Node, or a build step.
 
-## About Laravel
+## Deployment shape
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+WordPress remains the existing public site. The Laravel application is deployed beside it at `laravel-engine/` and is served through `laravel-engine/public/`. The root `.cpanel.yml` assumes cPanel's deployment path is already the existing website document root; it does not copy or replace WordPress core. Laravel reads the WordPress `wp_evt_*` tables through its `wordpress` database connection.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requirements
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.2 or 8.3. Laravel 12 requires PHP 8.2 or newer; the project deliberately does not fake compatibility with PHP 8.1.
+- PHP extensions: `bcmath`, `ctype`, `curl`, `dom`, `fileinfo`, `filter`, `gd`, `hash`, `mbstring`, `openssl`, `pcre`, `pdo`, `pdo_mysql`, `session`, `tokenizer`, `xml`, and `zip`.
+- Apache with `mod_rewrite` and an existing MySQL/MariaDB WordPress database.
+- cPanel Git Version Control access and a writable Laravel `storage/` and `bootstrap/cache/`.
 
-## Learning Laravel
+## First release from a clean clone
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Run locally on the release machine:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```powershell
+cd laravel-engine
+composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --classmap-authoritative
+npm install
+npm run build
+cd ..
+git add .gitignore .cpanel.yml laravel-engine/composer.json laravel-engine/composer.lock laravel-engine/vendor laravel-engine/public/build laravel-engine/package-lock.json laravel-engine/.env.example laravel-engine/README.md
+git commit -m "Prepare self-contained cPanel deployment"
+git push origin <branch>
+```
 
-## Laravel Sponsors
+Do not add `.env`, `wp-config.php`, logs, uploads, cache, `node_modules/`, or database dumps. The committed `vendor/` and `public/build/` directories are intentional release artifacts.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## cPanel setup
 
-### Premium Partners
+1. In **Git Version Control**, clone this repository.
+2. Set the deployment path once in cPanel to the website document root. That directory must contain the checked-out repository root, including `laravel-engine/`; do not edit `.cpanel.yml` per account.
+3. Select PHP 8.2 or 8.3 in **MultiPHP Manager** and enable the extensions listed above. The cPanel PHP CLI must be available as `php` on the deployment hook's PATH.
+4. Confirm Apache `mod_rewrite` is enabled. The Laravel front controller is `laravel-engine/public/index.php`.
+5. Confirm the cPanel database user can read and update the WordPress event tables.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Configure the server
 
-## Contributing
+After the first pull, create `laravel-engine/.env` from `.env.example` and edit every deployment value. Set `APP_KEY`, `APP_URL`, the Laravel-owned `DB_*` values, the WordPress `WP_DB_*` values, `CER_ENCRYPTION_KEY`, `CER_TICKET_CALLBACK_SECRET`, `WORDPRESS_URL`, and the Paystack keys. Use `APP_DEBUG=false` in production. Never commit `.env`.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The deployment hook creates the writable directories automatically. To repair an older installation:
 
-## Code of Conduct
+```bash
+cd laravel-engine
+mkdir -p bootstrap/cache storage/framework/{cache,sessions,views} storage/logs
+chmod -R 775 bootstrap/cache storage
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Automated deployment tasks
 
-## Security Vulnerabilities
+The root `.cpanel.yml` uses only paths relative to the configured deployment directory. On every deployment it creates `storage/framework/{cache,sessions,views}`, `storage/logs`, and `bootstrap/cache`, applies `775` permissions, runs `php artisan migrate --force` when `laravel-engine/.env` already exists, creates the storage link, and clears the configuration cache. It never copies or overwrites `.env`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+The migration command is intentional: Laravel owns `users`, `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, and `payment_logs`. The WordPress plugin owns all `wp_evt_*` tables and continues to manage those separately. On a brand-new Laravel installation where `.env` did not exist during the first pull, edit `.env` and run the migration command once from the `laravel-engine` directory; subsequent pulls run it automatically.
 
-## License
+If the hosting provider does not allow PHP commands in cPanel deployment hooks, configure the cPanel deployment path normally and run the same commands from a provider-approved post-deploy hook:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+cd laravel-engine
+mkdir -p bootstrap/cache storage/framework/{cache,sessions,views} storage/logs
+chmod -R 775 storage bootstrap/cache
+php artisan migrate --force
+php artisan storage:link || true
+php artisan config:clear
+```
+
+## Every deployment
+
+Push a tested commit, then use cPanel **Deploy HEAD Commit**. If shell access is available, run the pull from the repository checkout directory:
+
+```bash
+git pull --ff-only origin <branch>
+```
+
+The cPanel deployment uses the tracked Laravel release, including `vendor/` and `public/build/`. It does not install packages and does not touch the existing WordPress core. Edit only the server's untracked `.env` when configuration changes.
+
+## Paystack payments
+
+This application uses Paystack for card and M-Pesa payments. Set `PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY`, `PAYSTACK_ENV`, and `PAYSTACK_CURRENCY` in `.env`. Keep `PAYSTACK_ENV=live` for production. Also set `WORDPRESS_URL`, `CER_ENCRYPTION_KEY`, and `CER_TICKET_CALLBACK_SECRET`; these are required for payment fulfillment and ticket delivery.
+
+Configure this HTTPS callback in Paystack:
+
+```text
+https://YOUR-DOMAIN/laravel-engine/public/api/paystack-webhook
+```
+
+The webhook is a POST route in `routes/api.php`, outside the web CSRF middleware. It verifies Paystack's `X-Paystack-Signature` header before updating the WordPress registration and delivering the ticket. Payment fulfillment runs synchronously, so no queue worker or cron job is required.
+
+After deployment, run the health check and an invalid-signature webhook check:
+
+```bash
+curl -i https://YOUR-DOMAIN/laravel-engine/public/up
+curl -i -X POST https://YOUR-DOMAIN/laravel-engine/public/api/paystack-webhook \
+	-H 'Content-Type: application/json' \
+	-d '{"event":"charge.success","data":{}}'
+```
+
+The first request must return `200`; the second must return `400 invalid_signature`, proving the HTTPS route is reachable and signature protection is active. A real end-to-end payment requires a Paystack test/live key, a real registration row, and Paystack's callback delivery; complete one small test transaction after configuring those `.env` values.
+
+## Verification checklist
+
+- `laravel-engine/vendor/autoload.php` exists on the server.
+- `laravel-engine/public/build/manifest.json` exists.
+- `laravel-engine/.env` exists, has a real `APP_KEY`, and has `APP_DEBUG=false`.
+- Open `https://YOUR-DOMAIN/laravel-engine/public/up` and confirm HTTP 200.
+- Open the registration/payment flow and confirm the browser loads compiled CSS and JavaScript.
+- Check `storage/logs/laravel.log` after a test request; it must be writable and contain no missing-class or missing-key errors.
+
+## Troubleshooting
+
+**500 error mentioning `vendor/autoload.php`:** the deployment hook did not deploy the release tree. Confirm that `vendor/` is tracked with `git ls-files laravel-engine/vendor | head`.
+
+**500 error about `bootstrap/cache` or storage:** recreate the directories and permissions above, then retry the request.
+
+**Database connection failure:** verify the cPanel database name includes its account prefix, the user is assigned to the database, and both `DB_*` and `WP_DB_*` values are correct.
+
+**CSS/JavaScript 404:** verify `public/build/manifest.json` is present and that the URL includes the correct `laravel-engine/public` path.
+
+**Paystack callback failure:** use the public HTTPS URL ending in `/laravel-engine/public/api/paystack-webhook`, then verify `PAYSTACK_SECRET_KEY` and the callback secrets match WordPress.
+
+## Rollback
+
+In cPanel Git Version Control, deploy the previous known-good commit. If shell access is available, run this from the repository checkout directory:
+
+```bash
+git log --oneline -5
+git checkout <known-good-commit>
+```
+
+Prefer deploying a new revert commit on the shared branch so the repository and cPanel checkout remain aligned. Keep the existing `.env` and database; rollback changes code only.

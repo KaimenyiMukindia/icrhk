@@ -1,8 +1,11 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/lrnzwljz/icrhk.nyimuki.com/wp-content
-    - export REPOPATH=/home/lrnzwljz/repositories/icrhk
-    - /bin/mkdir -p $DEPLOYPATH/plugins/custom-event-registration $DEPLOYPATH/themes/goodsoul
-    - /bin/cp -Rf $REPOPATH/wp-content/plugins/custom-event-registration/. $DEPLOYPATH/plugins/custom-event-registration/
-    - /bin/cp -Rf $REPOPATH/wp-content/themes/goodsoul/. $DEPLOYPATH/themes/goodsoul/
+    # Configure cPanel Git Version Control's deployment path once to the
+    # website document root containing this repository checkout.
+    - /bin/mkdir -p laravel-engine/bootstrap/cache
+    - /bin/mkdir -p laravel-engine/storage/framework/cache laravel-engine/storage/framework/sessions laravel-engine/storage/framework/views laravel-engine/storage/logs
+    - /bin/chmod -R 775 laravel-engine/storage laravel-engine/bootstrap/cache
+    - if [ -f laravel-engine/.env ]; then cd laravel-engine && php artisan migrate --force --no-interaction; fi
+    - cd laravel-engine && php artisan storage:link || true
+    - cd laravel-engine && php artisan config:clear
