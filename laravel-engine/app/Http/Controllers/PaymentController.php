@@ -23,7 +23,7 @@ final class PaymentController extends Controller
 
     private function wordpressTable(string $table): string
     {
-        return (string) config('database.connections.wordpress.prefix', 'wp_') . ltrim($table, '_');
+        return (string) config('database.connections.wordpress.prefix', 'wp_') . $table;
     }
 
     public function initiate(Request $request): JsonResponse

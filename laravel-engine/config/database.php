@@ -75,7 +75,17 @@ return [
             'unix_socket' => env('WP_DB_SOCKET', ''),
             'charset' => env('WP_DB_CHARSET', 'utf8mb4'),
             'collation' => env('WP_DB_COLLATION', 'utf8mb4_unicode_ci'),
-            'prefix' => env('WP_DB_PREFIX', 'wp_'),
+            'prefix' => (static function (): string {
+                $wpConfig = dirname(__DIR__) . '/../wp-config.php';
+                if (is_file($wpConfig)) {
+                    $contents = file_get_contents($wpConfig);
+                    if (is_string($contents) && preg_match('/\$table_prefix\s*=\s*[\'\"]([^\'\"]+)[\'\"]\s*;/', $contents, $matches)) {
+                        return $matches[1];
+                    }
+                }
+
+                return (string) env('WP_DB_PREFIX', 'wp_');
+            })(),
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
