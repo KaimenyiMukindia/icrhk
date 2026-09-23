@@ -63,6 +63,10 @@ $default_event = array(
 	'location_lat' => '',
 	'location_lng' => '',
 	'location_address' => '',
+	'mail_sender_email' => '',
+	'mail_smtp_host' => '',
+	'mail_smtp_port' => '',
+	'mail_smtp_secure' => '',
 	'uuid' => '',
 );
 
@@ -114,6 +118,9 @@ if ( $event_id ) {
 	$default_event['event_end_date'] = $event->event_end_date;
 	$default_event['venue'] = $event->venue;
 	$default_event['mail_sender_email'] = isset( $event->mail_sender_email ) ? $event->mail_sender_email : '';
+	$default_event['mail_smtp_host'] = isset( $event->mail_smtp_host ) ? $event->mail_smtp_host : '';
+	$default_event['mail_smtp_port'] = isset( $event->mail_smtp_port ) ? $event->mail_smtp_port : '';
+	$default_event['mail_smtp_secure'] = isset( $event->mail_smtp_secure ) ? $event->mail_smtp_secure : '';
 	$default_event['mail_password_placeholder'] = '••••••••';
 	$default_event['status'] = $event->status;
 	$default_event['show_event_information'] = isset( $event->show_event_information ) ? (int) $event->show_event_information : 1;
@@ -328,7 +335,6 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 
 		$mail_sender_email = sanitize_email( wp_unslash( $_POST['mail_sender_email'] ?? '' ) );
 		$mail_from_name = trim( (string) get_option( 'blogname', 'ICRHK Events' ) );
-		$mail_resolver = class_exists( 'CerMailSmtpResolver' ) ? CerMailSmtpResolver::resolve( $mail_sender_email, $mail_from_name ) : array();
 		$event_data = array(
 			'name' => $default_event['title'],
 			'slug' => $default_event['slug'],
@@ -384,9 +390,9 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 			'location_address' => $default_event['location_address'],
 			'mail_sender_email' => $mail_sender_email,
 			'mail_password_encrypted' => $default_event['mail_password_encrypted'] ?? '',
-			'mail_smtp_host' => ! empty( $mail_resolver['host'] ) ? $mail_resolver['host'] : ( $default_event['mail_smtp_host'] ?? '' ),
-			'mail_smtp_port' => ! empty( $mail_resolver['port'] ) ? (string) $mail_resolver['port'] : ( $default_event['mail_smtp_port'] ?? '' ),
-			'mail_smtp_secure' => ! empty( $mail_resolver['secure'] ) ? $mail_resolver['secure'] : ( $default_event['mail_smtp_secure'] ?? 'tls' ),
+			'mail_smtp_host' => $default_event['mail_smtp_host'] ?? '',
+			'mail_smtp_port' => $default_event['mail_smtp_port'] ?? '',
+			'mail_smtp_secure' => $default_event['mail_smtp_secure'] ?? '',
 			'mail_from_name' => ! empty( $mail_resolver['from_name'] ) ? $mail_resolver['from_name'] : ( $default_event['mail_from_name'] ?? '' ),
 			'mail_notification_email' => $mail_sender_email,
 			'updated_at' => current_time( 'mysql' ),

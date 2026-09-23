@@ -15,20 +15,7 @@ class CerMailSmtpResolver {
 			$site_name = 'ICRHK Events';
 		}
 
-		$host = 'mail.' . $domain;
-		$port = 587;
-		$secure = 'tls';
-		$known = self::known_provider_map();
-		if ( isset( $known[ $domain ] ) ) {
-			$host = $known[ $domain ]['host'];
-			$port = $known[ $domain ]['port'];
-			$secure = $known[ $domain ]['secure'];
-		}
-
 		return array(
-			'host' => $host,
-			'port' => (int) $port,
-			'secure' => $secure,
 			'from_email' => $email,
 			'from_name' => $site_name,
 		); 
