@@ -56,6 +56,8 @@ The root `.cpanel.yml` runs `deploy-cpanel.sh`. The script uses the relative pat
 
 The migration command is intentional: Laravel owns `users`, `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, and `payment_logs`. The WordPress plugin owns all `wp_evt_*` tables and continues to manage those separately. On a brand-new Laravel installation where `.env` did not exist during the first pull, edit `.env` and run the migration command once from the `laravel-engine` directory; subsequent pulls run it automatically.
 
+During deployment, missing `CER_ENCRYPTION_KEY` and `CER_TICKET_CALLBACK_SECRET` definitions are generated in the existing `wp-config.php`; existing definitions are never overwritten. After the first deployment, copy those generated values into the matching Laravel `.env` variables before running Laravel migrations. The deployment does not commit or replace `wp-config.php`.
+
 If the hosting provider does not allow PHP commands in cPanel deployment hooks, configure the cPanel deployment path normally and run the same commands from a provider-approved post-deploy hook:
 
 ```bash
