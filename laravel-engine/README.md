@@ -89,7 +89,7 @@ https://YOUR-DOMAIN/laravel-engine/public/api/paystack-webhook
 
 The webhook is a POST route in `routes/api.php`, outside the web CSRF middleware. It verifies Paystack's `X-Paystack-Signature` header before updating the WordPress registration and delivering the ticket. Payment fulfillment runs synchronously, so no queue worker or cron job is required.
 
-Ticket delivery is completed by WordPress after Laravel calls the root site URL with the signed `cer_process_ticket` request. The live WordPress `wp-config.php` and Laravel `.env` must contain identical `CER_TICKET_CALLBACK_SECRET` and `CER_ENCRYPTION_KEY` values. The deployment script adds either missing WordPress constant without overwriting an existing one; copy those resulting values into `.env` before the second deployment. WordPress writes the PDF under `wp-content/uploads/tickets/` and sends it with the event's configured SMTP settings.
+Ticket delivery is completed by WordPress after Laravel calls the root site URL with the signed `cer_process_ticket` request. The live WordPress `wp-config.php` and Laravel `.env` must contain identical `CER_TICKET_CALLBACK_SECRET` and `CER_ENCRYPTION_KEY` values. The deployment script adds either missing WordPress constant without overwriting an existing one; copy those resulting values into `.env` before the second deployment. WordPress writes the PDF under `wp-content/uploads/tickets/` and sends it through Resend when `CER_RESEND_API_KEY` and `CER_RESEND_FROM` are defined; otherwise it falls back to the event's configured SMTP settings.
 
 After deployment, run the health check and an invalid-signature webhook check:
 

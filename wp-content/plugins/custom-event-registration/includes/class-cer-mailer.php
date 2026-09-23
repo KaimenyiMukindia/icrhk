@@ -54,6 +54,78 @@ function cer_clear_current_mail_config(): void {
 	unset( $GLOBALS['cer_current_mail_config'] );
 }
 
+function cer_get_resend_from_email(): string {
+	$from = defined( 'CER_RESEND_FROM' ) ? trim( (string) CER_RESEND_FROM ) : '';
+	if ( preg_match( '/<([^>]+)>/', $from, $matches ) ) {
+		$from = $matches[1];
+	}
+
+	return sanitize_email( $from );
+}
+
+function cer_maybe_send_via_resend( $pre, array $atts ) {
+	$api_key = defined( 'CER_RESEND_API_KEY' ) ? trim( (string) CER_RESEND_API_KEY ) : '';
+	$from = defined( 'CER_RESEND_FROM' ) ? trim( (string) CER_RESEND_FROM ) : '';
+	if ( '' === $api_key || '' === $from ) {
+		return $pre;
+	}
+
+	$to = is_array( $atts['to'] ?? null ) ? array_values( $atts['to'] ) : array_filter( array_map( 'trim', explode( ',', (string) ( $atts['to'] ?? '' ) ) ) );
+	if ( empty( $to ) ) {
+		return new WP_Error( 'cer_resend_recipient_missing', 'Resend recipient is missing.' );
+	}
+
+	$payload = array(
+		'from' => $from,
+		'to' => $to,
+		'subject' => (string) ( $atts['subject'] ?? '' ),
+		'html' => (string) ( $atts['message'] ?? '' ),
+	);
+	$headers = $atts['headers'] ?? array();
+	$headers = is_array( $headers ) ? $headers : preg_split( '/\r?\n/', (string) $headers );
+	foreach ( $headers as $header ) {
+		if ( preg_match( '/^Reply-To:\s*(.+)$/i', (string) $header, $matches ) ) {
+			$payload['reply_to'] = array( trim( $matches[1] ) );
+			break;
+		}
+	}
+
+	$attachments = $atts['attachments'] ?? array();
+	$attachments = is_array( $attachments ) ? $attachments : array_filter( preg_split( '/\r?\n/', (string) $attachments ) );
+	foreach ( $attachments as $attachment ) {
+		$attachment = (string) $attachment;
+		if ( ! is_readable( $attachment ) ) {
+			return new WP_Error( 'cer_resend_attachment_missing', 'Resend attachment is not readable.' );
+		}
+		$payload['attachments'][] = array(
+			'filename' => basename( $attachment ),
+			'content' => base64_encode( (string) file_get_contents( $attachment ) ),
+		);
+	}
+
+	$response = wp_remote_post(
+		'https://api.resend.com/emails',
+		array(
+			'timeout' => 30,
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $api_key,
+				'Content-Type' => 'application/json',
+			),
+			'body' => wp_json_encode( $payload ),
+		)
+	);
+	if ( is_wp_error( $response ) ) {
+		return $response;
+	}
+
+	$status = (int) wp_remote_retrieve_response_code( $response );
+	if ( $status < 200 || $status >= 300 ) {
+		return new WP_Error( 'cer_resend_rejected', 'Resend rejected the message.', array( 'status' => $status, 'body' => wp_remote_retrieve_body( $response ) ) );
+	}
+
+	return true;
+}
+
 function cer_configure_smtp( $phpmailer ): void {
 	$config = $GLOBALS['cer_current_mail_config'] ?? array();
 	if ( empty( $config ) ) {
@@ -146,7 +218,13 @@ function cer_send_admin_receipt_for_registration( int $registration_id ): bool {
 	}
 	$config = cer_get_mail_config_from_event( $event_id, $registration['event_name'] ?? '' );
 	if ( empty( $config ) ) {
-		return false;
+		if ( ! defined( 'CER_RESEND_API_KEY' ) || ! defined( 'CER_RESEND_FROM' ) ) {
+			return false;
+		}
+		$config = array(
+			'from_email' => cer_get_resend_from_email(),
+			'from_name' => 'ICRHK Events',
+		);
 	}
 	$registrant_name = function_exists( 'cer_decrypt_pii' ) ? cer_decrypt_pii( $registration['full_name'] ?? '' ) : (string) ( $registration['full_name'] ?? '' );
 	$event_name = ! empty( $registration['event_name'] ) ? (string) $registration['event_name'] : 'ICRHK Event';

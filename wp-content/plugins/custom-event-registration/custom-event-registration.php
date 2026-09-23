@@ -45,6 +45,7 @@ add_filter( 'document_title_parts', 'cer_filter_event_document_title_parts', 20 
 add_action( 'init', 'cer_register_rewrite_rules' );
 add_action( 'template_redirect', 'cer_handle_ticket_request', 0 );
 add_action( 'wp_mail_failed', 'cer_log_mail_failure' );
+add_filter( 'pre_wp_mail', 'cer_maybe_send_via_resend', 10, 2 );
 add_action( 'phpmailer_init', 'cer_configure_smtp' );
 add_filter( 'wp_mail_from', 'cer_mail_from_address' );
 add_filter( 'wp_mail_from_name', 'cer_mail_from_name' );

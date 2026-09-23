@@ -226,4 +226,17 @@ The real lesson for this thread is:
 - do not normalize user secrets destructively;
 - do not claim success until the live email actually leaves the system.
 
+## Transactional provider integration
+
+The WordPress mail path now supports Resend through the existing `wp_mail()` calls. The adapter is registered in `custom-event-registration.php` and implemented in `class-cer-mailer.php` using the `pre_wp_mail` hook. It sends the existing HTML body, Reply-To header, and ticket PDF attachment through `https://api.resend.com/emails`.
+
+Enable it in the deployment's untracked `wp-config.php` custom configuration section:
+
+```php
+define( 'CER_RESEND_API_KEY', 're_...' );
+define( 'CER_RESEND_FROM', 'ICRHK Events <tickets@verified-domain.example>' );
+```
+
+Both values are required. When either is absent, the adapter returns control to the existing SMTP path. The API key must never be committed, and the sender domain must be verified in Resend. A successful provider API response is the condition under which WordPress marks `ticket_sent_at`; provider inbox delivery remains subject to Resend delivery status.
+
 This document exists as the audit record of those failed and rejected attempts so the team can avoid repeating them.
