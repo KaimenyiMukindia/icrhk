@@ -1,6 +1,6 @@
 <?php
 
-// Deployment marker: this bootstrap file is part of the Laravel production payload.
+// Production runtime refresh marker.
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
