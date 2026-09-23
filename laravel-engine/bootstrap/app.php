@@ -1,6 +1,6 @@
 <?php
 
-// Production runtime refresh marker.
+// Production runtime payload marker.
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;

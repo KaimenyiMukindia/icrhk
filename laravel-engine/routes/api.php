@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-// Production runtime refresh marker.
+// Production runtime payload marker.
 
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
