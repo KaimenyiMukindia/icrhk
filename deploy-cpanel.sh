@@ -12,12 +12,15 @@ cp -Rf laravel-engine/. "$DEPLOY_ROOT/laravel-engine/"
 cp -Rf wp-content/plugins/custom-event-registration/. "$DEPLOY_ROOT/wp-content/plugins/custom-event-registration/"
 cp -Rf wp-content/themes/goodsoul/. "$DEPLOY_ROOT/wp-content/themes/goodsoul/"
 
-# Generate the shared CER secrets once; never overwrite existing WordPress values.
-if [ -f "$DEPLOY_ROOT/wp-config.php" ] \
-    && ! grep -q "CER_ENCRYPTION_KEY" "$DEPLOY_ROOT/wp-config.php" \
-    && ! grep -q "CER_TICKET_CALLBACK_SECRET" "$DEPLOY_ROOT/wp-config.php"; then
+# Generate each shared CER secret only when its WordPress constant is absent.
+if [ -f "$DEPLOY_ROOT/wp-config.php" ]; then
     CER_SECRET=$(php -r 'echo bin2hex(random_bytes(32));')
-    sed -i "/\/\* That's all, stop editing!/i define( 'CER_ENCRYPTION_KEY', '$CER_SECRET' );\ndefine( 'CER_TICKET_CALLBACK_SECRET', '$CER_SECRET' );" "$DEPLOY_ROOT/wp-config.php"
+    if ! grep -q "CER_ENCRYPTION_KEY" "$DEPLOY_ROOT/wp-config.php"; then
+        sed -i "/\/\* That's all, stop editing!/i define( 'CER_ENCRYPTION_KEY', '$CER_SECRET' );" "$DEPLOY_ROOT/wp-config.php"
+    fi
+    if ! grep -q "CER_TICKET_CALLBACK_SECRET" "$DEPLOY_ROOT/wp-config.php"; then
+        sed -i "/\/\* That's all, stop editing!/i define( 'CER_TICKET_CALLBACK_SECRET', '$CER_SECRET' );" "$DEPLOY_ROOT/wp-config.php"
+    fi
 fi
 
 mkdir -p "$DEPLOY_ROOT/laravel-engine/bootstrap/cache" \

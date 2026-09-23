@@ -21,19 +21,26 @@ function cer_generate_ticket_pdf( int $registration_id ): string {
 	$ticket_types = $wpdb->prefix . 'evt_ticket_types';
 	$registration = $wpdb->get_row( $wpdb->prepare( "SELECT r.*, e.name AS event_name, e.event_date, e.venue, tt.name AS ticket_name FROM {$registrations} r LEFT JOIN {$events} e ON e.id = r.event_id LEFT JOIN {$ticket_types} tt ON tt.id = r.ticket_type_id WHERE r.id = %d LIMIT 1", $registration_id ), ARRAY_A );
 	if ( ! $registration || empty( $registration['user_access_key'] ) ) {
+		error_log( 'CER ticket generation skipped: registration or access key missing for ' . $registration_id );
 		return '';
 	}
 
 	$path = cer_ticket_pdf_path( $registration );
 	if ( '' === $path ) {
+		error_log( 'CER ticket generation skipped: ticket path unavailable for ' . $registration_id );
 		return '';
 	}
 
 	$autoload = ABSPATH . 'laravel-engine/vendor/autoload.php';
 	if ( ! file_exists( $autoload ) ) {
+		error_log( 'CER ticket generation failed: Composer autoload missing at ' . $autoload );
 		return '';
 	}
 	require_once $autoload;
+	if ( ! class_exists( '\Dompdf\Dompdf' ) ) {
+		error_log( 'CER ticket generation failed: Dompdf class unavailable for ' . $registration_id );
+		return '';
+	}
 
 	$qr_data_uri = '';
 	if ( class_exists( '\Endroid\QrCode\QrCode' ) && class_exists( '\Endroid\QrCode\Writer\SvgWriter' ) ) {
@@ -62,11 +69,19 @@ function cer_generate_ticket_pdf( int $registration_id ): string {
 	}
 	$html .= '</td></tr></table></div><div class="footer"><strong>Keep this ticket ready at arrival.</strong> Your access code is unique to this registration and should not be shared.</div></div></body></html>';
 
-	$dompdf = new \Dompdf\Dompdf();
-	$dompdf->loadHtml( $html );
-	$dompdf->setPaper( 'A4', 'portrait' );
-	$dompdf->render();
-	file_put_contents( $path, $dompdf->output(), LOCK_EX );
+	try {
+		$dompdf = new \Dompdf\Dompdf();
+		$dompdf->loadHtml( $html );
+		$dompdf->setPaper( 'A4', 'portrait' );
+		$dompdf->render();
+		if ( false === file_put_contents( $path, $dompdf->output(), LOCK_EX ) ) {
+			error_log( 'CER ticket generation failed: PDF could not be written to ' . $path );
+			return '';
+		}
+	} catch ( Throwable $exception ) {
+		error_log( 'CER ticket generation exception for ' . $registration_id . ': ' . $exception->getMessage() );
+		return '';
+	}
 	return file_exists( $path ) ? $path : '';
 }
 
@@ -75,6 +90,7 @@ function cer_send_ticket_for_registration( int $registration_id ): bool {
 	$table = $wpdb->prefix . 'evt_registrations';
 	$registration = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d LIMIT 1", $registration_id ), ARRAY_A );
 	if ( ! $registration || 'paid' !== $registration['status'] || ! empty( $registration['ticket_sent_at'] ) ) {
+		error_log( 'CER ticket send skipped for ' . $registration_id . ': registration missing, unpaid, or already sent.' );
 		return false;
 	}
 
@@ -153,14 +169,17 @@ function cer_handle_ticket_request(): void {
 		$service_request_valid = $callback_secret && ctype_digit( $timestamp ) && abs( time() - (int) $timestamp ) <= 300 && hash_equals( hash_hmac( 'sha256', $registration_id . '|' . $timestamp, $callback_secret ), $signature );
 		$admin_request_valid = current_user_can( 'manage_options' ) && wp_verify_nonce( $nonce, 'cer_process_ticket_' . $registration_id );
 		if ( ! $service_request_valid && ! $admin_request_valid ) {
+			error_log( 'CER ticket callback unauthorized for registration ' . $registration_id );
 			wp_die( esc_html__( 'You are not authorized to process this ticket.', 'custom-event-registration' ), 403 );
 		}
 
 		$ticket_sent = cer_send_ticket_for_registration( $registration_id );
 		if ( ! $ticket_sent ) {
+			error_log( 'CER ticket callback failed for registration ' . $registration_id );
 			status_header( 500 );
 			exit;
 		}
+		error_log( 'CER ticket callback completed for registration ' . $registration_id );
 		status_header( 204 );
 		exit;
 	}

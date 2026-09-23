@@ -40,7 +40,7 @@ Do not add `.env`, `wp-config.php`, logs, uploads, cache, `node_modules/`, or da
 
 ## Configure the server
 
-After the first pull, create `laravel-engine/.env` from `.env.example` and edit every deployment value. Set `APP_KEY`, `APP_URL`, the Laravel-owned `DB_*` values, the WordPress `WP_DB_*` values, `WP_DB_PREFIX` exactly as `$table_prefix` in the live `wp-config.php` (for this site it is `wp9b_`), `CER_ENCRYPTION_KEY`, `CER_TICKET_CALLBACK_SECRET`, `WORDPRESS_URL`, and the Paystack keys. Use `APP_DEBUG=false` in production. Never commit `.env`.
+After the first pull, create `laravel-engine/.env` from `.env.example` and edit every deployment value. Set `APP_KEY`, `APP_URL`, the Laravel-owned `DB_*` values, the WordPress `WP_DB_*` values, `CER_ENCRYPTION_KEY`, `CER_TICKET_CALLBACK_SECRET`, `WORDPRESS_URL`, and the Paystack keys. Use `APP_DEBUG=false` in production. Never commit `.env`.
 
 The deployment hook creates the writable directories automatically. To repair an older installation:
 
@@ -55,8 +55,6 @@ chmod -R 775 bootstrap/cache storage
 The root `.cpanel.yml` runs `deploy-cpanel.sh`. The script uses the relative path from `repositories/icrhk` to the sibling `icrhk.nyimuki.com` document root, copies Laravel and the tracked custom WordPress integration, creates `storage/framework/{cache,sessions,views}`, `storage/logs`, and `bootstrap/cache`, and applies `775` permissions. It never copies or overwrites `.env` or WordPress core. Once a configured `.env` exists, it runs migrations, creates the storage link, and clears configuration.
 
 The migration command is intentional: Laravel owns `users`, `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, and `payment_logs`. The WordPress plugin owns all `wp_evt_*` tables and continues to manage those separately. On a brand-new Laravel installation where `.env` did not exist during the first pull, edit `.env` and run the migration command once from the `laravel-engine` directory; subsequent pulls run it automatically.
-
-During deployment, missing `CER_ENCRYPTION_KEY` and `CER_TICKET_CALLBACK_SECRET` definitions are generated in the existing `wp-config.php`; existing definitions are never overwritten. After the first deployment, copy those generated values into the matching Laravel `.env` variables before running Laravel migrations. The deployment does not commit or replace `wp-config.php`.
 
 If the hosting provider does not allow PHP commands in cPanel deployment hooks, configure the cPanel deployment path normally and run the same commands from a provider-approved post-deploy hook:
 
@@ -81,7 +79,7 @@ The cPanel deployment uses the tracked Laravel release, including `vendor/` and 
 
 ## Paystack payments
 
-This application uses Paystack for card and M-Pesa payments. Set `PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY`, `PAYSTACK_ENV`, and `PAYSTACK_CURRENCY` in `.env`. Keep `PAYSTACK_ENV=live` for production. Also set `WORDPRESS_URL`, `CER_ENCRYPTION_KEY`, and `CER_TICKET_CALLBACK_SECRET`; these are required for payment fulfillment and ticket delivery. Add matching `CER_ENCRYPTION_KEY` and `CER_TICKET_CALLBACK_SECRET` constants to the live `wp-config.php`; the plugin and Laravel must share both values.
+This application uses Paystack for card and M-Pesa payments. Set `PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY`, `PAYSTACK_ENV`, and `PAYSTACK_CURRENCY` in `.env`. Keep `PAYSTACK_ENV=live` for production. Also set `WORDPRESS_URL`, `CER_ENCRYPTION_KEY`, and `CER_TICKET_CALLBACK_SECRET`; these are required for payment fulfillment and ticket delivery.
 
 Configure this HTTPS callback in Paystack:
 
@@ -90,6 +88,8 @@ https://YOUR-DOMAIN/laravel-engine/public/api/paystack-webhook
 ```
 
 The webhook is a POST route in `routes/api.php`, outside the web CSRF middleware. It verifies Paystack's `X-Paystack-Signature` header before updating the WordPress registration and delivering the ticket. Payment fulfillment runs synchronously, so no queue worker or cron job is required.
+
+Ticket delivery is completed by WordPress after Laravel calls the root site URL with the signed `cer_process_ticket` request. The live WordPress `wp-config.php` and Laravel `.env` must contain identical `CER_TICKET_CALLBACK_SECRET` and `CER_ENCRYPTION_KEY` values. The deployment script adds either missing WordPress constant without overwriting an existing one; copy those resulting values into `.env` before the second deployment. WordPress writes the PDF under `wp-content/uploads/tickets/` and sends it with the event's configured SMTP settings.
 
 After deployment, run the health check and an invalid-signature webhook check:
 
@@ -101,6 +101,8 @@ curl -i -X POST https://YOUR-DOMAIN/laravel-engine/public/api/paystack-webhook \
 ```
 
 The first request must return `200`; the second must return `400 invalid_signature`, proving the HTTPS route is reachable and signature protection is active. A real end-to-end payment requires a Paystack test/live key, a real registration row, and Paystack's callback delivery; complete one small test transaction after configuring those `.env` values.
+
+For the second-site rehearsal, verify after deployment that the live `wp-config.php` contains both CER constants, the Laravel log records `IPN Processing: Making WordPress ticket callback`, and the WordPress PHP error log records `CER ticket callback completed`. Confirm `ticket_generated_at` and `ticket_sent_at` are populated on the paid `wp_evt_registrations` row and that the PDF exists in `wp-content/uploads/tickets/`.
 
 ## Verification checklist
 
@@ -122,6 +124,8 @@ The first request must return `200`; the second must return `400 invalid_signatu
 **CSS/JavaScript 404:** verify `public/build/manifest.json` is present and that the URL includes the correct `laravel-engine/public` path.
 
 **Paystack callback failure:** use the public HTTPS URL ending in `/laravel-engine/public/api/paystack-webhook`, then verify `PAYSTACK_SECRET_KEY` and the callback secrets match WordPress.
+
+**Payment succeeds but no ticket:** inspect Laravel `storage/logs/laravel.log` and the WordPress/PHP error log. `CER ticket callback unauthorized` means the two callback secrets differ; `Dompdf class unavailable`, `PDF could not be written`, or `wp_mail failed` identifies the ticket-stage failure directly.
 
 ## Rollback
 
