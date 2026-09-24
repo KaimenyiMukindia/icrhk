@@ -190,7 +190,7 @@ function cer_configure_smtp( $phpmailer ): void {
 	$smtp_options = array(
 		'ssl' => array(
 			'verify_peer' => defined( 'CER_SMTP_VERIFY_PEER' ) ? (bool) CER_SMTP_VERIFY_PEER : true,
-			'verify_peer_name' => defined( 'CER_SMTP_VERIFY_PEER_NAME' ) ? (bool) CER_SMTP_VERIFY_PEER_NAME : true,
+			'verify_peer_name' => defined( 'CER_SMTP_VERIFY_PEER_NAME' ) ? (bool) CER_SMTP_VERIFY_PEER_NAME : false,
 			'allow_self_signed' => defined( 'CER_SMTP_ALLOW_SELF_SIGNED' ) ? (bool) CER_SMTP_ALLOW_SELF_SIGNED : false,
 		),
 	);
