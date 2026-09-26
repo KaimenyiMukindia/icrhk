@@ -24,6 +24,9 @@ if [ -f "$DEPLOY_ROOT/wp-config.php" ]; then
     if ! grep -q "CER_RESEND_API_KEY" "$DEPLOY_ROOT/wp-config.php"; then
         sed -i "/\/\* That's all, stop editing!/i define( 'CER_RESEND_API_KEY', '' );" "$DEPLOY_ROOT/wp-config.php"
     fi
+    if ! grep -q "CER_RESEND_FROM" "$DEPLOY_ROOT/wp-config.php"; then
+        sed -i "/\/\* That's all, stop editing!/i define( 'CER_RESEND_FROM', 'ICRHK Events <noreply@nyimuki.com>' );" "$DEPLOY_ROOT/wp-config.php"
+    fi
 fi
 
 mkdir -p "$DEPLOY_ROOT/laravel-engine/bootstrap/cache" \
