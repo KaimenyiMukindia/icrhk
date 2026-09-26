@@ -21,6 +21,9 @@ if [ -f "$DEPLOY_ROOT/wp-config.php" ]; then
     if ! grep -q "CER_TICKET_CALLBACK_SECRET" "$DEPLOY_ROOT/wp-config.php"; then
         sed -i "/\/\* That's all, stop editing!/i define( 'CER_TICKET_CALLBACK_SECRET', '$CER_SECRET' );" "$DEPLOY_ROOT/wp-config.php"
     fi
+    if ! grep -q "CER_RESEND_API_KEY" "$DEPLOY_ROOT/wp-config.php"; then
+        sed -i "/\/\* That's all, stop editing!/i define( 'CER_RESEND_API_KEY', '' );" "$DEPLOY_ROOT/wp-config.php"
+    fi
 fi
 
 mkdir -p "$DEPLOY_ROOT/laravel-engine/bootstrap/cache" \
