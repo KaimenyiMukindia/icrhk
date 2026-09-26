@@ -67,6 +67,7 @@ jobs:
       - name: Verify Laravel vendor directory
         run: |
           test -f release/laravel-engine/vendor/autoload.php
+          test -f release/laravel-engine/bootstrap/cache/packages.php
           echo "Laravel production vendor directory is present."
 
       - name: Create deployment ZIP

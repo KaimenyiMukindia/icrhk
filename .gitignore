@@ -17,7 +17,6 @@ wp-content/temp-write-test-*
 wp-content/debug.log
 laravel-engine/bootstrap/cache/
 laravel-engine/storage/
-deploy-cpanel.log
 
 # Dependencies
 **/node_modules/

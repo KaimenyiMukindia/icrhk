@@ -109,8 +109,9 @@ function cer_send_ticket_for_registration( int $registration_id ): bool {
 	$payment_method = 'mpesa' === $payment_method_value ? 'M-PESA' : ( 'card' === $payment_method_value ? 'Card' : 'payment gateway' );
 	$view_url = add_query_arg( 'cer_ticket', rawurlencode( $registration['user_access_key'] ), home_url( '/' ) );
 	$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-	$body = '<p>Dear ' . esc_html( $name ) . ',</p><p>Your ' . esc_html( $payment_method ) . ' payment is confirmed. Your ticket for <strong>' . esc_html( $event_name ) . '</strong> is attached.</p><p>You can also view your ticket online: <a href="' . esc_url( $view_url ) . '">' . esc_html( $view_url ) . '</a></p><p>We look forward to seeing you.</p>';
 	$event_id = (int) ( $registration['event_id'] ?? 0 );
+	$contact_email = cer_get_event_mail_recipient( $registration_id );
+	$body = '<p>Dear ' . esc_html( $name ) . ',</p><p>Your ' . esc_html( $payment_method ) . ' payment is confirmed. Your ticket for <strong>' . esc_html( $event_name ) . '</strong> is attached.</p><p>You can also view your ticket online: <a href="' . esc_url( $view_url ) . '">' . esc_html( $view_url ) . '</a></p><p>We look forward to seeing you.</p><hr><p>This is an automatic system-generated message. Please do not reply. For issues, contact ' . esc_html( $contact_email ?: cer_get_resend_from() ) . '.</p>';
 	$context = cer_set_current_mail_config( $event_id, $event_name );
 	if ( ! wp_mail( $email, 'Your Ticket for ' . $event_name . ' - ' . $payment_method, $body, $headers, array( $path ) ) ) {
 		error_log( 'CER ticket email failed for registration ' . $registration_id . ' to ' . $email . ' event ' . $event_id );
@@ -118,6 +119,7 @@ function cer_send_ticket_for_registration( int $registration_id ): bool {
 		return false;
 	}
 	cer_clear_current_mail_config();
+	cer_send_admin_receipt_for_registration( $registration_id );
 
 	$wpdb->update( $table, array( 'ticket_sent_at' => current_time( 'mysql' ) ), array( 'id' => $registration_id ), array( '%s' ), array( '%d' ) );
 	return true;

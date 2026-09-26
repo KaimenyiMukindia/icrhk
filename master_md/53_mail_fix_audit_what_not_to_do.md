@@ -9,6 +9,23 @@ The scope is intentionally narrow: SMTP configuration, ticket email dispatch, an
 
 ## What the project currently implements
 
+### Resend API configuration
+
+The existing `pre_wp_mail` filter in `wp-content/plugins/custom-event-registration/custom-event-registration.php` can route all `wp_mail()` calls through the Resend HTTPS API before PHPMailer initializes. Configure these constants in `wp-config.php`:
+
+```php
+define( 'CER_RESEND_API_KEY', 're_xxxxxxxxx' );
+define( 'CER_RESEND_FROM', 'ICRHK Events <tickets@example.com>' );
+```
+
+Required Resend account fields:
+
+- **API key:** In the Resend dashboard, open **API Keys**, create a key with email-sending access, and copy it once into `CER_RESEND_API_KEY`. Never document or commit the secret value.
+- **Verified sender domain:** In the dashboard, open **Domains**, add the domain used by the sender address, publish the DNS records Resend supplies, and wait until the domain is marked verified.
+- **From address:** Set `CER_RESEND_FROM` to an address on the verified domain. Use either `tickets@example.com` or the friendly-name form `ICRHK Events <tickets@example.com>`.
+
+When an event mail configuration is active, its existing `mail_sender_email` and `mail_from_name` values take precedence for the Resend `from` field. Otherwise the filter uses `CER_RESEND_FROM`. The API request contains the existing recipients, subject, HTML body, reply/copy headers, and base64-encoded attachments.
+
 ### 1. WordPress mail hook registration
 The plugin bootstraps the mail pipeline through the WordPress `phpmailer_init` hook in:
 

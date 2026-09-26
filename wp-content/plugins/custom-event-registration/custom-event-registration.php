@@ -215,6 +215,9 @@ function cer_maybe_ensure_event_schema() {
 	$partners_table = $wpdb->prefix . 'evt_partners';
 	$ticket_types_table = $wpdb->prefix . 'evt_ticket_types';
 	$schema_version = get_option( 'cer_schema_version', '' );
+	cer_add_column_if_missing( $events_table, 'brand_color_1', 'VARCHAR(20) NULL', 'secondary_logo_id' );
+	cer_add_column_if_missing( $events_table, 'brand_color_2', 'VARCHAR(20) NULL', 'brand_color_1' );
+	cer_add_column_if_missing( $events_table, 'background_image_id', 'BIGINT(20) UNSIGNED NULL', 'brand_color_2' );
 
 	if ( '8' === $schema_version ) {
 		cer_install_event_schema();
@@ -632,6 +635,9 @@ function cer_install_event_schema() {
 		show_pillars TINYINT(1) NOT NULL DEFAULT 1,
 		max_attendees INT UNSIGNED,
 		featured_image_id BIGINT(20) UNSIGNED,
+		brand_color_1 VARCHAR(20) NULL,
+		brand_color_2 VARCHAR(20) NULL,
+		background_image_id BIGINT(20) UNSIGNED,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),

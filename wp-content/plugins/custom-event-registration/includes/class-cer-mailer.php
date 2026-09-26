@@ -12,28 +12,8 @@ function cer_get_mail_config_from_event( ?int $event_id = null, string $default_
 		$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_events WHERE id = %d LIMIT 1", $event_id ), ARRAY_A );
 		if ( $event ) {
 			$sender_email = isset( $event['mail_sender_email'] ) ? trim( (string) $event['mail_sender_email'] ) : '';
-			$encrypted_password = isset( $event['mail_password_encrypted'] ) ? (string) $event['mail_password_encrypted'] : '';
-			if ( '' !== $sender_email && '' !== $encrypted_password ) {
-				$password = cer_decrypt_pii( $encrypted_password );
-				if ( '' !== $password ) {
-					$resolved = CerMailSmtpResolver::resolve( $sender_email, $default_from_name ?: ( isset( $event['mail_from_name'] ) ? (string) $event['mail_from_name'] : ( function_exists( 'get_option' ) ? (string) get_option( 'blogname', 'ICRHK Events' ) : 'ICRHK Events' ) ) );
-					$host = isset( $event['mail_smtp_host'] ) && '' !== trim( (string) $event['mail_smtp_host'] ) ? trim( (string) $event['mail_smtp_host'] ) : $resolved['host'];
-					$port = isset( $event['mail_smtp_port'] ) && '' !== (string) $event['mail_smtp_port'] ? (int) $event['mail_smtp_port'] : $resolved['port'];
-					$secure = isset( $event['mail_smtp_secure'] ) && '' !== trim( (string) $event['mail_smtp_secure'] ) ? trim( (string) $event['mail_smtp_secure'] ) : $resolved['secure'];
-					$from_name = isset( $event['mail_from_name'] ) && '' !== trim( (string) $event['mail_from_name'] ) ? trim( (string) $event['mail_from_name'] ) : $resolved['from_name'];
-					return array(
-						'host' => $host,
-						'port' => $port,
-						'secure' => $secure,
-						'username' => $sender_email,
-						'password' => $password,
-						'from_email' => $sender_email,
-						'from_name' => $from_name,
-					);
-				}
-				error_log( 'CER SMTP config unavailable: event password decryption failed for event ' . $event_id );
-			} else {
-				error_log( 'CER SMTP config unavailable: sender email or encrypted password missing for event ' . $event_id );
+			if ( '' !== $sender_email ) {
+				error_log( 'CER event sender metadata retained for event ' . $event_id . '; SMTP is used only without Resend constants.' );
 			}
 		} else {
 			error_log( 'CER SMTP config unavailable: event not found for event ' . $event_id );
@@ -57,7 +37,7 @@ function cer_clear_current_mail_config(): void {
 function cer_get_resend_from(): string {
 	$from = defined( 'CER_RESEND_FROM' ) ? trim( (string) CER_RESEND_FROM ) : '';
 	if ( preg_match( '/<([^>]+)>/', $from, $matches ) ) {
-		$from = trim( $matches[1] );
+		return is_email( trim( $matches[1] ) ) ? $from : '';
 	}
 
 	return is_email( $from ) ? $from : '';
@@ -81,6 +61,7 @@ function cer_get_mail_addresses( $value ): array {
 
 function cer_maybe_send_via_resend( $pre, array $atts ) {
 	$api_key = defined( 'CER_RESEND_API_KEY' ) ? trim( (string) CER_RESEND_API_KEY ) : '';
+	$config = $GLOBALS['cer_current_mail_config'] ?? array();
 	$from = cer_get_resend_from();
 	if ( '' === $api_key || '' === $from ) {
 		return $pre;
@@ -237,12 +218,12 @@ function cer_get_event_mail_recipient( int $registration_id ): string {
 
 function cer_send_admin_receipt_for_registration( int $registration_id ): bool {
 	global $wpdb;
-	$registration = $wpdb->get_row( $wpdb->prepare( "SELECT r.*, e.name AS event_name, e.mail_sender_email, e.mail_notification_email, e.mail_from_name, e.mail_smtp_host, e.mail_smtp_port, e.mail_smtp_secure, e.mail_password_encrypted FROM {$wpdb->prefix}evt_registrations r LEFT JOIN {$wpdb->prefix}evt_events e ON e.id = r.event_id WHERE r.id = %d LIMIT 1", $registration_id ), ARRAY_A );
+	$registration = $wpdb->get_row( $wpdb->prepare( "SELECT r.*, e.name AS event_name, e.mail_notification_email FROM {$wpdb->prefix}evt_registrations r LEFT JOIN {$wpdb->prefix}evt_events e ON e.id = r.event_id WHERE r.id = %d LIMIT 1", $registration_id ), ARRAY_A );
 	if ( ! $registration ) {
 		return false;
 	}
 	$event_id = (int) ( $registration['event_id'] ?? 0 );
-	$recipient = cer_get_event_mail_recipient( $registration_id );
+	$recipient = is_email( trim( (string) ( $registration['mail_notification_email'] ?? '' ) ) ) ? trim( (string) $registration['mail_notification_email'] ) : '';
 	if ( '' === $recipient ) {
 		return false;
 	}
@@ -250,17 +231,17 @@ function cer_send_admin_receipt_for_registration( int $registration_id ): bool {
 	if ( empty( $config ) && '' === cer_get_resend_from() ) {
 		return false;
 	}
-	$from_email = ! empty( $config['from_email'] ) ? $config['from_email'] : cer_get_resend_from();
-	$from_name = ! empty( $config['from_name'] ) ? $config['from_name'] : 'ICRHK Events';
 	$registrant_name = function_exists( 'cer_decrypt_pii' ) ? cer_decrypt_pii( $registration['full_name'] ?? '' ) : (string) ( $registration['full_name'] ?? '' );
+	$registrant_email = function_exists( 'cer_decrypt_pii' ) ? cer_decrypt_pii( $registration['email'] ?? '' ) : (string) ( $registration['email'] ?? '' );
 	$event_name = ! empty( $registration['event_name'] ) ? (string) $registration['event_name'] : 'ICRHK Event';
-	$body = '<p>New registration received for <strong>' . esc_html( $event_name ) . '</strong>.</p><p><strong>Attendee:</strong> ' . esc_html( $registrant_name ) . '<br><strong>Email:</strong> ' . esc_html( (string) ( $registration['email'] ?? '' ) ) . '<br><strong>Payment:</strong> ' . esc_html( (string) ( $registration['payment_method'] ?? '' ) ) . '</p>';
+	$ticket_name = $wpdb->get_var( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d LIMIT 1", (int) ( $registration['ticket_type_id'] ?? 0 ) ) );
+	$body = "New ticket purchase for {$event_name}\n\nBuyer name: {$registrant_name}\nBuyer email: {$registrant_email}\nTicket type: " . ( $ticket_name ?: (string) ( $registration['ticket_type'] ?? 'General admission' ) );
 	$context = cer_set_current_mail_config( $event_id, $event_name );
-	$headers = array( 'Content-Type: text/html; charset=UTF-8', 'From: ' . $from_name . ' <' . $from_email . '>', 'Reply-To: ' . $from_email );
+	$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
 	$sent = wp_mail( $recipient, 'New registration for ' . $event_name, $body, $headers );
 	cer_clear_current_mail_config();
 	if ( ! $sent ) {
-		error_log( 'CER admin receipt failed for event ' . $event_id . ' sender ' . $from_email );
+		error_log( 'CER admin receipt failed for event ' . $event_id );
 	}
 	return $sent;
 }

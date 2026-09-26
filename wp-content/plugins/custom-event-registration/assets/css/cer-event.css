@@ -16,6 +16,9 @@
    ========================================================================== */
 
 .cer-event-page {
+    --cer-brand-color-1: #ff8c00;
+    --cer-brand-color-2: #800080;
+    --cer-event-background-image: url(../../../../uploads/2026/09/png-bg.png);
     /* --- Type scale — 8 steps, every step pairs size + leading + tracking --- */
     --cer-fs-display: clamp(2.5rem, 5vw, 4rem);
     --cer-lh-display: 1.05;
@@ -200,6 +203,24 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     font-size: 0.85rem;
     font-weight: 700;
     margin-right: 2px;
+}
+
+.cer-form-message-pending::before {
+    content: '';
+    display: inline-block;
+    width: 0.8em;
+    height: 0.8em;
+    margin-right: 0.5em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    vertical-align: -0.12em;
+    animation: cer-payment-spin 700ms linear infinite;
+    pointer-events: none;
+}
+
+@keyframes cer-payment-spin {
+    to { transform: rotate(360deg); }
 }
 
 .cer-share-bar a {
@@ -670,8 +691,8 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 
 /* Modern KAMGC layout integrated with the theme header/footer */
 .cer-event-page {
-    --cer-icrblue: #FAA41A;
-    --cer-icrorange: #FAA41A;
+    --cer-icrblue: var(--cer-brand-color-1);
+    --cer-icrorange: var(--cer-brand-color-1);
     --cer-surface: #FFFFFF;
     --cer-surface-low: #F8F9FA;
     --cer-text-main: #333333;
@@ -3229,8 +3250,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 
 /* Layer 1: background image  */
 body:has(.cer-event-page) {
-    background-image:
-        url(../../../../uploads/2026/09/png-bg.png);
+    background-image: var(--cer-event-background-image);
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
@@ -3245,6 +3265,14 @@ body:has(.cer-event-page) {
 .cer-kamgc-shell {
     background: transparent;
     box-shadow: none;
+}
+
+.cer-event-page {
+    background-image: var(--cer-event-background-image);
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
 }
 
 /* Widen the shell so glass panels cover far more of the viewport, leaving much less bg exposed on the sides */
@@ -3384,12 +3412,12 @@ body:has(.cer-event-page) {
     border-radius: 16px;
     background: #ffffff;
     border: 1px solid #e7edf5;
-    border-top: 3px solid #ff8c00;
+    border-top: 3px solid var(--cer-brand-color-1);
     box-shadow: 0 12px 30px rgba(18, 33, 53, 0.05);
 }
 
 .cer-kamgc-compact-card:nth-child(3n+2) {
-    border-top-color: #800080;
+    border-top-color: var(--cer-brand-color-2);
 }
 
 .cer-kamgc-compact-icon {
@@ -3406,7 +3434,7 @@ body:has(.cer-event-page) {
 
 .cer-kamgc-compact-card:nth-child(3n+2) .cer-kamgc-compact-icon {
     background: rgba(128, 0, 128, 0.12);
-    color: #800080;
+    color: var(--cer-brand-color-2);
 }
 
 .cer-kamgc-compact-card h3 {
@@ -3446,8 +3474,8 @@ body:has(.cer-event-page) {
 }
 
 .cer-kamgc-partner-card:hover {
-    border-color: #ff8c00;
-    box-shadow: 0 10px 26px rgba(255, 140, 0, 0.16);
+    border-color: var(--cer-brand-color-1);
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--cer-brand-color-1) 16%, transparent);
 }
 
 .cer-kamgc-partner-card img {
@@ -3592,9 +3620,9 @@ body:has(.cer-event-page) {
 .cer-kamgc-page {
     --kamgc-navy: #0f172a;
     --kamgc-body: #475569;
-    --kamgc-blue: #800080;
-    --kamgc-orang: #FAA41A;
-    --kamgc-blue-dark: #800080;
+    --kamgc-blue: var(--cer-brand-color-2);
+    --kamgc-orang: var(--cer-brand-color-1);
+    --kamgc-blue-dark: var(--cer-brand-color-2);
     font-family: 'Plus Jakarta Sans', 'Open Sans', sans-serif;
 }
 
@@ -6547,7 +6575,7 @@ body.cer-pillar-pop-lock {
    ========================================================================== */
 .cer-kamgc-page {
     --cl-blue: purple;
-    --cl-orange: #FAA41A;
+    --cl-orange: var(--cer-brand-color-1);
     --cl-ink: #14202B;
     --cl-body: #3F4B59;
     --cl-muted: #6B7683;

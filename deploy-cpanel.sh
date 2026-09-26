@@ -39,6 +39,7 @@ if [ ! -f "$DEPLOY_ROOT/laravel-engine/.env" ] \
 fi
 
 cd "$DEPLOY_ROOT/laravel-engine"
+php artisan package:discover --ansi --no-interaction
 php artisan migrate --force --no-interaction
 php artisan storage:link || true
-php artisan config:clear
+php artisan config:clear --no-interaction

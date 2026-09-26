@@ -47,6 +47,9 @@ $default_event = array(
 	'max_attendees' => '',
 	'featured_image_id' => '',
 	'secondary_logo_id' => '',
+	'brand_color_1' => '#ff8c00',
+	'brand_color_2' => '#800080',
+	'background_image_id' => '',
 	'objectives_heading' => '',
 	'objectives_intro' => '',
 	'show_objectives' => 1,
@@ -64,6 +67,7 @@ $default_event = array(
 	'location_lng' => '',
 	'location_address' => '',
 	'mail_sender_email' => '',
+	'mail_notification_email' => '',
 	'mail_smtp_host' => '',
 	'mail_smtp_port' => '',
 	'mail_smtp_secure' => '',
@@ -118,10 +122,10 @@ if ( $event_id ) {
 	$default_event['event_end_date'] = $event->event_end_date;
 	$default_event['venue'] = $event->venue;
 	$default_event['mail_sender_email'] = isset( $event->mail_sender_email ) ? $event->mail_sender_email : '';
+	$default_event['mail_notification_email'] = isset( $event->mail_notification_email ) ? $event->mail_notification_email : '';
 	$default_event['mail_smtp_host'] = isset( $event->mail_smtp_host ) ? $event->mail_smtp_host : '';
 	$default_event['mail_smtp_port'] = isset( $event->mail_smtp_port ) ? $event->mail_smtp_port : '';
 	$default_event['mail_smtp_secure'] = isset( $event->mail_smtp_secure ) ? $event->mail_smtp_secure : '';
-	$default_event['mail_password_placeholder'] = '••••••••';
 	$default_event['status'] = $event->status;
 	$default_event['show_event_information'] = isset( $event->show_event_information ) ? (int) $event->show_event_information : 1;
 	$default_event['show_speakers'] = isset( $event->show_speakers ) ? (int) $event->show_speakers : 1;
@@ -130,6 +134,9 @@ if ( $event_id ) {
 	$default_event['max_attendees'] = $event->max_attendees;
 	$default_event['featured_image_id'] = $event->featured_image_id;
 	$default_event['secondary_logo_id'] = isset( $event->secondary_logo_id ) ? $event->secondary_logo_id : '';
+	$default_event['brand_color_1'] = isset( $event->brand_color_1 ) && $event->brand_color_1 ? $event->brand_color_1 : '#ff8c00';
+	$default_event['brand_color_2'] = isset( $event->brand_color_2 ) && $event->brand_color_2 ? $event->brand_color_2 : '#800080';
+	$default_event['background_image_id'] = isset( $event->background_image_id ) ? $event->background_image_id : '';
 	$default_event['objectives_heading'] = isset( $event->objectives_heading ) ? $event->objectives_heading : '';
 	$default_event['objectives_intro'] = isset( $event->objectives_intro ) ? $event->objectives_intro : '';
 	$default_event['show_objectives'] = isset( $event->show_objectives ) ? (int) $event->show_objectives : 1;
@@ -204,6 +211,9 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	$default_event['max_attendees'] = absint( wp_unslash( $_POST['max_attendees'] ?? 0 ) );
 	$default_event['featured_image_id'] = absint( wp_unslash( $_POST['featured_image_id'] ?? 0 ) );
 	$default_event['secondary_logo_id'] = absint( wp_unslash( $_POST['secondary_logo_id'] ?? 0 ) );
+	$default_event['brand_color_1'] = sanitize_hex_color( wp_unslash( $_POST['brand_color_1'] ?? '' ) ) ?: '#ff8c00';
+	$default_event['brand_color_2'] = sanitize_hex_color( wp_unslash( $_POST['brand_color_2'] ?? '' ) ) ?: '#800080';
+	$default_event['background_image_id'] = absint( wp_unslash( $_POST['background_image_id'] ?? 0 ) );
 	$default_event['objectives_heading'] = sanitize_text_field( wp_unslash( $_POST['objectives_heading'] ?? '' ) );
 	$default_event['objectives_intro'] = wp_kses_post( wp_unslash( $_POST['objectives_intro'] ?? '' ) );
 	$default_event['show_objectives'] = empty( $_POST['show_objectives'] ) ? 0 : 1;
@@ -221,20 +231,7 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	$default_event['location_lng'] = sanitize_text_field( wp_unslash( $_POST['location_lng'] ?? '' ) );
 	$default_event['location_address'] = sanitize_text_field( wp_unslash( $_POST['location_address'] ?? '' ) );
 	$default_event['mail_sender_email'] = sanitize_email( wp_unslash( $_POST['mail_sender_email'] ?? '' ) );
-	$submitted_mail_password = isset( $_POST['mail_password'] ) ? wp_unslash( $_POST['mail_password'] ) : '';
-	$default_event['mail_password_placeholder'] = '••••••••';
-	$existing_encrypted_password = $event_id ? $wpdb->get_var( $wpdb->prepare( "SELECT mail_password_encrypted FROM {$wpdb->prefix}evt_events WHERE id = %d LIMIT 1", $event_id ) ) : '';
-	if ( is_string( $existing_encrypted_password ) && '' !== $existing_encrypted_password && ( '' === $submitted_mail_password || '••••••••' === $submitted_mail_password ) ) {
-		$default_event['mail_password_encrypted'] = $existing_encrypted_password;
-	} elseif ( '' !== $submitted_mail_password && '••••••••' !== $submitted_mail_password ) {
-		$normalized_password = cer_normalize_mail_password( $submitted_mail_password );
-		$encryption_key = cer_get_encryption_key();
-		if ( '' !== trim( (string) $encryption_key ) ) {
-			$default_event['mail_password_encrypted'] = cer_encrypt_pii( $normalized_password );
-		} else {
-			wp_die( esc_html__( 'Mail encryption key is missing. Configure CER_ENCRYPTION_KEY or ensure AUTH_KEY is defined before saving event email settings.', 'custom-event-registration' ) );
-		}
-	}
+	$default_event['mail_notification_email'] = sanitize_email( wp_unslash( $_POST['mail_notification_email'] ?? '' ) );
 
 	// Single source of truth for the venue: the Location / Map display address.
 	// The front end reads `venue`, so deriving it here keeps every existing
@@ -373,6 +370,9 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 			'max_attendees' => $default_event['max_attendees'],
 			'featured_image_id' => $default_event['featured_image_id'],
 			'secondary_logo_id' => $default_event['secondary_logo_id'],
+			'brand_color_1' => $default_event['brand_color_1'],
+			'brand_color_2' => $default_event['brand_color_2'],
+			'background_image_id' => $default_event['background_image_id'],
 			'objectives_heading' => $default_event['objectives_heading'],
 			'objectives_intro' => $default_event['objectives_intro'],
 			'show_objectives' => $default_event['show_objectives'],
@@ -390,19 +390,18 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 			'location_lng' => $default_event['location_lng'],
 			'location_address' => $default_event['location_address'],
 			'mail_sender_email' => $mail_sender_email,
-			'mail_password_encrypted' => $default_event['mail_password_encrypted'] ?? '',
 			'mail_smtp_host' => '' !== trim( (string) ( $default_event['mail_smtp_host'] ?? '' ) ) ? $default_event['mail_smtp_host'] : $mail_resolver['host'],
 			'mail_smtp_port' => '' !== trim( (string) ( $default_event['mail_smtp_port'] ?? '' ) ) ? $default_event['mail_smtp_port'] : $mail_resolver['port'],
 			'mail_smtp_secure' => '' !== trim( (string) ( $default_event['mail_smtp_secure'] ?? '' ) ) ? $default_event['mail_smtp_secure'] : $mail_resolver['secure'],
 			'mail_from_name' => ! empty( $mail_resolver['from_name'] ) ? $mail_resolver['from_name'] : ( $default_event['mail_from_name'] ?? '' ),
-			'mail_notification_email' => $mail_sender_email,
+			'mail_notification_email' => $default_event['mail_notification_email'],
 			'updated_at' => current_time( 'mysql' ),
 		);
 
 		if ( $event_id ) {
 			$event_update_formats = array();
 			foreach ( array_keys( $event_data ) as $field_name ) {
-				if ( in_array( $field_name, array( 'show_event_information', 'show_speakers', 'show_sponsors', 'show_pillars', 'max_attendees', 'featured_image_id', 'secondary_logo_id', 'show_objectives', 'show_summit_structure', 'show_partners', 'show_faq' ), true ) ) {
+				if ( in_array( $field_name, array( 'show_event_information', 'show_speakers', 'show_sponsors', 'show_pillars', 'max_attendees', 'featured_image_id', 'secondary_logo_id', 'background_image_id', 'show_objectives', 'show_summit_structure', 'show_partners', 'show_faq' ), true ) ) {
 					$event_update_formats[] = '%d';
 				} else {
 					$event_update_formats[] = '%s';
@@ -747,6 +746,9 @@ $event_data = array(
 	'max_attendees' => $default_event['max_attendees'],
 	'featured_image_id' => $default_event['featured_image_id'],
 	'secondary_logo_id' => $default_event['secondary_logo_id'],
+	'brand_color_1' => $default_event['brand_color_1'],
+	'brand_color_2' => $default_event['brand_color_2'],
+	'background_image_id' => $default_event['background_image_id'],
 	'objectives_heading' => $default_event['objectives_heading'],
 	'objectives_intro' => $default_event['objectives_intro'],
 	'show_objectives' => $default_event['show_objectives'],
@@ -764,7 +766,7 @@ $event_data = array(
 	'location_lng' => $default_event['location_lng'],
 	'location_address' => $default_event['location_address'],
 	'mail_sender_email' => $default_event['mail_sender_email'] ?? '',
-	'mail_password_placeholder' => '••••••••',
+	'mail_notification_email' => $default_event['mail_notification_email'] ?? '',
 	'event_uuid' => $default_event['uuid'],
 );
 
@@ -983,6 +985,23 @@ if ( empty( $faq_rows ) ) {
 							</div>
 							<button type="button" class="button cer-media-select" data-target="secondary-logo-id" data-preview="secondary-logo-preview"><?php esc_html_e( 'Select Logo', 'custom-event-registration' ); ?></button>
 							<button type="button" class="button secondary cer-media-clear" data-target="secondary-logo-id" data-preview="secondary-logo-preview" style="margin-left:8px;"><?php esc_html_e( 'Clear', 'custom-event-registration' ); ?></button>
+						</div>
+						<div class="cer-field">
+							<label for="brand-color-1"><?php esc_html_e( 'Brand Color 1', 'custom-event-registration' ); ?></label>
+							<input type="color" id="brand-color-1" name="brand_color_1" value="<?php echo esc_attr( $event_data['brand_color_1'] ); ?>" />
+						</div>
+						<div class="cer-field">
+							<label for="brand-color-2"><?php esc_html_e( 'Brand Color 2', 'custom-event-registration' ); ?></label>
+							<input type="color" id="brand-color-2" name="brand_color_2" value="<?php echo esc_attr( $event_data['brand_color_2'] ); ?>" />
+						</div>
+						<div class="cer-field">
+							<label><?php esc_html_e( 'Event Background Image', 'custom-event-registration' ); ?></label>
+							<input type="hidden" id="background-image-id" name="background_image_id" value="<?php echo esc_attr( $event_data['background_image_id'] ); ?>" />
+							<div id="background-image-preview" class="cer-inline-help" style="margin-bottom:8px; min-height: 44px;">
+								<?php if ( $event_data['background_image_id'] ) : ?><?php echo wp_get_attachment_image( $event_data['background_image_id'], 'thumbnail' ); ?><?php else : ?><?php esc_html_e( 'Default background image will be used.', 'custom-event-registration' ); ?><?php endif; ?>
+							</div>
+							<button type="button" class="button cer-media-select" data-target="background-image-id" data-preview="background-image-preview"><?php esc_html_e( 'Select Image', 'custom-event-registration' ); ?></button>
+							<button type="button" class="button secondary cer-media-clear" data-target="background-image-id" data-preview="background-image-preview" style="margin-left:8px;"><?php esc_html_e( 'Clear', 'custom-event-registration' ); ?></button>
 						</div>
 						<?php if ( ! empty( $event_data['event_uuid'] ) ) : ?>
 						<div class="cer-field">
@@ -1517,14 +1536,9 @@ if ( empty( $faq_rows ) ) {
 						<input type="email" id="mail-sender-email" name="mail_sender_email" value="<?php echo esc_attr( $event_data['mail_sender_email'] ); ?>" placeholder="organizer@example.com" />
 					</div>
 					<div class="cer-field">
-						<label for="mail-password"><?php esc_html_e( 'App Password', 'custom-event-registration' ); ?></label>
-						<div class="cer-password-wrap" style="position:relative;">
-							<input type="password" id="mail-password" name="mail_password" value="" placeholder="••••••••" autocomplete="new-password" style="padding-right: 42px;" />
-							<button type="button" class="button button-small cer-toggle-password" data-target="mail-password" aria-label="<?php esc_attr_e( 'Show or hide app password', 'custom-event-registration' ); ?>" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);padding:0 8px;line-height:28px;height:28px;">
-								<span class="dashicons dashicons-visibility" aria-hidden="true"></span>
-							</button>
-						</div>
-						<p class="cer-help-text"><?php esc_html_e( 'Leave blank to keep the existing encrypted password.', 'custom-event-registration' ); ?></p>
+						<label for="mail-notification-email"><?php esc_html_e( 'Notification Email', 'custom-event-registration' ); ?></label>
+						<input type="email" id="mail-notification-email" name="mail_notification_email" value="<?php echo esc_attr( $event_data['mail_notification_email'] ?? '' ); ?>" placeholder="organizer@example.com" />
+						<p class="cer-help-text"><?php esc_html_e( 'Receives a plain notification after each paid ticket purchase.', 'custom-event-registration' ); ?></p>
 					</div>
 				</div>
 			</div>

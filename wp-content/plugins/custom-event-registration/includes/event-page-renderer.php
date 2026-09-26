@@ -91,7 +91,17 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 			$location_address = '';
 		}
 		?>
-		<div class="cer-event-page">
+		<?php
+		$brand_color_1 = $current_event && ! empty( $current_event->brand_color_1 ) ? sanitize_hex_color( $current_event->brand_color_1 ) : '#ff8c00';
+		$brand_color_2 = $current_event && ! empty( $current_event->brand_color_2 ) ? sanitize_hex_color( $current_event->brand_color_2 ) : '#800080';
+		$background_image_id = $current_event && ! empty( $current_event->background_image_id ) ? (int) $current_event->background_image_id : 0;
+		$background_image_url = $background_image_id ? wp_get_attachment_image_url( $background_image_id, 'full' ) : '';
+		$event_style = '--cer-brand-color-1:' . esc_attr( $brand_color_1 ?: '#ff8c00' ) . ';--cer-brand-color-2:' . esc_attr( $brand_color_2 ?: '#800080' ) . ';';
+		if ( $background_image_url ) {
+			$event_style .= '--cer-event-background-image:url("' . esc_url_raw( $background_image_url ) . '");';
+		}
+		?>
+		<div class="cer-event-page" style="<?php echo esc_attr( $event_style ); ?>">
 			<div class="cer-top-glass-backdrop" aria-hidden="true"></div>
 			<div class="cer-event-shell">
 				<?php if ( ! $current_event ) : ?>
@@ -608,10 +618,15 @@ if ( ! function_exists( 'cer_event_page_organiser_logos' ) ) {
 	 * gets, since media IDs are database state and do not travel with code.
 	 */
 	function cer_event_page_organiser_logos( $event ) {
+		global $wpdb;
 		$logos = array();
 
-		$ids = $event && isset( $event->organiser_logo_ids ) ? array_filter( array_map( 'absint', explode( ',', (string) $event->organiser_logo_ids ) ) ) : array();
-		foreach ( $ids as $id ) {
+		$partner_rows = $event ? cer_event_page_get_related_rows( (int) $event->id, $wpdb->prefix . 'evt_partners', true ) : array();
+		foreach ( $partner_rows as $partner ) {
+			$id = isset( $partner->logo_id ) ? (int) $partner->logo_id : 0;
+			if ( ! $id ) {
+				continue;
+			}
 			$src = wp_get_attachment_image_src( $id, 'medium' );
 			if ( $src ) {
 				$logos[] = array(

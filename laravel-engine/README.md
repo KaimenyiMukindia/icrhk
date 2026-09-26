@@ -61,7 +61,7 @@ chmod -R 775 bootstrap/cache storage
 
 ## Automated deployment tasks
 
-The root `.cpanel.yml` runs `deploy-cpanel.sh`. The script uses the relative path from `repositories/icrhk` to the sibling `icrhk.nyimuki.com` document root, copies Laravel and the tracked custom WordPress integration, creates `storage/framework/{cache,sessions,views}`, `storage/logs`, and `bootstrap/cache`, and applies `775` permissions. It never copies or overwrites `.env` or WordPress core. Once a configured `.env` exists, it runs migrations, creates the storage link, and clears configuration.
+The root `.cpanel.yml` runs `deploy-cpanel.sh`. The script uses the relative path from `repositories/icrhk` to the sibling `icrhk.nyimuki.com` document root, copies Laravel and the tracked custom WordPress integration, creates `storage/framework/{cache,sessions,views}`, `storage/logs`, and `bootstrap/cache`, and applies `775` permissions. It never copies or overwrites `.env` or WordPress core. Once a configured `.env` exists, it runs migrations, creates the storage link, and clears configuration. Deployment regenerates Laravel package discovery after the live environment is configured.
 
 The migration command is intentional: Laravel owns `users`, `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, and `payment_logs`. The WordPress plugin owns all `wp_evt_*` tables and continues to manage those separately. On a brand-new Laravel installation where `.env` did not exist during the first pull, edit `.env` and run the migration command once from the `laravel-engine` directory; subsequent pulls run it automatically.
 

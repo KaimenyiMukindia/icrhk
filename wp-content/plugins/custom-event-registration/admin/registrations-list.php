@@ -146,8 +146,8 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 				<label for="payment-filter"><?php esc_html_e( 'Payment Method', 'custom-event-registration' ); ?></label>
 				<select id="payment-filter" name="payment_filter">
 					<option value=""><?php esc_html_e( 'All Methods', 'custom-event-registration' ); ?></option>
-					<option value="M-Pesa" <?php selected( $payment_filter, 'M-Pesa' ); ?>>M-Pesa</option>
-					<option value="Card" <?php selected( $payment_filter, 'Card' ); ?>>Card</option>
+						<option value="mpesa" <?php selected( $payment_filter, 'mpesa' ); ?>>M-Pesa</option>
+						<option value="card" <?php selected( $payment_filter, 'card' ); ?>>Card</option>
 				</select>
 			</div>
 			<div class="field">

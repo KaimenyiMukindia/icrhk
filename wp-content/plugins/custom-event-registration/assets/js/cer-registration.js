@@ -60,6 +60,8 @@
 
         messageBox.textContent = text;
         messageBox.className = 'cer-form-message cer-form-message-' + state;
+        messageBox.setAttribute('aria-busy', state === 'info' ? 'true' : 'false');
+        messageBox.classList.toggle('cer-form-message-pending', state === 'info');
     }
 
     function setPaymentMethod(method) {
