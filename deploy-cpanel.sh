@@ -2,8 +2,8 @@
 set -eu
 
 REPOSITORY_ROOT=$(pwd)
-# DEPLOY_ROOT must be exported by the caller (.cpanel.yml sets it to $HOME); no hardcoded sibling-folder guessing.
-: "${DEPLOY_ROOT:?DEPLOY_ROOT env var must be set (the live document/home root to deploy into)}"
+# DEPLOY_ROOT must be exported by the caller (.cpanel.yml sets it); no hardcoded sibling-folder guessing.
+: "${DEPLOY_ROOT:?DEPLOY_ROOT env var must be set (the live document root to deploy into)}"
 DEPLOY_ROOT=$(cd "$DEPLOY_ROOT" && pwd)
 
 mkdir -p "$DEPLOY_ROOT/laravel-engine" \
