@@ -15,7 +15,8 @@ wp-content/wpvivid_staging/
 wp-content/wpvividbackups/
 wp-content/temp-write-test-*
 wp-content/debug.log
-laravel-engine/bootstrap/cache/
+laravel-engine/bootstrap/cache/*
+!laravel-engine/bootstrap/cache/.gitignore
 laravel-engine/storage/
 
 # Dependencies
