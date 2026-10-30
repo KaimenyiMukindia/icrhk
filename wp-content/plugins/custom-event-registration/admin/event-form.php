@@ -45,7 +45,6 @@ $default_event = array(
 	'show_sponsors' => 1,
 	'show_pillars' => 1,
 	'max_attendees' => '',
-	'featured_image_id' => '',
 	'secondary_logo_id' => '',
 	'brand_color_1' => '#ff8c00',
 	'brand_color_2' => '#800080',
@@ -74,7 +73,37 @@ $default_event = array(
 	'uuid' => '',
 );
 
-$event_id = isset( $_GET['event_id'] ) ? absint( wp_unslash( $_GET['event_id'] ) ) : 0;
+$event_id = isset( $_GET['event_id'] )
+	? absint( wp_unslash( $_GET['event_id'] ) )
+	: ( isset( $_POST['event_id'] ) ? absint( wp_unslash( $_POST['event_id'] ) ) : 0 );
+$requested_item_type = isset( $_GET['item_type'] ) ? sanitize_key( wp_unslash( $_GET['item_type'] ) ) : '';
+$item_view = isset( $_GET['item_view'] ) && 'trash' === sanitize_key( wp_unslash( $_GET['item_view'] ) ) ? 'trash' : 'active';
+$posted_item_tabs = isset( $_POST['cer_item_active_tabs'] ) && is_array( $_POST['cer_item_active_tabs'] )
+	? wp_unslash( $_POST['cer_item_active_tabs'] )
+	: ( isset( $_GET['cer_item_active_tabs'] ) && is_array( $_GET['cer_item_active_tabs'] ) ? wp_unslash( $_GET['cer_item_active_tabs'] ) : array() );
+$posted_item_pages = isset( $_POST['cer_item_pages'] ) && is_array( $_POST['cer_item_pages'] )
+	? wp_unslash( $_POST['cer_item_pages'] )
+	: ( isset( $_GET['cer_item_pages'] ) && is_array( $_GET['cer_item_pages'] ) ? wp_unslash( $_GET['cer_item_pages'] ) : array() );
+$repeater_page_size = 5;
+$item_repeater_configs = array(
+	'tickets' => array( 'table' => $wpdb->prefix . 'evt_ticket_types', 'where' => 'deleted_at IS NULL', 'rows' => 'ticket_rows' ),
+	'speakers' => array( 'table' => $wpdb->prefix . 'evt_speakers', 'where' => 'deleted_at IS NULL', 'rows' => 'speaker_rows' ),
+	'sponsors' => array( 'table' => $wpdb->prefix . 'evt_sponsorships', 'where' => 'deleted_at IS NULL', 'rows' => 'sponsor_rows' ),
+	'pillars' => array( 'table' => $wpdb->prefix . 'evt_pillars', 'where' => 'deleted_at IS NULL', 'rows' => 'pillar_rows' ),
+	'objectives' => array( 'table' => $wpdb->prefix . 'evt_objectives', 'where' => '1 = 1', 'rows' => 'objective_rows' ),
+	'summit' => array( 'table' => $wpdb->prefix . 'evt_summit_structure', 'where' => '1 = 1', 'rows' => 'summit_rows' ),
+	'partners' => array( 'table' => $wpdb->prefix . 'evt_partners', 'where' => '1 = 1', 'rows' => 'partner_rows' ),
+	'faqs' => array( 'table' => $wpdb->prefix . 'evt_faqs', 'where' => '1 = 1', 'rows' => 'faq_rows' ),
+);
+$item_page_counts = array_fill_keys( array_keys( $item_repeater_configs ), 0 );
+$item_pages = array_fill_keys( array_keys( $item_repeater_configs ), 1 );
+$item_page_offsets = array_fill_keys( array_keys( $item_repeater_configs ), 0 );
+if ( isset( $_POST['cer_item_type'] ) ) {
+	$requested_item_type = sanitize_key( wp_unslash( $_POST['cer_item_type'] ) );
+}
+if ( isset( $_POST['cer_item_view'] ) && 'trash' === sanitize_key( wp_unslash( $_POST['cer_item_view'] ) ) ) {
+	$item_view = 'trash';
+}
 $event = null;
 $errors = array();
 $ticket_rows = array();
@@ -87,7 +116,7 @@ $partner_rows = array();
 $faq_rows = array();
 
 if ( $event_id ) {
-	$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_events WHERE id = %d", $event_id ) );
+	$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_events WHERE id = %d AND deleted_at IS NULL", $event_id ) );
 	if ( ! $event ) {
 		wp_die( esc_html__( 'Event not found.', 'custom-event-registration' ) );
 	}
@@ -132,7 +161,6 @@ if ( $event_id ) {
 	$default_event['show_sponsors'] = isset( $event->show_sponsors ) ? (int) $event->show_sponsors : 1;
 	$default_event['show_pillars'] = isset( $event->show_pillars ) ? (int) $event->show_pillars : 1;
 	$default_event['max_attendees'] = $event->max_attendees;
-	$default_event['featured_image_id'] = $event->featured_image_id;
 	$default_event['secondary_logo_id'] = isset( $event->secondary_logo_id ) ? $event->secondary_logo_id : '';
 	$default_event['brand_color_1'] = isset( $event->brand_color_1 ) && $event->brand_color_1 ? $event->brand_color_1 : '#ff8c00';
 	$default_event['brand_color_2'] = isset( $event->brand_color_2 ) && $event->brand_color_2 ? $event->brand_color_2 : '#800080';
@@ -155,14 +183,99 @@ if ( $event_id ) {
 	$default_event['location_address'] = isset( $event->location_address ) ? $event->location_address : '';
 	$default_event['uuid'] = $event->event_uuid;
 
-	$ticket_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_ticket_types WHERE event_id = %d ORDER BY order_index ASC, id ASC", $event_id ), ARRAY_A );
-	$speaker_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_speakers WHERE event_id = %d ORDER BY order_index ASC, id ASC", $event_id ), ARRAY_A );
-	$sponsor_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_sponsorships WHERE event_id = %d ORDER BY order_index ASC, id ASC", $event_id ), ARRAY_A );
-	$pillar_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_pillars WHERE event_id = %d ORDER BY order_index ASC, id ASC", $event_id ), ARRAY_A );
-	$objective_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_objectives WHERE event_id = %d ORDER BY order_index ASC, id ASC", $event_id ), ARRAY_A );
-	$summit_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_summit_structure WHERE event_id = %d ORDER BY order_index ASC, id ASC", $event_id ), ARRAY_A );
-	$partner_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_partners WHERE event_id = %d ORDER BY order_index ASC, id ASC", $event_id ), ARRAY_A );
-	$faq_rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_faqs WHERE event_id = %d ORDER BY order_index ASC, id ASC", $event_id ), ARRAY_A );
+	foreach ( $item_repeater_configs as $item_type => $item_config ) {
+		$item_where = $wpdb->prepare( "event_id = %d AND {$item_config['where']}", $event_id );
+		$item_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$item_config['table']} WHERE {$item_where}" );
+		$item_total_pages = max( 1, (int) ceil( $item_count / $repeater_page_size ) );
+		$item_page = min( $item_total_pages, max( 1, absint( $posted_item_pages[ $item_type ] ?? 1 ) ) );
+		$item_page_counts[ $item_type ] = $item_total_pages;
+		$item_pages[ $item_type ] = $item_page;
+		$item_page_offsets[ $item_type ] = ( $item_page - 1 ) * $repeater_page_size;
+		$item_rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$item_config['table']} WHERE {$item_where} ORDER BY order_index ASC, id ASC LIMIT %d OFFSET %d",
+				$repeater_page_size,
+				$item_page_offsets[ $item_type ]
+			),
+			ARRAY_A
+		);
+		${$item_config['rows']} = $item_rows;
+	}
+}
+
+$item_section_tabs = array( 'tickets' => 'setup', 'speakers' => 'program', 'sponsors' => 'partners', 'pillars' => 'program' );
+$repeater_types = array( 'tickets', 'speakers', 'sponsors', 'pillars', 'objectives', 'summit', 'partners', 'faqs' );
+$render_item_pagination = function ( string $item_type ) use ( $item_pages, $item_page_counts ): void {
+	$page = $item_pages[ $item_type ] ?? 1;
+	$total_pages = $item_page_counts[ $item_type ] ?? 1;
+	if ( $total_pages <= 1 ) {
+		return;
+	}
+
+	echo '<nav class="cer-item-page-controls" aria-label="' . esc_attr__( 'Item pages', 'custom-event-registration' ) . '">';
+	printf(
+		'<span class="cer-item-page-count">%s</span>',
+		esc_html( sprintf( __( 'Page %1$d of %2$d', 'custom-event-registration' ), $page, $total_pages ) )
+	);
+	if ( $page > 1 ) {
+		printf(
+			'<button type="submit" class="button button-small" name="cer_item_navigate" value="%1$s:%2$d" formnovalidate>%3$s</button>',
+			esc_attr( $item_type ),
+			$page - 1,
+			esc_html__( 'Previous', 'custom-event-registration' )
+		);
+	}
+	$page_numbers = $total_pages <= 7
+		? range( 1, $total_pages )
+		: array_unique( array( 1, max( 1, $page - 1 ), $page, min( $total_pages, $page + 1 ), $total_pages ) );
+	$last_page_number = 0;
+	foreach ( $page_numbers as $page_number ) {
+		if ( $last_page_number && $page_number > $last_page_number + 1 ) {
+			echo '<span aria-hidden="true">&hellip;</span>';
+		}
+		printf(
+			'<button type="submit" class="button button-small%s" name="cer_item_navigate" value="%s:%d"%s formnovalidate>%d</button>',
+			$page_number === $page ? ' current' : '',
+			esc_attr( $item_type ),
+			(int) $page_number,
+			$page_number === $page ? ' aria-current="page"' : '',
+			(int) $page_number
+		);
+		$last_page_number = $page_number;
+	}
+	if ( $page < $total_pages ) {
+		printf(
+			'<button type="submit" class="button button-small" name="cer_item_navigate" value="%1$s:%2$d" formnovalidate>%3$s</button>',
+			esc_attr( $item_type ),
+			$page + 1,
+			esc_html__( 'Next', 'custom-event-registration' )
+		);
+	}
+	echo '</nav>';
+};
+$item_trash_counts = array_fill_keys( array_keys( $item_section_tabs ), 0 );
+$item_nav_urls = array();
+foreach ( $item_section_tabs as $item_type => $event_tab ) {
+	$item_nav_args = array(
+		'page' => 'cer-event-new',
+		'event_id' => $event_id,
+		'item_type' => $item_type,
+		'cer_event_active_tab' => $event_tab,
+	);
+	$item_nav_urls[ $item_type ] = array(
+		'active' => add_query_arg( $item_nav_args, admin_url( 'admin.php' ) ),
+		'trash' => add_query_arg( array_merge( $item_nav_args, array( 'item_view' => 'trash' ) ), admin_url( 'admin.php' ) ),
+	);
+	if ( $event_id ) {
+		$item_config = cer_event_item_config( $item_type );
+		$item_trash_counts[ $item_type ] = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$item_config['table']} WHERE event_id = %d AND deleted_at IS NOT NULL AND deleted_at >= %s",
+				$event_id,
+				cer_dashboard_trash_cutoff()
+			)
+		);
+	}
 }
 
 if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form', 'cer_event_nonce' ) ) {
@@ -209,7 +322,6 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	$default_event['show_sponsors'] = empty( $_POST['show_sponsors'] ) ? 0 : 1;
 	$default_event['show_pillars'] = empty( $_POST['show_pillars'] ) ? 0 : 1;
 	$default_event['max_attendees'] = absint( wp_unslash( $_POST['max_attendees'] ?? 0 ) );
-	$default_event['featured_image_id'] = absint( wp_unslash( $_POST['featured_image_id'] ?? 0 ) );
 	$default_event['secondary_logo_id'] = absint( wp_unslash( $_POST['secondary_logo_id'] ?? 0 ) );
 	$default_event['brand_color_1'] = sanitize_hex_color( wp_unslash( $_POST['brand_color_1'] ?? '' ) ) ?: '#ff8c00';
 	$default_event['brand_color_2'] = sanitize_hex_color( wp_unslash( $_POST['brand_color_2'] ?? '' ) ) ?: '#800080';
@@ -312,7 +424,16 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	if ( empty( $errors ) ) {
 		// Total capacity is the sum of the individual ticket quantities. The
 		// dashboard "Max Attendees" field is derived from this and read-only.
-		$computed_max_attendees = 0;
+		$replaced_ticket_ids = array_map( 'absint', array_column( $ticket_rows, 'id' ) );
+		$deleted_ticket_ids = array_map( 'absint', (array) ( $_POST['deleted_tickets'] ?? array() ) );
+		$replaced_ticket_ids = array_values( array_unique( array_filter( array_merge( $replaced_ticket_ids, $deleted_ticket_ids ) ) ) );
+		$ticket_capacity_sql = "SELECT COALESCE(SUM(quantity_available), 0) FROM {$wpdb->prefix}evt_ticket_types WHERE event_id = %d AND deleted_at IS NULL";
+		$ticket_capacity_args = array( $event_id );
+		if ( $replaced_ticket_ids ) {
+			$ticket_capacity_sql .= ' AND id NOT IN (' . implode( ', ', array_fill( 0, count( $replaced_ticket_ids ), '%d' ) ) . ')';
+			$ticket_capacity_args = array_merge( $ticket_capacity_args, $replaced_ticket_ids );
+		}
+		$computed_max_attendees = (int) $wpdb->get_var( $wpdb->prepare( $ticket_capacity_sql, $ticket_capacity_args ) );
 		foreach ( $ticket_rows as $ticket ) {
 			if ( '' === sanitize_text_field( wp_unslash( $ticket['name'] ?? '' ) ) ) {
 				continue;
@@ -368,7 +489,6 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 			'show_sponsors' => $default_event['show_sponsors'],
 			'show_pillars' => $default_event['show_pillars'],
 			'max_attendees' => $default_event['max_attendees'],
-			'featured_image_id' => $default_event['featured_image_id'],
 			'secondary_logo_id' => $default_event['secondary_logo_id'],
 			'brand_color_1' => $default_event['brand_color_1'],
 			'brand_color_2' => $default_event['brand_color_2'],
@@ -401,7 +521,7 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 		if ( $event_id ) {
 			$event_update_formats = array();
 			foreach ( array_keys( $event_data ) as $field_name ) {
-				if ( in_array( $field_name, array( 'show_event_information', 'show_speakers', 'show_sponsors', 'show_pillars', 'max_attendees', 'featured_image_id', 'secondary_logo_id', 'background_image_id', 'show_objectives', 'show_summit_structure', 'show_partners', 'show_faq' ), true ) ) {
+				if ( in_array( $field_name, array( 'show_event_information', 'show_speakers', 'show_sponsors', 'show_pillars', 'max_attendees', 'secondary_logo_id', 'background_image_id', 'show_objectives', 'show_summit_structure', 'show_partners', 'show_faq' ), true ) ) {
 					$event_update_formats[] = '%d';
 				} else {
 					$event_update_formats[] = '%s';
@@ -433,52 +553,56 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 			$event_id = (int) $wpdb->insert_id;
 		}
 
-		$deleted_ticket_ids = array_map( 'absint', (array) ( $_POST['deleted_tickets'] ?? array() ) );
-		foreach ( $deleted_ticket_ids as $deleted_ticket_id ) {
-			if ( $deleted_ticket_id ) {
-				$wpdb->delete( $wpdb->prefix . 'evt_ticket_types', array( 'id' => $deleted_ticket_id, 'event_id' => $event_id ), array( '%d', '%d' ) );
-			}
-		}
-		$deleted_speaker_ids = array_map( 'absint', (array) ( $_POST['deleted_speakers'] ?? array() ) );
-		foreach ( $deleted_speaker_ids as $deleted_speaker_id ) {
-			if ( $deleted_speaker_id ) {
-				$wpdb->delete( $wpdb->prefix . 'evt_speakers', array( 'id' => $deleted_speaker_id, 'event_id' => $event_id ), array( '%d', '%d' ) );
-			}
-		}
-		$deleted_sponsor_ids = array_map( 'absint', (array) ( $_POST['deleted_sponsors'] ?? array() ) );
-		foreach ( $deleted_sponsor_ids as $deleted_sponsor_id ) {
-			if ( $deleted_sponsor_id ) {
-				$wpdb->delete( $wpdb->prefix . 'evt_sponsorships', array( 'id' => $deleted_sponsor_id, 'event_id' => $event_id ), array( '%d', '%d' ) );
-			}
-		}
-		$deleted_pillar_ids = array_map( 'absint', (array) ( $_POST['deleted_pillars'] ?? array() ) );
-		foreach ( $deleted_pillar_ids as $deleted_pillar_id ) {
-			if ( $deleted_pillar_id ) {
-				$wpdb->delete( $wpdb->prefix . 'evt_pillars', array( 'id' => $deleted_pillar_id, 'event_id' => $event_id ), array( '%d', '%d' ) );
-			}
-		}
-		$deleted_objective_ids = array_map( 'absint', (array) ( $_POST['deleted_objectives'] ?? array() ) );
-		foreach ( $deleted_objective_ids as $deleted_objective_id ) {
-			if ( $deleted_objective_id ) {
-				$wpdb->delete( $wpdb->prefix . 'evt_objectives', array( 'id' => $deleted_objective_id, 'event_id' => $event_id ), array( '%d', '%d' ) );
-			}
-		}
-		$deleted_summit_ids = array_map( 'absint', (array) ( $_POST['deleted_summit'] ?? array() ) );
-		foreach ( $deleted_summit_ids as $deleted_summit_id ) {
-			if ( $deleted_summit_id ) {
-				$wpdb->delete( $wpdb->prefix . 'evt_summit_structure', array( 'id' => $deleted_summit_id, 'event_id' => $event_id ), array( '%d', '%d' ) );
-			}
-		}
-		$deleted_partner_ids = array_map( 'absint', (array) ( $_POST['deleted_partners'] ?? array() ) );
-		foreach ( $deleted_partner_ids as $deleted_partner_id ) {
-			if ( $deleted_partner_id ) {
-				$wpdb->delete( $wpdb->prefix . 'evt_partners', array( 'id' => $deleted_partner_id, 'event_id' => $event_id ), array( '%d', '%d' ) );
-			}
-		}
-		$deleted_faq_ids = array_map( 'absint', (array) ( $_POST['deleted_faqs'] ?? array() ) );
-		foreach ( $deleted_faq_ids as $deleted_faq_id ) {
-			if ( $deleted_faq_id ) {
-				$wpdb->delete( $wpdb->prefix . 'evt_faqs', array( 'id' => $deleted_faq_id, 'event_id' => $event_id ), array( '%d', '%d' ) );
+		$deleted_repeater_fields = array(
+			'tickets' => 'deleted_tickets',
+			'speakers' => 'deleted_speakers',
+			'sponsors' => 'deleted_sponsors',
+			'pillars' => 'deleted_pillars',
+			'objectives' => 'deleted_objectives',
+			'summit' => 'deleted_summit',
+			'partners' => 'deleted_partners',
+			'faqs' => 'deleted_faqs',
+		);
+		foreach ( $deleted_repeater_fields as $item_type => $post_field ) {
+			$item_config = $item_repeater_configs[ $item_type ];
+			$deleted_ids = array_map( 'absint', (array) ( $_POST[ $post_field ] ?? array() ) );
+			foreach ( $deleted_ids as $deleted_id ) {
+				if ( ! $deleted_id ) {
+					continue;
+				}
+				$order_index = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT order_index FROM {$item_config['table']} WHERE id = %d AND event_id = %d AND {$item_config['where']}",
+						$deleted_id,
+						$event_id
+					)
+				);
+				if ( null === $order_index ) {
+					continue;
+				}
+				$deleted = $wpdb->query(
+					$wpdb->prepare(
+						"DELETE FROM {$item_config['table']} WHERE id = %d AND event_id = %d AND {$item_config['where']}",
+						$deleted_id,
+						$event_id
+					)
+				);
+				if ( false === $deleted ) {
+					error_log( sprintf( 'CER could not remove %s item %d: %s', $item_type, $deleted_id, $wpdb->last_error ) );
+					continue;
+				}
+				if ( $deleted ) {
+					$shifted = $wpdb->query(
+						$wpdb->prepare(
+							"UPDATE {$item_config['table']} SET order_index = order_index - 1 WHERE event_id = %d AND order_index > %d AND {$item_config['where']}",
+							$event_id,
+							(int) $order_index
+						)
+					);
+					if ( false === $shifted ) {
+						error_log( sprintf( 'CER could not reorder %s items after deletion: %s', $item_type, $wpdb->last_error ) );
+					}
+				}
 			}
 		}
 
@@ -502,7 +626,7 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'currency' => 'KES',
 				'quantity_available' => $ticket_quantity,
 				'description' => $ticket_description,
-				'order_index' => $index,
+				'order_index' => $item_page_offsets['tickets'] + $index,
 				'updated_at' => current_time( 'mysql' ),
 			);
 			if ( $ticket_id ) {
@@ -527,14 +651,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'role' => sanitize_text_field( wp_unslash( $speaker['role'] ?? '' ) ),
 				'bio' => sanitize_textarea_field( wp_unslash( $speaker['bio'] ?? '' ) ),
 				'photo_id' => absint( $speaker['photo_id'] ?? 0 ),
-				'is_visible' => empty( $speaker['is_visible'] ) ? 0 : 1,
-				'order_index' => $index,
+				'order_index' => $item_page_offsets['speakers'] + $index,
 				'updated_at' => current_time( 'mysql' ),
 			);
 			if ( $speaker_id ) {
-				$wpdb->update( $wpdb->prefix . 'evt_speakers', $speaker_data, array( 'id' => $speaker_id ), array( '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s' ), array( '%d' ) );
+				$wpdb->update( $wpdb->prefix . 'evt_speakers', $speaker_data, array( 'id' => $speaker_id ), array( '%d', '%s', '%s', '%s', '%d', '%d', '%s' ), array( '%d' ) );
 			} else {
-				$wpdb->insert( $wpdb->prefix . 'evt_speakers', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $speaker_data ), array( '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%d', '%s' ) );
+				$wpdb->insert( $wpdb->prefix . 'evt_speakers', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $speaker_data ), array( '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%s' ) );
 			}
 		}
 
@@ -553,14 +676,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'description' => sanitize_textarea_field( wp_unslash( $sponsor['description'] ?? '' ) ),
 				'benefits' => sanitize_textarea_field( wp_unslash( $sponsor['benefits'] ?? '' ) ),
 				'cta_url' => esc_url_raw( wp_unslash( $sponsor['cta_url'] ?? '' ) ),
-				'is_visible' => empty( $sponsor['is_visible'] ) ? 0 : 1,
-				'order_index' => $index,
+				'order_index' => $item_page_offsets['sponsors'] + $index,
 				'updated_at' => current_time( 'mysql' ),
 			);
 			if ( $sponsor_id ) {
-				$wpdb->update( $wpdb->prefix . 'evt_sponsorships', $sponsor_data, array( 'id' => $sponsor_id ), array( '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s' ), array( '%d' ) );
+				$wpdb->update( $wpdb->prefix . 'evt_sponsorships', $sponsor_data, array( 'id' => $sponsor_id ), array( '%d', '%s', '%s', '%s', '%s', '%d', '%s' ), array( '%d' ) );
 			} else {
-				$wpdb->insert( $wpdb->prefix . 'evt_sponsorships', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $sponsor_data ), array( '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s' ) );
+				$wpdb->insert( $wpdb->prefix . 'evt_sponsorships', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $sponsor_data ), array( '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s' ) );
 			}
 		}
 
@@ -578,14 +700,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'title' => $pillar_title,
 				'description' => wp_kses_post( wp_unslash( $pillar['description'] ?? '' ) ),
 				'icon' => sanitize_text_field( wp_unslash( $pillar['icon'] ?? '' ) ),
-				'is_visible' => empty( $pillar['is_visible'] ) ? 0 : 1,
-				'order_index' => $index,
+				'order_index' => $item_page_offsets['pillars'] + $index,
 				'updated_at' => current_time( 'mysql' ),
 			);
 			if ( $pillar_id ) {
-				$wpdb->update( $wpdb->prefix . 'evt_pillars', $pillar_data, array( 'id' => $pillar_id ), array( '%d', '%s', '%s', '%s', '%d', '%d', '%s' ), array( '%d' ) );
+				$wpdb->update( $wpdb->prefix . 'evt_pillars', $pillar_data, array( 'id' => $pillar_id ), array( '%d', '%s', '%s', '%s', '%d', '%s' ), array( '%d' ) );
 			} else {
-				$wpdb->insert( $wpdb->prefix . 'evt_pillars', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $pillar_data ), array( '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%s' ) );
+				$wpdb->insert( $wpdb->prefix . 'evt_pillars', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $pillar_data ), array( '%s', '%d', '%s', '%s', '%s', '%d', '%s' ) );
 			}
 		}
 
@@ -603,14 +724,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'title' => $objective_title,
 				'description' => wp_kses_post( wp_unslash( $objective['description'] ?? '' ) ),
 				'icon' => sanitize_text_field( wp_unslash( $objective['icon'] ?? '' ) ),
-				'is_visible' => empty( $objective['is_visible'] ) ? 0 : 1,
-				'order_index' => $index,
+				'order_index' => $item_page_offsets['objectives'] + $index,
 				'updated_at' => current_time( 'mysql' ),
 			);
 			if ( $objective_id ) {
-				$wpdb->update( $wpdb->prefix . 'evt_objectives', $objective_data, array( 'id' => $objective_id ), array( '%d', '%s', '%s', '%s', '%d', '%d', '%s' ), array( '%d' ) );
+				$wpdb->update( $wpdb->prefix . 'evt_objectives', $objective_data, array( 'id' => $objective_id ), array( '%d', '%s', '%s', '%s', '%d', '%s' ), array( '%d' ) );
 			} else {
-				$wpdb->insert( $wpdb->prefix . 'evt_objectives', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $objective_data ), array( '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%s' ) );
+				$wpdb->insert( $wpdb->prefix . 'evt_objectives', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $objective_data ), array( '%s', '%d', '%s', '%s', '%s', '%d', '%s' ) );
 			}
 		}
 
@@ -628,14 +748,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'title' => $summit_title,
 				'description' => wp_kses_post( wp_unslash( $summit_item['description'] ?? '' ) ),
 				'icon' => sanitize_text_field( wp_unslash( $summit_item['icon'] ?? '' ) ),
-				'is_visible' => empty( $summit_item['is_visible'] ) ? 0 : 1,
-				'order_index' => $index,
+				'order_index' => $item_page_offsets['summit'] + $index,
 				'updated_at' => current_time( 'mysql' ),
 			);
 			if ( $summit_id ) {
-				$wpdb->update( $wpdb->prefix . 'evt_summit_structure', $summit_data, array( 'id' => $summit_id ), array( '%d', '%s', '%s', '%s', '%d', '%d', '%s' ), array( '%d' ) );
+				$wpdb->update( $wpdb->prefix . 'evt_summit_structure', $summit_data, array( 'id' => $summit_id ), array( '%d', '%s', '%s', '%s', '%d', '%s' ), array( '%d' ) );
 			} else {
-				$wpdb->insert( $wpdb->prefix . 'evt_summit_structure', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $summit_data ), array( '%s', '%d', '%s', '%s', '%s', '%d', '%d', '%s' ) );
+				$wpdb->insert( $wpdb->prefix . 'evt_summit_structure', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $summit_data ), array( '%s', '%d', '%s', '%s', '%s', '%d', '%s' ) );
 			}
 		}
 
@@ -657,14 +776,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'tel_no' => sanitize_text_field( wp_unslash( $partner['tel_no'] ?? '' ) ),
 				'email' => sanitize_email( wp_unslash( $partner['email'] ?? '' ) ),
 				'address' => sanitize_text_field( wp_unslash( $partner['address'] ?? '' ) ),
-				'is_visible' => empty( $partner['is_visible'] ) ? 0 : 1,
-				'order_index' => $index,
+				'order_index' => $item_page_offsets['partners'] + $index,
 				'updated_at' => current_time( 'mysql' ),
 			);
 			if ( $partner_id ) {
-				$wpdb->update( $wpdb->prefix . 'evt_partners', $partner_data, array( 'id' => $partner_id ), array( '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s' ), array( '%d' ) );
+				$wpdb->update( $wpdb->prefix . 'evt_partners', $partner_data, array( 'id' => $partner_id ), array( '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s' ), array( '%d' ) );
 			} else {
-				$wpdb->insert( $wpdb->prefix . 'evt_partners', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $partner_data ), array( '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s' ) );
+				$wpdb->insert( $wpdb->prefix . 'evt_partners', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $partner_data ), array( '%s', '%d', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s' ) );
 			}
 		}
 
@@ -681,14 +799,13 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'event_id' => $event_id,
 				'question' => $faq_question,
 				'answer' => wp_kses_post( wp_unslash( $faq['answer'] ?? '' ) ),
-				'is_visible' => empty( $faq['is_visible'] ) ? 0 : 1,
-				'order_index' => $index,
+				'order_index' => $item_page_offsets['faqs'] + $index,
 				'updated_at' => current_time( 'mysql' ),
 			);
 			if ( $faq_id ) {
-				$wpdb->update( $wpdb->prefix . 'evt_faqs', $faq_data, array( 'id' => $faq_id ), array( '%d', '%s', '%s', '%d', '%d', '%s' ), array( '%d' ) );
+				$wpdb->update( $wpdb->prefix . 'evt_faqs', $faq_data, array( 'id' => $faq_id ), array( '%d', '%s', '%s', '%d', '%s' ), array( '%d' ) );
 			} else {
-				$wpdb->insert( $wpdb->prefix . 'evt_faqs', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $faq_data ), array( '%s', '%d', '%s', '%s', '%d', '%d', '%s' ) );
+				$wpdb->insert( $wpdb->prefix . 'evt_faqs', array_merge( array( 'created_at' => current_time( 'mysql' ) ), $faq_data ), array( '%s', '%d', '%s', '%s', '%d', '%s' ) );
 			}
 		}
 
@@ -698,7 +815,27 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 		delete_transient( 'cer_dashboard_metrics' );
 		update_option( 'cer_event_cache_version', (int) get_option( 'cer_event_cache_version', 1 ) + 1, false );
 
-		$redirect_url = add_query_arg( array( 'page' => 'cer-event-new', 'event_id' => $event_id, 'updated' => 1 ), admin_url( 'admin.php' ) );
+		$redirect_args = array(
+			'page' => 'cer-event-new',
+			'event_id' => $event_id,
+			'updated' => 1,
+			'item_type' => isset( $item_repeater_configs[ $requested_item_type ] ) ? $requested_item_type : '',
+			'cer_event_active_tab' => sanitize_key( wp_unslash( $_POST['cer_event_active_tab'] ?? 'setup' ) ),
+			'cer_item_pages' => array(),
+			'cer_item_active_tabs' => array(),
+		);
+		foreach ( array_keys( $item_repeater_configs ) as $item_type ) {
+			$redirect_args['cer_item_pages'][ $item_type ] = max( 1, absint( $posted_item_pages[ $item_type ] ?? 1 ) );
+			$redirect_args['cer_item_active_tabs'][ $item_type ] = max( 0, absint( $posted_item_tabs[ $item_type ] ?? 0 ) );
+		}
+		if ( isset( $_POST['cer_item_navigate'] ) ) {
+			$navigation = explode( ':', sanitize_text_field( wp_unslash( $_POST['cer_item_navigate'] ) ), 2 );
+			if ( 2 === count( $navigation ) && isset( $item_repeater_configs[ $navigation[0] ] ) ) {
+				$redirect_args['cer_item_pages'][ $navigation[0] ] = max( 1, absint( $navigation[1] ) );
+				$redirect_args['item_type'] = $navigation[0];
+			}
+		}
+		$redirect_url = add_query_arg( $redirect_args, admin_url( 'admin.php' ) );
 		wp_safe_redirect( $redirect_url );
 		exit;
 	}
@@ -744,7 +881,6 @@ $event_data = array(
 	'show_sponsors' => $default_event['show_sponsors'],
 	'show_pillars' => $default_event['show_pillars'],
 	'max_attendees' => $default_event['max_attendees'],
-	'featured_image_id' => $default_event['featured_image_id'],
 	'secondary_logo_id' => $default_event['secondary_logo_id'],
 	'brand_color_1' => $default_event['brand_color_1'],
 	'brand_color_2' => $default_event['brand_color_2'],
@@ -774,32 +910,79 @@ if ( empty( $ticket_rows ) ) {
 	$ticket_rows = array( array( 'id' => '', 'name' => '', 'price' => '', 'quantity_available' => '', 'description' => '' ) );
 }
 if ( empty( $speaker_rows ) ) {
-	$speaker_rows = array( array( 'id' => '', 'name' => '', 'role' => '', 'bio' => '', 'photo_id' => '', 'is_visible' => 1 ) );
+	$speaker_rows = array( array( 'id' => '', 'name' => '', 'role' => '', 'bio' => '', 'photo_id' => '' ) );
 }
 if ( empty( $sponsor_rows ) ) {
-	$sponsor_rows = array( array( 'id' => '', 'name' => '', 'description' => '', 'benefits' => '', 'cta_url' => '', 'is_visible' => 1 ) );
+	$sponsor_rows = array( array( 'id' => '', 'name' => '', 'description' => '', 'benefits' => '', 'cta_url' => '' ) );
 }
 if ( empty( $pillar_rows ) ) {
-	$pillar_rows = array( array( 'id' => '', 'title' => '', 'description' => '', 'icon' => '', 'is_visible' => 1 ) );
+	$pillar_rows = array( array( 'id' => '', 'title' => '', 'description' => '', 'icon' => '' ) );
 }
 if ( empty( $objective_rows ) ) {
-	$objective_rows = array( array( 'id' => '', 'title' => '', 'description' => '', 'icon' => '', 'is_visible' => 1 ) );
+	$objective_rows = array( array( 'id' => '', 'title' => '', 'description' => '', 'icon' => '' ) );
 }
 if ( empty( $summit_rows ) ) {
-	$summit_rows = array( array( 'id' => '', 'title' => '', 'description' => '', 'icon' => '', 'is_visible' => 1 ) );
+	$summit_rows = array( array( 'id' => '', 'title' => '', 'description' => '', 'icon' => '' ) );
 }
 if ( empty( $partner_rows ) ) {
-	$partner_rows = array( array( 'id' => '', 'name' => '', 'logo_id' => '', 'url' => '', 'tel_no' => '', 'email' => '', 'address' => '', 'is_visible' => 1 ) );
+	$partner_rows = array( array( 'id' => '', 'name' => '', 'logo_id' => '', 'url' => '', 'tel_no' => '', 'email' => '', 'address' => '' ) );
 }
 if ( empty( $faq_rows ) ) {
-	$faq_rows = array( array( 'id' => '', 'question' => '', 'answer' => '', 'is_visible' => 1 ) );
+	$faq_rows = array( array( 'id' => '', 'question' => '', 'answer' => '' ) );
+}
+
+$visible_ticket_ids = array_map( 'absint', array_column( $ticket_rows, 'id' ) );
+$pending_ticket_deletions = array_map( 'absint', (array) ( $_POST['deleted_tickets'] ?? array() ) );
+$excluded_ticket_ids = array_values( array_unique( array_filter( array_merge( $visible_ticket_ids, $pending_ticket_deletions ) ) ) );
+$other_ticket_capacity = 0;
+if ( $event_id ) {
+	$other_ticket_sql = "SELECT COALESCE(SUM(quantity_available), 0) FROM {$wpdb->prefix}evt_ticket_types WHERE event_id = %d AND deleted_at IS NULL";
+	$other_ticket_args = array( $event_id );
+	if ( $excluded_ticket_ids ) {
+		$other_ticket_sql .= ' AND id NOT IN (' . implode( ', ', array_fill( 0, count( $excluded_ticket_ids ), '%d' ) ) . ')';
+		$other_ticket_args = array_merge( $other_ticket_args, $excluded_ticket_ids );
+	}
+	$other_ticket_capacity = (int) $wpdb->get_var( $wpdb->prepare( $other_ticket_sql, $other_ticket_args ) );
+}
+
+$valid_event_tabs = array( 'setup', 'content', 'program', 'partners', 'registration', 'appearance', 'mail' );
+$active_event_tab = 'setup';
+if ( isset( $_POST['cer_event_active_tab'] ) ) {
+	$posted_event_tab = sanitize_key( wp_unslash( $_POST['cer_event_active_tab'] ) );
+	if ( in_array( $posted_event_tab, $valid_event_tabs, true ) ) {
+		$active_event_tab = $posted_event_tab;
+	}
+} elseif ( isset( $_GET['cer_event_active_tab'] ) ) {
+	$requested_event_tab = sanitize_key( wp_unslash( $_GET['cer_event_active_tab'] ) );
+	if ( in_array( $requested_event_tab, $valid_event_tabs, true ) ) {
+		$active_event_tab = $requested_event_tab;
+	}
+}
+if ( ! empty( $errors ) ) {
+	foreach ( array_keys( $errors ) as $error_key ) {
+		if ( in_array( $error_key, array( 'event_title', 'event_slug', 'event_date' ), true ) || 0 === strpos( $error_key, 'ticket_name_' ) ) {
+			$active_event_tab = 'setup';
+		} elseif ( 0 === strpos( $error_key, 'speaker_name_' ) || 0 === strpos( $error_key, 'pillar_title_' ) || 0 === strpos( $error_key, 'objective_title_' ) || 0 === strpos( $error_key, 'summit_title_' ) ) {
+			$active_event_tab = 'program';
+		} elseif ( 0 === strpos( $error_key, 'sponsor_name_' ) || 0 === strpos( $error_key, 'partner_name_' ) ) {
+			$active_event_tab = 'partners';
+		} elseif ( 0 === strpos( $error_key, 'faq_question_' ) ) {
+			$active_event_tab = 'registration';
+		}
+		break;
+	}
 }
 
 ?>
 <div class="wrap cer-admin-shell">
+	<hr class="wp-header-end" />
+	<?php if ( isset( $_GET['cer_notice'] ) && 'updated' === sanitize_key( wp_unslash( $_GET['cer_notice'] ) ) && isset( $item_section_tabs[ $requested_item_type ] ) ) : ?>
+		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Event item updated successfully.', 'custom-event-registration' ); ?></p></div>
+	<?php endif; ?>
 	<div class="cer-admin-header">
 		<h1><?php echo $event_id ? esc_html__( 'Edit Event', 'custom-event-registration' ) : esc_html__( 'Create Event', 'custom-event-registration' ); ?></h1>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=cer-events' ) ); ?>" class="button button-secondary"><?php esc_html_e( 'Back to Events', 'custom-event-registration' ); ?></a>
+		<button type="submit" form="cer-event-form" name="cer_submit" class="button button-primary"><?php echo $event_id ? esc_html__( 'Save Event', 'custom-event-registration' ) : esc_html__( 'Create Event', 'custom-event-registration' ); ?></button>
 	</div>
 	<script>
 	jQuery(function($){
@@ -851,6 +1034,15 @@ if ( empty( $faq_rows ) ) {
 				return;
 			}
 
+			var showCopyResult = function(success){
+				if (!success) {
+					alert('<?php echo esc_js( __( 'Copy failed. Please copy the section URL manually:', 'custom-event-registration' ) ); ?>' + '\n' + url);
+					return;
+				}
+				var originalText = $button.text();
+				$button.text('<?php echo esc_js( __( 'Copied!', 'custom-event-registration' ) ); ?>');
+				setTimeout(function(){ $button.text(originalText); }, 1200);
+			};
 			var fallbackCopy = function(text){
 				var $helper = $('<textarea>', {
 					readonly: 'readonly',
@@ -858,34 +1050,41 @@ if ( empty( $faq_rows ) ) {
 				}).val(text).appendTo('body');
 				$helper[0].focus();
 				$helper[0].select();
+				var copied = false;
 				try {
-					document.execCommand('copy');
+					copied = document.execCommand('copy');
 				} catch (err) {
 					console.warn('CER section link copy failed', err);
 				}
 				$helper.remove();
+				$button.trigger('focus');
+				showCopyResult(copied);
 			};
 
 			if ( navigator.clipboard && window.isSecureContext ) {
 				navigator.clipboard.writeText(url).then(function(){
-					var originalText = $button.text();
-					$button.text('<?php echo esc_js( __( 'Copied!', 'custom-event-registration' ) ); ?>');
-					setTimeout(function(){ $button.text(originalText); }, 1200);
+					showCopyResult(true);
 				}).catch(function(){ fallbackCopy(url); });
 			} else {
 				fallbackCopy(url);
-				var originalText = $button.text();
-				$button.text('<?php echo esc_js( __( 'Copied!', 'custom-event-registration' ) ); ?>');
-				setTimeout(function(){ $button.text(originalText); }, 1200);
 			}
 		});
 	});
 	</script>
 
-	<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=cer-event-new' ) ); ?>">
+	<form id="cer-event-form" class="cer-event-form" method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=cer-event-new' ) ); ?>">
 		<?php wp_nonce_field( 'cer_event_form', 'cer_event_nonce' ); ?>
 		<input type="hidden" name="cer_event_save" value="1" />
 		<input type="hidden" name="event_id" value="<?php echo esc_attr( $event_data['event_id'] ); ?>" />
+		<input type="hidden" id="cer-event-active-tab" name="cer_event_active_tab" value="<?php echo esc_attr( $active_event_tab ); ?>" />
+		<input type="hidden" name="cer_item_type" value="<?php echo esc_attr( $requested_item_type ); ?>" />
+		<input type="hidden" name="cer_item_view" value="<?php echo esc_attr( $item_view ); ?>" />
+		<?php foreach ( $repeater_types as $item_type ) : ?>
+			<input type="hidden" id="cer-item-active-tab-<?php echo esc_attr( $item_type ); ?>" name="cer_item_active_tabs[<?php echo esc_attr( $item_type ); ?>]" value="<?php echo esc_attr( absint( $posted_item_tabs[ $item_type ] ?? 0 ) ); ?>" />
+		<?php endforeach; ?>
+		<?php foreach ( $repeater_types as $item_type ) : ?>
+			<input type="hidden" id="cer-item-page-<?php echo esc_attr( $item_type ); ?>" name="cer_item_pages[<?php echo esc_attr( $item_type ); ?>]" value="<?php echo esc_attr( $item_pages[ $item_type ] ); ?>" />
+		<?php endforeach; ?>
 		<div class="cer-admin-layout">
 			<div class="cer-panel">
 				<div class="cer-panel-header">
@@ -900,7 +1099,7 @@ if ( empty( $faq_rows ) ) {
 							<?php if ( ! empty( $errors['event_title'] ) ) : ?><span class="cer-inline-error"><?php echo esc_html( $errors['event_title'] ); ?></span><?php endif; ?>
 						</div>
 						<div class="cer-field">
-							<label for="event-slug"><?php esc_html_e( 'Slug', 'custom-event-registration' ); ?> <span class="required">*</span></label>
+							<label for="event-slug"><?php esc_html_e( 'Slug', 'custom-event-registration' ); ?></label>
 							<input type="text" id="event-slug" name="event_slug" value="<?php echo esc_attr( $event_data['event_slug'] ); ?>" placeholder="e.g. icrhk-impact-forum-2026" />
 							<?php if ( ! empty( $errors['event_slug'] ) ) : ?><span class="cer-inline-error"><?php echo esc_html( $errors['event_slug'] ); ?></span><?php endif; ?>
 						</div>
@@ -917,7 +1116,7 @@ if ( empty( $faq_rows ) ) {
 							<input type="text" id="meta-keywords" name="meta_keywords" value="<?php echo esc_attr( $event_data['meta_keywords'] ); ?>" placeholder="comma, separated, keywords" />
 						</div>
 						<div class="cer-field cer-full">
-							<label for="event-description"><?php esc_html_e( 'Description', 'custom-event-registration' ); ?></label>
+							<label for="event_description"><?php esc_html_e( 'Description', 'custom-event-registration' ); ?></label>
 							<?php wp_editor( $event_data['event_description'], 'event_description', array( 'textarea_name' => 'event_description', 'media_buttons' => true, 'teeny' => false, 'textarea_rows' => 9 ) ); ?>
 						</div>
 						<div class="cer-field cer-full">
@@ -956,24 +1155,11 @@ if ( empty( $faq_rows ) ) {
 						</div>
 						<div class="cer-field">
 							<label for="max-attendees"><?php esc_html_e( 'Max Attendees', 'custom-event-registration' ); ?></label>
-							<input type="number" id="max-attendees" name="max_attendees" value="<?php echo esc_attr( $event_data['max_attendees'] ); ?>" placeholder="0" min="0" readonly />
+							<input type="number" id="max-attendees" name="max_attendees" value="<?php echo esc_attr( $event_data['max_attendees'] ); ?>" data-other-ticket-capacity="<?php echo esc_attr( $other_ticket_capacity ); ?>" placeholder="0" min="0" readonly />
 							<p class="cer-help-text"><?php esc_html_e( 'Auto-calculated as the total of all ticket quantities added below.', 'custom-event-registration' ); ?></p>
 						</div>
 						<div class="cer-field">
-							<label><?php esc_html_e( 'Featured Image', 'custom-event-registration' ); ?></label>
-							<input type="hidden" id="featured-image-id" name="featured_image_id" value="<?php echo esc_attr( $event_data['featured_image_id'] ); ?>" />
-							<div id="featured-image-preview" class="cer-inline-help" style="margin-bottom:8px; min-height: 44px;">
-								<?php if ( $event_data['featured_image_id'] ) : ?>
-									<?php echo wp_get_attachment_image( $event_data['featured_image_id'], 'thumbnail' ); ?>
-								<?php else : ?>
-									<?php esc_html_e( 'No featured image selected.', 'custom-event-registration' ); ?>
-								<?php endif; ?>
-							</div>
-							<button type="button" class="button cer-media-select" data-target="featured-image-id" data-preview="featured-image-preview"><?php esc_html_e( 'Select Image', 'custom-event-registration' ); ?></button>
-							<button type="button" class="button secondary cer-media-clear" data-target="featured-image-id" data-preview="featured-image-preview" style="margin-left:8px;"><?php esc_html_e( 'Clear', 'custom-event-registration' ); ?></button>
-						</div>
-						<div class="cer-field">
-							<label><?php esc_html_e( 'Secondary Logo', 'custom-event-registration' ); ?></label>
+							<label for="secondary-logo-select"><?php esc_html_e( 'Secondary Logo', 'custom-event-registration' ); ?></label>
 							<p class="cer-help-text"><?php esc_html_e( 'Displayed on the right side of the hero section, outside the main navigation.', 'custom-event-registration' ); ?></p>
 							<input type="hidden" id="secondary-logo-id" name="secondary_logo_id" value="<?php echo esc_attr( $event_data['secondary_logo_id'] ); ?>" />
 							<div id="secondary-logo-preview" class="cer-inline-help" style="margin-bottom:8px; min-height: 44px;">
@@ -983,8 +1169,8 @@ if ( empty( $faq_rows ) ) {
 									<?php esc_html_e( 'No secondary logo selected.', 'custom-event-registration' ); ?>
 								<?php endif; ?>
 							</div>
-							<button type="button" class="button cer-media-select" data-target="secondary-logo-id" data-preview="secondary-logo-preview"><?php esc_html_e( 'Select Logo', 'custom-event-registration' ); ?></button>
-							<button type="button" class="button secondary cer-media-clear" data-target="secondary-logo-id" data-preview="secondary-logo-preview" style="margin-left:8px;"><?php esc_html_e( 'Clear', 'custom-event-registration' ); ?></button>
+							<button type="button" id="secondary-logo-select" class="button cer-media-select" data-target="secondary-logo-id" data-preview="secondary-logo-preview"><?php esc_html_e( 'Select Logo', 'custom-event-registration' ); ?></button>
+							<button type="button" class="button secondary cer-media-clear" data-target="secondary-logo-id" data-preview="secondary-logo-preview" aria-label="<?php esc_attr_e( 'Clear secondary logo', 'custom-event-registration' ); ?>" style="margin-left:8px;"><?php esc_html_e( 'Clear', 'custom-event-registration' ); ?></button>
 						</div>
 						<div class="cer-field">
 							<label for="brand-color-1"><?php esc_html_e( 'Brand Color 1', 'custom-event-registration' ); ?></label>
@@ -995,25 +1181,25 @@ if ( empty( $faq_rows ) ) {
 							<input type="color" id="brand-color-2" name="brand_color_2" value="<?php echo esc_attr( $event_data['brand_color_2'] ); ?>" />
 						</div>
 						<div class="cer-field">
-							<label><?php esc_html_e( 'Event Background Image', 'custom-event-registration' ); ?></label>
+							<label for="background-image-select"><?php esc_html_e( 'Event Background Image', 'custom-event-registration' ); ?></label>
 							<input type="hidden" id="background-image-id" name="background_image_id" value="<?php echo esc_attr( $event_data['background_image_id'] ); ?>" />
 							<div id="background-image-preview" class="cer-inline-help" style="margin-bottom:8px; min-height: 44px;">
 								<?php if ( $event_data['background_image_id'] ) : ?><?php echo wp_get_attachment_image( $event_data['background_image_id'], 'thumbnail' ); ?><?php else : ?><?php esc_html_e( 'Default background image will be used.', 'custom-event-registration' ); ?><?php endif; ?>
 							</div>
-							<button type="button" class="button cer-media-select" data-target="background-image-id" data-preview="background-image-preview"><?php esc_html_e( 'Select Image', 'custom-event-registration' ); ?></button>
-							<button type="button" class="button secondary cer-media-clear" data-target="background-image-id" data-preview="background-image-preview" style="margin-left:8px;"><?php esc_html_e( 'Clear', 'custom-event-registration' ); ?></button>
+							<button type="button" id="background-image-select" class="button cer-media-select" data-target="background-image-id" data-preview="background-image-preview"><?php esc_html_e( 'Select Image', 'custom-event-registration' ); ?></button>
+							<button type="button" class="button secondary cer-media-clear" data-target="background-image-id" data-preview="background-image-preview" aria-label="<?php esc_attr_e( 'Clear event background image', 'custom-event-registration' ); ?>" style="margin-left:8px;"><?php esc_html_e( 'Clear', 'custom-event-registration' ); ?></button>
 						</div>
 						<?php if ( ! empty( $event_data['event_uuid'] ) ) : ?>
 						<div class="cer-field">
-							<label><?php esc_html_e( 'Event UUID', 'custom-event-registration' ); ?></label>
-							<input type="text" value="<?php echo esc_attr( $event_data['event_uuid'] ); ?>" readonly />
+							<label for="event-uuid"><?php esc_html_e( 'Event UUID', 'custom-event-registration' ); ?></label>
+							<input type="text" id="event-uuid" name="event_uuid" value="<?php echo esc_attr( $event_data['event_uuid'] ); ?>" readonly />
 						</div>
 						<?php endif; ?>
 					</div>
 				</div>
 			</div>
 
-			<div class="cer-panel is-collapsed" style="margin-top: 24px;">
+			<div class="cer-panel is-collapsed" data-cer-tab="content" style="margin-top: 24px;">
 				<div class="cer-panel-header">
 					<h2><?php esc_html_e( 'Event Display & Marketing Content', 'custom-event-registration' ); ?></h2>
 					<div class="cer-panel-header-actions">
@@ -1120,15 +1306,25 @@ if ( empty( $faq_rows ) ) {
 
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="setup" data-cer-item-type="tickets" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Ticket Types', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions"></div>
 			</div>
 			<div class="cer-panel-body">
+				<nav class="cer-item-view-nav" aria-label="<?php esc_attr_e( 'Ticket type views', 'custom-event-registration' ); ?>">
+					<a href="<?php echo esc_url( $item_nav_urls['tickets']['active'] ); ?>" class="<?php echo 'tickets' === $requested_item_type && 'active' === $item_view ? 'current' : ''; ?>"><?php esc_html_e( 'Active items', 'custom-event-registration' ); ?></a>
+					<?php if ( $event_id ) : ?><a href="<?php echo esc_url( $item_nav_urls['tickets']['trash'] ); ?>" class="<?php echo 'tickets' === $requested_item_type && 'trash' === $item_view ? 'current' : ''; ?>"><?php printf( esc_html__( 'Trash (%d)', 'custom-event-registration' ), (int) $item_trash_counts['tickets'] ); ?></a><?php endif; ?>
+				</nav>
+				<?php if ( 'tickets' === $requested_item_type && 'trash' === $item_view ) : ?>
+					<?php cer_render_event_item_trash_list( $event_id, 'tickets' ); ?>
+				<?php else : ?>
 				<p class="cer-inline-help"><?php esc_html_e( 'Add as many tickets as needed for this event.', 'custom-event-registration' ); ?></p>
 				<div class="cer-repeater" data-repeater="tickets">
 					<?php foreach ( $ticket_rows as $index => $ticket ) : ?>
+						<?php
+						$ticket_trash_url = add_query_arg( array( 'page' => 'cer-event-new', 'event_id' => $event_id, 'item_type' => 'tickets', 'item_view' => 'trash', 'cer_event_active_tab' => 'setup', 'cer_action' => 'trash_event_item', 'item_id' => absint( $ticket['id'] ?? 0 ) ), admin_url( 'admin.php' ) );
+						?>
 						<div class="cer-repeater-row" data-row-index="<?php echo esc_attr( $index ); ?>">
 							<input type="hidden" name="tickets[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( $ticket['id'] ?? '' ); ?>" />
 							<div class="cer-field">
@@ -1149,19 +1345,25 @@ if ( empty( $faq_rows ) ) {
 								<textarea name="tickets[<?php echo esc_attr( $index ); ?>][description]" placeholder="Describe what is included in this ticket type."><?php echo esc_textarea( $ticket['description'] ?? '' ); ?></textarea>
 							</div>
 							<div class="cer-repeater-actions">
-								<span class="cer-row-handle"><?php esc_html_e( 'Ticket', 'custom-event-registration' ); ?> #<?php echo esc_html( $index + 1 ); ?></span>
-								<button type="button" class="button cer-remove-row"><?php esc_html_e( 'Remove', 'custom-event-registration' ); ?></button>
+								<span class="cer-row-handle"><?php esc_html_e( 'Ticket', 'custom-event-registration' ); ?> #<?php echo esc_html( $item_page_offsets['tickets'] + $index + 1 ); ?></span>
+								<?php if ( ! empty( $ticket['id'] ) ) : ?>
+									<a class="button cer-item-action-confirm" data-confirm-kind="trash" data-confirm="<?php echo esc_attr__( 'Move this ticket to Trash? It can be restored for 30 days. Unsaved event changes will be lost.', 'custom-event-registration' ); ?>" href="<?php echo esc_url( wp_nonce_url( $ticket_trash_url, 'trash_event_item_tickets_' . absint( $ticket['id'] ) . '_' . $event_id ) ); ?>"><?php esc_html_e( 'Move to Trash', 'custom-event-registration' ); ?></a>
+								<?php else : ?>
+									<button type="button" class="button cer-remove-row"><?php esc_html_e( 'Remove', 'custom-event-registration' ); ?></button>
+								<?php endif; ?>
 							</div>
 						</div>
 					<?php endforeach; ?>
 				</div>
+				<?php $render_item_pagination( 'tickets' ); ?>
 				<div class="cer-repeater-actions" style="margin-top: 12px; justify-content: flex-start;">
 					<button type="button" class="button cer-add-row" data-repeater="tickets"><?php esc_html_e( '+ Add Ticket', 'custom-event-registration' ); ?></button>
 				</div>
+				<?php endif; ?>
 			</div>
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="program" data-cer-item-type="speakers" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Speakers', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
@@ -1170,13 +1372,24 @@ if ( empty( $faq_rows ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<nav class="cer-item-view-nav" aria-label="<?php esc_attr_e( 'Speaker views', 'custom-event-registration' ); ?>">
+					<a href="<?php echo esc_url( $item_nav_urls['speakers']['active'] ); ?>" class="<?php echo 'speakers' === $requested_item_type && 'active' === $item_view ? 'current' : ''; ?>"><?php esc_html_e( 'Active items', 'custom-event-registration' ); ?></a>
+					<?php if ( $event_id ) : ?><a href="<?php echo esc_url( $item_nav_urls['speakers']['trash'] ); ?>" class="<?php echo 'speakers' === $requested_item_type && 'trash' === $item_view ? 'current' : ''; ?>"><?php printf( esc_html__( 'Trash (%d)', 'custom-event-registration' ), (int) $item_trash_counts['speakers'] ); ?></a><?php endif; ?>
+				</nav>
+				<?php if ( 'speakers' === $requested_item_type && 'trash' === $item_view ) : ?>
+					<?php cer_render_event_item_trash_list( $event_id, 'speakers' ); ?>
+				<?php else : ?>
 				<p class="cer-inline-help"><?php esc_html_e( 'Add speakers and their profiles for the event program.', 'custom-event-registration' ); ?></p>
 				<div class="cer-repeater" data-repeater="speakers">
 					<?php foreach ( $speaker_rows as $index => $speaker ) : ?>
+						<?php
+						$speaker_trash_url = add_query_arg( array( 'page' => 'cer-event-new', 'event_id' => $event_id, 'item_type' => 'speakers', 'item_view' => 'trash', 'cer_event_active_tab' => 'program', 'cer_action' => 'trash_event_item', 'item_id' => absint( $speaker['id'] ?? 0 ) ), admin_url( 'admin.php' ) );
+						?>
 						<div class="cer-repeater-row cer-speaker-row" data-row-index="<?php echo esc_attr( $index ); ?>">
 							<input type="hidden" name="speakers[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( $speaker['id'] ?? '' ); ?>" />
 							<div class="cer-speaker-photo-col">
 								<input type="hidden" name="speakers[<?php echo esc_attr( $index ); ?>][photo_id]" id="speaker-photo-<?php echo esc_attr( $index ); ?>" value="<?php echo esc_attr( $speaker['photo_id'] ?? '' ); ?>" />
+								<label for="speaker-photo-select-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Speaker Photo', 'custom-event-registration' ); ?></label>
 								<div id="speaker-photo-preview-<?php echo esc_attr( $index ); ?>" class="cer-speaker-photo-thumb">
 									<?php if ( ! empty( $speaker['photo_id'] ) ) : ?><?php echo wp_get_attachment_image( $speaker['photo_id'], 'thumbnail' ); ?><?php else : ?><span class="dashicons dashicons-admin-users"></span><?php endif; ?>
 								</div>
@@ -1195,26 +1408,29 @@ if ( empty( $faq_rows ) ) {
 									<label><?php esc_html_e( 'Short Bio', 'custom-event-registration' ); ?></label>
 									<textarea name="speakers[<?php echo esc_attr( $index ); ?>][bio]" placeholder="Short bio or profile summary"><?php echo esc_textarea( $speaker['bio'] ?? '' ); ?></textarea>
 								</div>
-								<div class="cer-field cer-speaker-field-full">
-									<label class="cer-toggle" for="speaker-visible-<?php echo esc_attr( $index ); ?>"><span><?php esc_html_e( 'Visible on front-end', 'custom-event-registration' ); ?></span><input id="speaker-visible-<?php echo esc_attr( $index ); ?>" type="checkbox" name="speakers[<?php echo esc_attr( $index ); ?>][is_visible]" value="1" <?php checked( empty( $speaker['is_visible'] ) ? 0 : 1, 1 ); ?> /></label>
-								</div>
 							</div>
 							<div class="cer-speaker-actions-col">
-								<span class="cer-row-handle"><?php esc_html_e( 'Speaker', 'custom-event-registration' ); ?> #<?php echo esc_html( $index + 1 ); ?></span>
-								<button type="button" class="button button-small cer-media-select" data-target="speaker-photo-<?php echo esc_attr( $index ); ?>" data-preview="speaker-photo-preview-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Select Photo', 'custom-event-registration' ); ?></button>
+								<span class="cer-row-handle"><?php esc_html_e( 'Speaker', 'custom-event-registration' ); ?> #<?php echo esc_html( $item_page_offsets['speakers'] + $index + 1 ); ?></span>
+								<button type="button" id="speaker-photo-select-<?php echo esc_attr( $index ); ?>" class="button button-small cer-media-select" data-target="speaker-photo-<?php echo esc_attr( $index ); ?>" data-preview="speaker-photo-preview-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Select Photo', 'custom-event-registration' ); ?></button>
 								<button type="button" class="button button-small cer-media-clear" data-target="speaker-photo-<?php echo esc_attr( $index ); ?>" data-preview="speaker-photo-preview-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Remove Photo', 'custom-event-registration' ); ?></button>
-								<button type="button" class="button button-small cer-remove-row"><?php esc_html_e( 'Remove Speaker', 'custom-event-registration' ); ?></button>
+								<?php if ( ! empty( $speaker['id'] ) ) : ?>
+									<a class="button button-small cer-item-action-confirm" data-confirm-kind="trash" data-confirm="<?php echo esc_attr__( 'Move this speaker to Trash? It can be restored for 30 days. Unsaved event changes will be lost.', 'custom-event-registration' ); ?>" href="<?php echo esc_url( wp_nonce_url( $speaker_trash_url, 'trash_event_item_speakers_' . absint( $speaker['id'] ) . '_' . $event_id ) ); ?>"><?php esc_html_e( 'Move to Trash', 'custom-event-registration' ); ?></a>
+								<?php else : ?>
+									<button type="button" class="button button-small cer-remove-row"><?php esc_html_e( 'Remove Speaker', 'custom-event-registration' ); ?></button>
+								<?php endif; ?>
 							</div>
 						</div>
 					<?php endforeach; ?>
 				</div>
+				<?php $render_item_pagination( 'speakers' ); ?>
 				<div class="cer-repeater-actions" style="margin-top: 12px; justify-content: flex-start;">
 					<button type="button" class="button cer-add-row" data-repeater="speakers"><?php esc_html_e( '+ Add Speaker', 'custom-event-registration' ); ?></button>
 				</div>
+				<?php endif; ?>
 			</div>
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="partners" data-cer-item-type="sponsors" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Sponsorship Packages', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
@@ -1223,9 +1439,19 @@ if ( empty( $faq_rows ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<nav class="cer-item-view-nav" aria-label="<?php esc_attr_e( 'Sponsorship package views', 'custom-event-registration' ); ?>">
+					<a href="<?php echo esc_url( $item_nav_urls['sponsors']['active'] ); ?>" class="<?php echo 'sponsors' === $requested_item_type && 'active' === $item_view ? 'current' : ''; ?>"><?php esc_html_e( 'Active items', 'custom-event-registration' ); ?></a>
+					<?php if ( $event_id ) : ?><a href="<?php echo esc_url( $item_nav_urls['sponsors']['trash'] ); ?>" class="<?php echo 'sponsors' === $requested_item_type && 'trash' === $item_view ? 'current' : ''; ?>"><?php printf( esc_html__( 'Trash (%d)', 'custom-event-registration' ), (int) $item_trash_counts['sponsors'] ); ?></a><?php endif; ?>
+				</nav>
+				<?php if ( 'sponsors' === $requested_item_type && 'trash' === $item_view ) : ?>
+					<?php cer_render_event_item_trash_list( $event_id, 'sponsors' ); ?>
+				<?php else : ?>
 				<p class="cer-inline-help"><?php esc_html_e( 'Add sponsor packages and benefits for supporters of the event.', 'custom-event-registration' ); ?></p>
 				<div class="cer-repeater" data-repeater="sponsors">
 					<?php foreach ( $sponsor_rows as $index => $sponsor ) : ?>
+						<?php
+						$sponsor_trash_url = add_query_arg( array( 'page' => 'cer-event-new', 'event_id' => $event_id, 'item_type' => 'sponsors', 'item_view' => 'trash', 'cer_event_active_tab' => 'partners', 'cer_action' => 'trash_event_item', 'item_id' => absint( $sponsor['id'] ?? 0 ) ), admin_url( 'admin.php' ) );
+						?>
 						<div class="cer-repeater-row" data-row-index="<?php echo esc_attr( $index ); ?>">
 							<input type="hidden" name="sponsors[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( $sponsor['id'] ?? '' ); ?>" />
 							<div class="cer-field">
@@ -1245,23 +1471,26 @@ if ( empty( $faq_rows ) ) {
 								<label><?php esc_html_e( 'Benefits', 'custom-event-registration' ); ?></label>
 								<textarea name="sponsors[<?php echo esc_attr( $index ); ?>][benefits]" placeholder="One benefit per line or a short paragraph."><?php echo esc_textarea( $sponsor['benefits'] ?? '' ); ?></textarea>
 							</div>
-								<div class="cer-field cer-full">
-										<label class="cer-toggle" for="sponsor-visible-<?php echo esc_attr( $index ); ?>"><span><?php esc_html_e( 'Visible on front-end', 'custom-event-registration' ); ?></span><input id="sponsor-visible-<?php echo esc_attr( $index ); ?>" type="checkbox" name="sponsors[<?php echo esc_attr( $index ); ?>][is_visible]" value="1" <?php checked( empty( $sponsor['is_visible'] ) ? 0 : 1, 1 ); ?> /></label>
-								</div>
 							<div class="cer-repeater-actions">
-								<span class="cer-row-handle"><?php esc_html_e( 'Package', 'custom-event-registration' ); ?> #<?php echo esc_html( $index + 1 ); ?></span>
-								<button type="button" class="button cer-remove-row"><?php esc_html_e( 'Remove', 'custom-event-registration' ); ?></button>
+								<span class="cer-row-handle"><?php esc_html_e( 'Package', 'custom-event-registration' ); ?> #<?php echo esc_html( $item_page_offsets['sponsors'] + $index + 1 ); ?></span>
+								<?php if ( ! empty( $sponsor['id'] ) ) : ?>
+									<a class="button cer-item-action-confirm" data-confirm-kind="trash" data-confirm="<?php echo esc_attr__( 'Move this package to Trash? It can be restored for 30 days. Unsaved event changes will be lost.', 'custom-event-registration' ); ?>" href="<?php echo esc_url( wp_nonce_url( $sponsor_trash_url, 'trash_event_item_sponsors_' . absint( $sponsor['id'] ) . '_' . $event_id ) ); ?>"><?php esc_html_e( 'Move to Trash', 'custom-event-registration' ); ?></a>
+								<?php else : ?>
+									<button type="button" class="button cer-remove-row"><?php esc_html_e( 'Remove', 'custom-event-registration' ); ?></button>
+								<?php endif; ?>
 							</div>
 						</div>
 					<?php endforeach; ?>
 				</div>
+				<?php $render_item_pagination( 'sponsors' ); ?>
 				<div class="cer-repeater-actions" style="margin-top: 12px; justify-content: flex-start;">
 					<button type="button" class="button cer-add-row" data-repeater="sponsors"><?php esc_html_e( '+ Add Sponsorship Package', 'custom-event-registration' ); ?></button>
 				</div>
+				<?php endif; ?>
 			</div>
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="program" data-cer-item-type="pillars" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Thematic Pillars', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
@@ -1270,9 +1499,19 @@ if ( empty( $faq_rows ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<nav class="cer-item-view-nav" aria-label="<?php esc_attr_e( 'Thematic pillar views', 'custom-event-registration' ); ?>">
+					<a href="<?php echo esc_url( $item_nav_urls['pillars']['active'] ); ?>" class="<?php echo 'pillars' === $requested_item_type && 'active' === $item_view ? 'current' : ''; ?>"><?php esc_html_e( 'Active items', 'custom-event-registration' ); ?></a>
+					<?php if ( $event_id ) : ?><a href="<?php echo esc_url( $item_nav_urls['pillars']['trash'] ); ?>" class="<?php echo 'pillars' === $requested_item_type && 'trash' === $item_view ? 'current' : ''; ?>"><?php printf( esc_html__( 'Trash (%d)', 'custom-event-registration' ), (int) $item_trash_counts['pillars'] ); ?></a><?php endif; ?>
+				</nav>
+				<?php if ( 'pillars' === $requested_item_type && 'trash' === $item_view ) : ?>
+					<?php cer_render_event_item_trash_list( $event_id, 'pillars' ); ?>
+				<?php else : ?>
 				<p class="cer-inline-help"><?php esc_html_e( 'Add the thematic pillars that will appear in the front-end grid.', 'custom-event-registration' ); ?></p>
 				<div class="cer-repeater" data-repeater="pillars">
 					<?php foreach ( $pillar_rows as $index => $pillar ) : ?>
+						<?php
+						$pillar_trash_url = add_query_arg( array( 'page' => 'cer-event-new', 'event_id' => $event_id, 'item_type' => 'pillars', 'item_view' => 'trash', 'cer_event_active_tab' => 'program', 'cer_action' => 'trash_event_item', 'item_id' => absint( $pillar['id'] ?? 0 ) ), admin_url( 'admin.php' ) );
+						?>
 						<div class="cer-repeater-row" data-row-index="<?php echo esc_attr( $index ); ?>">
 							<input type="hidden" name="pillars[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( $pillar['id'] ?? '' ); ?>" />
 							<div class="cer-field">
@@ -1288,23 +1527,26 @@ if ( empty( $faq_rows ) ) {
 								<label><?php esc_html_e( 'Description', 'custom-event-registration' ); ?></label>
 								<textarea name="pillars[<?php echo esc_attr( $index ); ?>][description]" placeholder="Describe what this pillar covers."><?php echo esc_textarea( $pillar['description'] ?? '' ); ?></textarea>
 							</div>
-							<div class="cer-field cer-full">
-									<label class="cer-toggle" for="pillar-visible-<?php echo esc_attr( $index ); ?>"><span><?php esc_html_e( 'Visible on front-end', 'custom-event-registration' ); ?></span><input id="pillar-visible-<?php echo esc_attr( $index ); ?>" type="checkbox" name="pillars[<?php echo esc_attr( $index ); ?>][is_visible]" value="1" <?php checked( empty( $pillar['is_visible'] ) ? 0 : 1, 1 ); ?> /></label>
-							</div>
 							<div class="cer-repeater-actions">
-								<span class="cer-row-handle"><?php esc_html_e( 'Pillar', 'custom-event-registration' ); ?> #<?php echo esc_html( $index + 1 ); ?></span>
-								<button type="button" class="button cer-remove-row"><?php esc_html_e( 'Remove', 'custom-event-registration' ); ?></button>
+								<span class="cer-row-handle"><?php esc_html_e( 'Pillar', 'custom-event-registration' ); ?> #<?php echo esc_html( $item_page_offsets['pillars'] + $index + 1 ); ?></span>
+								<?php if ( ! empty( $pillar['id'] ) ) : ?>
+									<a class="button cer-item-action-confirm" data-confirm-kind="trash" data-confirm="<?php echo esc_attr__( 'Move this pillar to Trash? It can be restored for 30 days. Unsaved event changes will be lost.', 'custom-event-registration' ); ?>" href="<?php echo esc_url( wp_nonce_url( $pillar_trash_url, 'trash_event_item_pillars_' . absint( $pillar['id'] ) . '_' . $event_id ) ); ?>"><?php esc_html_e( 'Move to Trash', 'custom-event-registration' ); ?></a>
+								<?php else : ?>
+									<button type="button" class="button cer-remove-row"><?php esc_html_e( 'Remove', 'custom-event-registration' ); ?></button>
+								<?php endif; ?>
 							</div>
 						</div>
 					<?php endforeach; ?>
 				</div>
+				<?php $render_item_pagination( 'pillars' ); ?>
 				<div class="cer-repeater-actions" style="margin-top: 12px; justify-content: flex-start;">
 					<button type="button" class="button cer-add-row" data-repeater="pillars"><?php esc_html_e( '+ Add Pillar', 'custom-event-registration' ); ?></button>
 				</div>
+				<?php endif; ?>
 			</div>
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="program" data-cer-item-type="objectives" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Objectives', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
@@ -1331,23 +1573,21 @@ if ( empty( $faq_rows ) ) {
 								<label><?php esc_html_e( 'Description', 'custom-event-registration' ); ?></label>
 								<textarea name="objectives[<?php echo esc_attr( $index ); ?>][description]" placeholder="Describe this objective."><?php echo esc_textarea( $objective['description'] ?? '' ); ?></textarea>
 							</div>
-							<div class="cer-field cer-full">
-								<label class="cer-toggle" for="objective-visible-<?php echo esc_attr( $index ); ?>"><span><?php esc_html_e( 'Visible on front-end', 'custom-event-registration' ); ?></span><input id="objective-visible-<?php echo esc_attr( $index ); ?>" type="checkbox" name="objectives[<?php echo esc_attr( $index ); ?>][is_visible]" value="1" <?php checked( empty( $objective['is_visible'] ) ? 0 : 1, 1 ); ?> /></label>
-							</div>
 							<div class="cer-repeater-actions">
-								<span class="cer-row-handle"><?php esc_html_e( 'Objective', 'custom-event-registration' ); ?> #<?php echo esc_html( $index + 1 ); ?></span>
+								<span class="cer-row-handle"><?php esc_html_e( 'Objective', 'custom-event-registration' ); ?> #<?php echo esc_html( $item_page_offsets['objectives'] + $index + 1 ); ?></span>
 								<button type="button" class="button cer-remove-row"><?php esc_html_e( 'Remove', 'custom-event-registration' ); ?></button>
 							</div>
 						</div>
 					<?php endforeach; ?>
 				</div>
+				<?php $render_item_pagination( 'objectives' ); ?>
 				<div class="cer-repeater-actions" style="margin-top: 12px; justify-content: flex-start;">
 					<button type="button" class="button cer-add-row" data-repeater="objectives"><?php esc_html_e( '+ Add Objective', 'custom-event-registration' ); ?></button>
 				</div>
 			</div>
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="program" data-cer-item-type="summit" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Summit Structure', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
@@ -1374,23 +1614,21 @@ if ( empty( $faq_rows ) ) {
 								<label><?php esc_html_e( 'Description', 'custom-event-registration' ); ?></label>
 								<textarea name="summit[<?php echo esc_attr( $index ); ?>][description]" placeholder="Describe this part of the summit structure."><?php echo esc_textarea( $summit_item['description'] ?? '' ); ?></textarea>
 							</div>
-							<div class="cer-field cer-full">
-								<label class="cer-toggle" for="summit-visible-<?php echo esc_attr( $index ); ?>"><span><?php esc_html_e( 'Visible on front-end', 'custom-event-registration' ); ?></span><input id="summit-visible-<?php echo esc_attr( $index ); ?>" type="checkbox" name="summit[<?php echo esc_attr( $index ); ?>][is_visible]" value="1" <?php checked( empty( $summit_item['is_visible'] ) ? 0 : 1, 1 ); ?> /></label>
-							</div>
 							<div class="cer-repeater-actions">
-								<span class="cer-row-handle"><?php esc_html_e( 'Item', 'custom-event-registration' ); ?> #<?php echo esc_html( $index + 1 ); ?></span>
+								<span class="cer-row-handle"><?php esc_html_e( 'Item', 'custom-event-registration' ); ?> #<?php echo esc_html( $item_page_offsets['summit'] + $index + 1 ); ?></span>
 								<button type="button" class="button cer-remove-row"><?php esc_html_e( 'Remove', 'custom-event-registration' ); ?></button>
 							</div>
 						</div>
 					<?php endforeach; ?>
 				</div>
+				<?php $render_item_pagination( 'summit' ); ?>
 				<div class="cer-repeater-actions" style="margin-top: 12px; justify-content: flex-start;">
 					<button type="button" class="button cer-add-row" data-repeater="summit"><?php esc_html_e( '+ Add Structure Item', 'custom-event-registration' ); ?></button>
 				</div>
 			</div>
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="partners" data-cer-item-type="partners" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Partners', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
@@ -1406,6 +1644,7 @@ if ( empty( $faq_rows ) ) {
 							<input type="hidden" name="partners[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo esc_attr( $partner['id'] ?? '' ); ?>" />
 							<div class="cer-speaker-photo-col">
 								<input type="hidden" name="partners[<?php echo esc_attr( $index ); ?>][logo_id]" id="partner-logo-<?php echo esc_attr( $index ); ?>" value="<?php echo esc_attr( $partner['logo_id'] ?? '' ); ?>" />
+								<label for="partner-logo-select-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Partner Logo', 'custom-event-registration' ); ?></label>
 								<div id="partner-logo-preview-<?php echo esc_attr( $index ); ?>" class="cer-speaker-photo-thumb">
 									<?php if ( ! empty( $partner['logo_id'] ) ) : ?><?php echo wp_get_attachment_image( $partner['logo_id'], 'thumbnail' ); ?><?php else : ?><span class="dashicons dashicons-format-image"></span><?php endif; ?>
 								</div>
@@ -1434,26 +1673,24 @@ if ( empty( $faq_rows ) ) {
 										<input type="text" name="partners[<?php echo esc_attr( $index ); ?>][address]" value="<?php echo esc_attr( $partner['address'] ?? '' ); ?>" placeholder="Nairobi, Kenya" />
 									</div>
 								</div>
-								<div class="cer-field cer-speaker-field-full">
-									<label class="cer-toggle" for="partner-visible-<?php echo esc_attr( $index ); ?>"><span><?php esc_html_e( 'Visible on front-end', 'custom-event-registration' ); ?></span><input id="partner-visible-<?php echo esc_attr( $index ); ?>" type="checkbox" name="partners[<?php echo esc_attr( $index ); ?>][is_visible]" value="1" <?php checked( empty( $partner['is_visible'] ) ? 0 : 1, 1 ); ?> /></label>
-								</div>
 							</div>
 							<div class="cer-speaker-actions-col">
-								<span class="cer-row-handle"><?php esc_html_e( 'Partner', 'custom-event-registration' ); ?> #<?php echo esc_html( $index + 1 ); ?></span>
-								<button type="button" class="button button-small cer-media-select" data-target="partner-logo-<?php echo esc_attr( $index ); ?>" data-preview="partner-logo-preview-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Select Logo', 'custom-event-registration' ); ?></button>
+								<span class="cer-row-handle"><?php esc_html_e( 'Partner', 'custom-event-registration' ); ?> #<?php echo esc_html( $item_page_offsets['partners'] + $index + 1 ); ?></span>
+								<button type="button" id="partner-logo-select-<?php echo esc_attr( $index ); ?>" class="button button-small cer-media-select" data-target="partner-logo-<?php echo esc_attr( $index ); ?>" data-preview="partner-logo-preview-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Select Logo', 'custom-event-registration' ); ?></button>
 								<button type="button" class="button button-small cer-media-clear" data-target="partner-logo-<?php echo esc_attr( $index ); ?>" data-preview="partner-logo-preview-<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Remove Logo', 'custom-event-registration' ); ?></button>
 								<button type="button" class="button button-small cer-remove-row"><?php esc_html_e( 'Remove Partner', 'custom-event-registration' ); ?></button>
 							</div>
 						</div>
 					<?php endforeach; ?>
 				</div>
+				<?php $render_item_pagination( 'partners' ); ?>
 				<div class="cer-repeater-actions" style="margin-top: 12px; justify-content: flex-start;">
 					<button type="button" class="button cer-add-row" data-repeater="partners"><?php esc_html_e( '+ Add Partner', 'custom-event-registration' ); ?></button>
 				</div>
 			</div>
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="registration" data-cer-item-type="faqs" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'FAQ', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions">
@@ -1476,23 +1713,21 @@ if ( empty( $faq_rows ) ) {
 								<label><?php esc_html_e( 'Answer', 'custom-event-registration' ); ?></label>
 								<textarea name="faqs[<?php echo esc_attr( $index ); ?>][answer]" placeholder="Provide the answer to this question."><?php echo esc_textarea( $faq['answer'] ?? '' ); ?></textarea>
 							</div>
-							<div class="cer-field cer-full">
-								<label class="cer-toggle" for="faq-visible-<?php echo esc_attr( $index ); ?>"><span><?php esc_html_e( 'Visible on front-end', 'custom-event-registration' ); ?></span><input id="faq-visible-<?php echo esc_attr( $index ); ?>" type="checkbox" name="faqs[<?php echo esc_attr( $index ); ?>][is_visible]" value="1" <?php checked( empty( $faq['is_visible'] ) ? 0 : 1, 1 ); ?> /></label>
-							</div>
 							<div class="cer-repeater-actions">
-								<span class="cer-row-handle"><?php esc_html_e( 'Question', 'custom-event-registration' ); ?> #<?php echo esc_html( $index + 1 ); ?></span>
+								<span class="cer-row-handle"><?php esc_html_e( 'Question', 'custom-event-registration' ); ?> #<?php echo esc_html( $item_page_offsets['faqs'] + $index + 1 ); ?></span>
 								<button type="button" class="button cer-remove-row"><?php esc_html_e( 'Remove', 'custom-event-registration' ); ?></button>
 							</div>
 						</div>
 					<?php endforeach; ?>
 				</div>
+				<?php $render_item_pagination( 'faqs' ); ?>
 				<div class="cer-repeater-actions" style="margin-top: 12px; justify-content: flex-start;">
 					<button type="button" class="button cer-add-row" data-repeater="faqs"><?php esc_html_e( '+ Add Question', 'custom-event-registration' ); ?></button>
 				</div>
 			</div>
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="appearance" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Location / Map', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions"></div>
@@ -1524,7 +1759,7 @@ if ( empty( $faq_rows ) ) {
 			</div>
 		</div>
 
-		<div class="cer-panel" style="margin-top: 24px;">
+		<div class="cer-panel" data-cer-tab="mail" style="margin-top: 24px;">
 			<div class="cer-panel-header">
 				<h2><?php esc_html_e( 'Event Mail Settings', 'custom-event-registration' ); ?></h2>
 				<div class="cer-panel-header-actions"></div>
@@ -1546,15 +1781,16 @@ if ( empty( $faq_rows ) ) {
 
 		<div id="cer-map-modal" class="cer-map-modal" hidden>
 			<div class="cer-map-modal-backdrop"></div>
-			<div class="cer-map-modal-dialog">
+			<div class="cer-map-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="cer-map-modal-title" tabindex="-1">
 				<button type="button" class="cer-map-modal-close" id="cer-close-map-search" aria-label="<?php esc_attr_e( 'Close', 'custom-event-registration' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
-				<h2><?php esc_html_e( 'Search Location', 'custom-event-registration' ); ?></h2>
+				<h2 id="cer-map-modal-title"><?php esc_html_e( 'Search Location', 'custom-event-registration' ); ?></h2>
 				<div class="cer-map-search-row">
+					<label for="cer-map-search-input"><?php esc_html_e( 'Location or coordinates', 'custom-event-registration' ); ?></label>
 					<input type="text" id="cer-map-search-input" placeholder="<?php esc_attr_e( 'Type an address, place name, or coordinates (lat, lng)…', 'custom-event-registration' ); ?>" />
 					<button type="button" class="button button-primary" id="cer-map-search-go"><?php esc_html_e( 'Preview', 'custom-event-registration' ); ?></button>
 				</div>
 				<div class="cer-map-embed-wrap">
-					<iframe id="cer-map-embed" src="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+					<iframe id="cer-map-embed" src="" title="<?php esc_attr_e( 'Map location preview', 'custom-event-registration' ); ?>" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 				</div>
 				<button type="button" class="button button-primary" id="cer-map-use-location"><?php esc_html_e( 'Use This Location', 'custom-event-registration' ); ?></button>
 			</div>
@@ -1564,6 +1800,6 @@ if ( empty( $faq_rows ) ) {
 			<?php submit_button( $event_id ? __( 'Save Event', 'custom-event-registration' ) : __( 'Create Event', 'custom-event-registration' ), 'primary', 'cer_submit', false ); ?>
 		</div>
 		<div class="cer-deleted-inputs" style="display:none;"></div>
+		<p id="cer-form-status" class="screen-reader-text" role="status" aria-live="polite"></p>
 	</form>
 </div>
-

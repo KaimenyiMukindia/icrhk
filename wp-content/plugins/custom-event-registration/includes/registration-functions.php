@@ -13,7 +13,7 @@ function cer_get_registration_form_markup( $event_id = null ) {
 	if ( $event_id ) {
 		$event = $wpdb->get_row( $wpdb->prepare( "SELECT slug, summary_note FROM {$wpdb->prefix}evt_events WHERE id = %d LIMIT 1", $event_id ) );
 		$table = $wpdb->prefix . 'evt_ticket_types';
-		$ticket_types = $wpdb->get_results( $wpdb->prepare( "SELECT id, name, price FROM $table WHERE event_id = %d ORDER BY order_index ASC, id ASC", $event_id ) );
+		$ticket_types = $wpdb->get_results( $wpdb->prepare( "SELECT id, name, price FROM $table WHERE event_id = %d AND deleted_at IS NULL ORDER BY order_index ASC, id ASC", $event_id ) );
 		if ( ! empty( $ticket_types ) ) {
 			$amount = (string) $ticket_types[0]->price;
 		}

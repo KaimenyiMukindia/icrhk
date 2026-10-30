@@ -56,3 +56,6 @@ wp-content/themes/*
 
 # Standard WordPress content index
 /wp-content/index.php
+
+# Local editor configuration
+.vscode/

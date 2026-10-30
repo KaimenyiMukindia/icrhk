@@ -30,6 +30,9 @@ register_deactivation_hook( __FILE__, 'cer_deactivate_plugin' );
 add_action( 'admin_menu', 'cer_register_admin_menu' );
 add_action( 'admin_init', 'cer_maybe_ensure_event_schema' );
 add_action( 'admin_init', 'cer_handle_admin_actions' );
+add_action( 'plugins_loaded', 'cer_maybe_install_dashboard_trash_schema' );
+add_action( 'plugins_loaded', 'cer_maybe_install_event_item_trash_schema' );
+add_action( 'cer_purge_expired_event_trash', 'cer_purge_expired_event_trash' );
 add_action( 'wp_ajax_cer_submit_registration', 'cer_handle_ajax_submission' );
 add_action( 'wp_ajax_nopriv_cer_submit_registration', 'cer_handle_ajax_submission' );
 add_action( 'rest_api_init', 'cer_register_rest_routes' );
@@ -219,11 +222,20 @@ function cer_maybe_ensure_event_schema() {
 	cer_add_column_if_missing( $events_table, 'brand_color_2', 'VARCHAR(20) NULL', 'brand_color_1' );
 	cer_add_column_if_missing( $events_table, 'background_image_id', 'BIGINT(20) UNSIGNED NULL', 'brand_color_2' );
 
+	if ( in_array( $schema_version, array( '9', '10' ), true ) ) {
+		return;
+	}
+
 	if ( '8' === $schema_version ) {
 		cer_install_event_schema();
 		cer_add_column_if_missing( $registrations_table, 'reserved_until', 'DATETIME NULL', 'status' );
 		cer_add_column_if_missing( $registrations_table, 'release_notified_at', 'DATETIME NULL', 'reserved_until' );
 		cer_backfill_paid_ticket_inventory();
+		cer_add_column_if_missing( $events_table, 'deleted_at', 'DATETIME NULL', 'status' );
+		cer_add_column_if_missing( $registrations_table, 'deleted_at', 'DATETIME NULL', 'status' );
+		cer_add_index_if_missing( $events_table, 'deleted_at', 'deleted_at' );
+		cer_add_index_if_missing( $registrations_table, 'deleted_at', 'deleted_at' );
+		update_option( 'cer_schema_version', '9', false );
 		return;
 	}
 
@@ -418,6 +430,9 @@ function cer_schedule_registration_expiry_cleanup(): void {
 	if ( ! wp_next_scheduled( 'cer_release_expired_registrations' ) ) {
 		wp_schedule_event( time() + 300, 'every_5_minutes', 'cer_release_expired_registrations' );
 	}
+	if ( ! wp_next_scheduled( 'cer_purge_expired_event_trash' ) ) {
+		wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'cer_purge_expired_event_trash' );
+	}
 }
 
 function cer_register_inventory_cleanup_schedule( $schedules ) {
@@ -532,7 +547,7 @@ function cer_maybe_render_clean_event_url() {
 	}
 
 	global $wpdb;
-	$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_events WHERE slug = %s AND status = %s LIMIT 1", $event_slug, 'published' ) );
+	$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}evt_events WHERE slug = %s AND status = %s AND deleted_at IS NULL LIMIT 1", $event_slug, 'published' ) );
 	if ( ! $event ) {
 		global $wp_query;
 		if ( isset( $wp_query ) ) {
@@ -608,6 +623,47 @@ function cer_add_index_if_missing( string $table, string $index, string $columns
 	}
 }
 
+function cer_maybe_install_dashboard_trash_schema(): void {
+	if ( '8' !== get_option( 'cer_schema_version', '' ) ) {
+		return;
+	}
+
+	global $wpdb;
+	$events_table = $wpdb->prefix . 'evt_events';
+	$registrations_table = $wpdb->prefix . 'evt_registrations';
+
+	cer_add_column_if_missing( $events_table, 'deleted_at', 'DATETIME NULL', 'status' );
+	cer_add_column_if_missing( $registrations_table, 'deleted_at', 'DATETIME NULL', 'status' );
+	cer_add_index_if_missing( $events_table, 'deleted_at', 'deleted_at' );
+	cer_add_index_if_missing( $registrations_table, 'deleted_at', 'deleted_at' );
+	update_option( 'cer_schema_version', '9', false );
+}
+
+function cer_maybe_install_event_item_trash_schema(): void {
+	if ( '9' !== get_option( 'cer_schema_version', '' ) ) {
+		return;
+	}
+
+	global $wpdb;
+	$tables = array(
+		$wpdb->prefix . 'evt_ticket_types',
+		$wpdb->prefix . 'evt_speakers',
+		$wpdb->prefix . 'evt_sponsorships',
+		$wpdb->prefix . 'evt_pillars',
+	);
+
+	foreach ( $tables as $table ) {
+		cer_add_column_if_missing( $table, 'deleted_at', 'DATETIME NULL', 'updated_at' );
+		cer_add_index_if_missing( $table, 'deleted_at', 'deleted_at' );
+		if ( ! cer_column_exists( $table, 'deleted_at' ) ) {
+			error_log( sprintf( 'CER schema migration incomplete for %s.deleted_at; schema version remains 9.', $table ) );
+			return;
+		}
+	}
+
+	update_option( 'cer_schema_version', '10', false );
+}
+
 function cer_install_event_schema() {
 	global $wpdb;
 
@@ -630,11 +686,11 @@ function cer_install_event_schema() {
 		event_end_date DATETIME,
 		venue VARCHAR(255),
 		status VARCHAR(50) NOT NULL DEFAULT 'draft',
+		deleted_at DATETIME NULL,
 		show_speakers TINYINT(1) NOT NULL DEFAULT 1,
 		show_sponsors TINYINT(1) NOT NULL DEFAULT 1,
 		show_pillars TINYINT(1) NOT NULL DEFAULT 1,
 		max_attendees INT UNSIGNED,
-		featured_image_id BIGINT(20) UNSIGNED,
 		brand_color_1 VARCHAR(20) NULL,
 		brand_color_2 VARCHAR(20) NULL,
 		background_image_id BIGINT(20) UNSIGNED,
@@ -644,7 +700,8 @@ function cer_install_event_schema() {
 		UNIQUE KEY event_uuid (event_uuid),
 		UNIQUE KEY slug (slug),
 		KEY status (status),
-		KEY event_date (event_date)
+		KEY event_date (event_date),
+		KEY deleted_at (deleted_at)
 	) $charset_collate;";
 
 	$sql_ticket_types = "CREATE TABLE IF NOT EXISTS $ticket_types_table (
@@ -657,10 +714,12 @@ function cer_install_event_schema() {
 		quantity_sold INT UNSIGNED DEFAULT 0,
 		description TEXT,
 		order_index INT UNSIGNED DEFAULT 0,
+		deleted_at DATETIME NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		KEY event_id (event_id),
+		KEY deleted_at (deleted_at),
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
 	) $charset_collate;";
 
@@ -671,12 +730,13 @@ function cer_install_event_schema() {
 		role VARCHAR(255),
 		bio TEXT,
 		photo_id BIGINT(20) UNSIGNED,
-		is_visible TINYINT(1) NOT NULL DEFAULT 1,
 		order_index INT UNSIGNED DEFAULT 0,
+		deleted_at DATETIME NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		KEY event_id (event_id),
+		KEY deleted_at (deleted_at),
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
 	) $charset_collate;";
 
@@ -687,12 +747,13 @@ function cer_install_event_schema() {
 		description TEXT,
 		benefits LONGTEXT,
 		cta_url VARCHAR(255),
-		is_visible TINYINT(1) NOT NULL DEFAULT 1,
 		order_index INT UNSIGNED DEFAULT 0,
+		deleted_at DATETIME NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		KEY event_id (event_id),
+		KEY deleted_at (deleted_at),
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
 	) $charset_collate;";
 
@@ -702,12 +763,13 @@ function cer_install_event_schema() {
 		title VARCHAR(255) NOT NULL,
 		description LONGTEXT,
 		icon VARCHAR(255),
-		is_visible TINYINT(1) NOT NULL DEFAULT 1,
 		order_index INT UNSIGNED DEFAULT 0,
+		deleted_at DATETIME NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		KEY event_id (event_id),
+		KEY deleted_at (deleted_at),
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
 	) $charset_collate;";
 
@@ -722,7 +784,6 @@ function cer_install_event_schema() {
 		title VARCHAR(255) NOT NULL,
 		description LONGTEXT,
 		icon VARCHAR(255),
-		is_visible TINYINT(1) NOT NULL DEFAULT 1,
 		order_index INT UNSIGNED DEFAULT 0,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -737,7 +798,6 @@ function cer_install_event_schema() {
 		title VARCHAR(255) NOT NULL,
 		description LONGTEXT,
 		icon VARCHAR(255),
-		is_visible TINYINT(1) NOT NULL DEFAULT 1,
 		order_index INT UNSIGNED DEFAULT 0,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -755,7 +815,6 @@ function cer_install_event_schema() {
 		tel_no VARCHAR(50),
 		email VARCHAR(255),
 		address VARCHAR(255),
-		is_visible TINYINT(1) NOT NULL DEFAULT 1,
 		order_index INT UNSIGNED DEFAULT 0,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -769,7 +828,6 @@ function cer_install_event_schema() {
 		event_id BIGINT(20) UNSIGNED NOT NULL,
 		question VARCHAR(255) NOT NULL,
 		answer LONGTEXT,
-		is_visible TINYINT(1) NOT NULL DEFAULT 1,
 		order_index INT UNSIGNED DEFAULT 0,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -803,6 +861,7 @@ function cer_install_event_schema() {
 		serial_number VARCHAR(255) NULL,
 		confirmation_code VARCHAR(255) NULL,
 		status VARCHAR(50) NOT NULL DEFAULT 'pending',
+		deleted_at DATETIME NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
@@ -813,6 +872,7 @@ function cer_install_event_schema() {
 		KEY ticket_type_id (ticket_type_id),
 		KEY created_at (created_at),
 		KEY status (status),
+		KEY deleted_at (deleted_at),
 		KEY payment_method (payment_method),
 		KEY event_status_created (event_id, status, created_at),
 		KEY full_name_search_hash (full_name_search_hash),
@@ -863,10 +923,7 @@ function cer_install_event_schema() {
 	cer_add_column_if_missing( $events_table, 'show_pillars', 'TINYINT(1) NOT NULL DEFAULT 1', 'show_sponsors' );
 	cer_add_column_if_missing( $registrations_table, 'payment_uuid', 'VARCHAR(64) NULL', 'registration_uuid' );
 	cer_add_column_if_missing( $registrations_table, 'gateway_reference', 'VARCHAR(255) NULL', 'payment_uuid' );
-	cer_add_column_if_missing( $speakers_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'photo_id' );
-	cer_add_column_if_missing( $sponsorships_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'cta_url' );
-	cer_add_column_if_missing( $pillars_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'icon' );
-	cer_add_column_if_missing( $events_table, 'secondary_logo_id', 'BIGINT(20) UNSIGNED NULL', 'featured_image_id' );
+	cer_add_column_if_missing( $events_table, 'secondary_logo_id', 'BIGINT(20) UNSIGNED NULL', 'max_attendees' );
 	cer_add_column_if_missing( $events_table, 'objectives_heading', 'VARCHAR(255) NULL', 'secondary_logo_id' );
 	cer_add_column_if_missing( $events_table, 'objectives_intro', 'LONGTEXT NULL', 'objectives_heading' );
 	cer_add_column_if_missing( $events_table, 'show_objectives', 'TINYINT(1) NOT NULL DEFAULT 1', 'objectives_intro' );
@@ -894,9 +951,6 @@ function cer_install_event_schema() {
 	cer_add_column_if_missing( $partners_table, 'tel_no', 'VARCHAR(50) NULL', 'url' );
 	cer_add_column_if_missing( $partners_table, 'email', 'VARCHAR(255) NULL', 'tel_no' );
 	cer_add_column_if_missing( $partners_table, 'address', 'VARCHAR(255) NULL', 'email' );
-	cer_add_column_if_missing( $objectives_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'icon' );
-	cer_add_column_if_missing( $summit_structure_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'icon' );
-	cer_add_column_if_missing( $partners_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'address' );
 	if ( cer_column_exists( $partners_table, 'link_url' ) && ! cer_column_exists( $partners_table, 'url' ) ) {
 		$wpdb->query( "ALTER TABLE {$partners_table} CHANGE link_url url VARCHAR(500) NULL" );
 	}
@@ -904,7 +958,6 @@ function cer_install_event_schema() {
 		$wpdb->query( "UPDATE {$partners_table} SET url = IFNULL(url, link_url) WHERE url IS NULL OR url = ''" );
 		$wpdb->query( "ALTER TABLE {$partners_table} DROP COLUMN link_url" );
 	}
-	cer_add_column_if_missing( $faqs_table, 'is_visible', 'TINYINT(1) NOT NULL DEFAULT 1', 'answer' );
 	cer_add_index_if_missing( $events_table, 'event_date', 'event_date' );
 	cer_add_index_if_missing( $registrations_table, 'created_at', 'created_at' );
 	cer_add_index_if_missing( $registrations_table, 'status', 'status' );
@@ -913,7 +966,452 @@ function cer_install_event_schema() {
 }
 
 function cer_deactivate_plugin() {
+	wp_clear_scheduled_hook( 'cer_purge_expired_event_trash' );
 	flush_rewrite_rules();
+}
+
+function cer_dashboard_trash_cutoff(): string {
+	return wp_date( 'Y-m-d H:i:s', time() - ( 30 * DAY_IN_SECONDS ) );
+}
+
+function cer_dashboard_trash_table( string $record_type ) {
+	global $wpdb;
+
+	$tables = array(
+		'event' => $wpdb->prefix . 'evt_events',
+		'registration' => $wpdb->prefix . 'evt_registrations',
+	);
+
+	return $tables[ $record_type ] ?? new WP_Error( 'cer_invalid_trash_type', __( 'That record type cannot be moved to trash.', 'custom-event-registration' ) );
+}
+
+function cer_trash_dashboard_record( string $record_type, int $record_id ) {
+	global $wpdb;
+
+	$table = cer_dashboard_trash_table( $record_type );
+	if ( is_wp_error( $table ) ) {
+		return $table;
+	}
+
+	$record = $wpdb->get_row( $wpdb->prepare( "SELECT id, deleted_at FROM {$table} WHERE id = %d LIMIT 1", $record_id ), ARRAY_A );
+	if ( ! $record || ! empty( $record['deleted_at'] ) ) {
+		return new WP_Error( 'cer_record_not_active', __( 'The selected record is no longer active.', 'custom-event-registration' ) );
+	}
+
+	$now = current_time( 'mysql' );
+	$updated = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$table} SET deleted_at = %s, updated_at = %s WHERE id = %d AND deleted_at IS NULL",
+			$now,
+			$now,
+			$record_id
+		)
+	);
+	if ( false === $updated ) {
+		return new WP_Error( 'cer_trash_failed', __( 'The record could not be moved to trash. Please try again.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+	}
+	if ( 0 === $updated ) {
+		return new WP_Error( 'cer_record_not_active', __( 'The selected record is no longer active.', 'custom-event-registration' ) );
+	}
+
+	cer_invalidate_dashboard_trash_caches( $record_type );
+	return true;
+}
+
+function cer_restore_dashboard_record( string $record_type, int $record_id ) {
+	global $wpdb;
+
+	$table = cer_dashboard_trash_table( $record_type );
+	if ( is_wp_error( $table ) ) {
+		return $table;
+	}
+
+	$record = $wpdb->get_row( $wpdb->prepare( "SELECT id, deleted_at FROM {$table} WHERE id = %d LIMIT 1", $record_id ), ARRAY_A );
+	if ( ! $record || empty( $record['deleted_at'] ) ) {
+		return new WP_Error( 'cer_record_not_trashed', __( 'The selected record is not in the trash.', 'custom-event-registration' ) );
+	}
+	if ( $record['deleted_at'] < cer_dashboard_trash_cutoff() ) {
+		return new WP_Error( 'cer_trash_expired', __( 'This record has been in the trash for more than 30 days and can no longer be restored.', 'custom-event-registration' ) );
+	}
+
+	$updated = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$table} SET deleted_at = NULL, updated_at = %s WHERE id = %d AND deleted_at = %s",
+			current_time( 'mysql' ),
+			$record_id,
+			$record['deleted_at']
+		)
+	);
+	if ( false === $updated ) {
+		return new WP_Error( 'cer_restore_failed', __( 'The record could not be restored. Please try again.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+	}
+	if ( 0 === $updated ) {
+		return new WP_Error( 'cer_record_not_trashed', __( 'The selected record is no longer in the trash.', 'custom-event-registration' ) );
+	}
+
+	cer_invalidate_dashboard_trash_caches( $record_type );
+	return true;
+}
+
+function cer_event_item_config( string $item_type ) {
+	global $wpdb;
+
+	$item_types = array(
+		'tickets' => array( 'table' => $wpdb->prefix . 'evt_ticket_types', 'label' => __( 'ticket type', 'custom-event-registration' ), 'name_field' => 'name' ),
+		'speakers' => array( 'table' => $wpdb->prefix . 'evt_speakers', 'label' => __( 'speaker', 'custom-event-registration' ), 'name_field' => 'name' ),
+		'sponsors' => array( 'table' => $wpdb->prefix . 'evt_sponsorships', 'label' => __( 'sponsorship package', 'custom-event-registration' ), 'name_field' => 'name' ),
+		'pillars' => array( 'table' => $wpdb->prefix . 'evt_pillars', 'label' => __( 'thematic pillar', 'custom-event-registration' ), 'name_field' => 'title' ),
+	);
+
+	return $item_types[ $item_type ] ?? new WP_Error( 'cer_invalid_event_item_type', __( 'That event item type is not supported.', 'custom-event-registration' ) );
+}
+
+function cer_bump_event_item_cache_version(): void {
+	update_option( 'cer_event_cache_version', (int) get_option( 'cer_event_cache_version', 1 ) + 1, false );
+	delete_transient( 'cer_dashboard_metrics' );
+}
+
+function cer_trash_event_item( string $item_type, int $item_id, int $event_id ) {
+	global $wpdb;
+
+	$config = cer_event_item_config( $item_type );
+	if ( is_wp_error( $config ) ) {
+		return $config;
+	}
+	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}evt_events WHERE id = %d AND deleted_at IS NULL", $event_id ) );
+	if ( ! $event ) {
+		return new WP_Error( 'cer_event_item_parent_inactive', __( 'Items can only be trashed while their parent event is active.', 'custom-event-registration' ) );
+	}
+
+	$item = $wpdb->get_row( $wpdb->prepare( "SELECT id, deleted_at FROM {$config['table']} WHERE id = %d AND event_id = %d", $item_id, $event_id ), ARRAY_A );
+	if ( ! $item || ! empty( $item['deleted_at'] ) ) {
+		return new WP_Error( 'cer_event_item_not_active', __( 'The selected item is no longer active.', 'custom-event-registration' ) );
+	}
+
+	$now = current_time( 'mysql' );
+	$updated = $wpdb->update(
+		$config['table'],
+		array( 'deleted_at' => $now, 'updated_at' => $now ),
+		array( 'id' => $item_id, 'event_id' => $event_id, 'deleted_at' => null ),
+		array( '%s', '%s' ),
+		array( '%d', '%d', '%s' )
+	);
+	if ( false === $updated ) {
+		return new WP_Error( 'cer_event_item_trash_failed', __( 'The item could not be moved to Trash.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+	}
+	if ( 0 === $updated ) {
+		return new WP_Error( 'cer_event_item_not_active', __( 'The selected item is no longer active.', 'custom-event-registration' ) );
+	}
+
+	cer_bump_event_item_cache_version();
+	return true;
+}
+
+function cer_restore_event_item( string $item_type, int $item_id, int $event_id ) {
+	global $wpdb;
+
+	$config = cer_event_item_config( $item_type );
+	if ( is_wp_error( $config ) ) {
+		return $config;
+	}
+	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, deleted_at FROM {$wpdb->prefix}evt_events WHERE id = %d", $event_id ), ARRAY_A );
+	if ( ! $event ) {
+		return new WP_Error( 'cer_event_item_parent_missing', __( 'The parent event no longer exists, so this item cannot be restored.', 'custom-event-registration' ) );
+	}
+	if ( ! empty( $event['deleted_at'] ) ) {
+		return new WP_Error( 'cer_event_item_parent_trashed', __( 'Restore the parent event before restoring this item.', 'custom-event-registration' ) );
+	}
+
+	$item = $wpdb->get_row( $wpdb->prepare( "SELECT id, deleted_at FROM {$config['table']} WHERE id = %d AND event_id = %d", $item_id, $event_id ), ARRAY_A );
+	if ( ! $item || empty( $item['deleted_at'] ) ) {
+		return new WP_Error( 'cer_event_item_not_trashed', __( 'The selected item is not in this event’s Trash.', 'custom-event-registration' ) );
+	}
+	if ( $item['deleted_at'] < cer_dashboard_trash_cutoff() ) {
+		return new WP_Error( 'cer_event_item_trash_expired', __( 'This item has been in Trash for more than 30 days and can no longer be restored.', 'custom-event-registration' ) );
+	}
+
+	$updated = $wpdb->update(
+		$config['table'],
+		array( 'deleted_at' => null, 'updated_at' => current_time( 'mysql' ) ),
+		array( 'id' => $item_id, 'event_id' => $event_id, 'deleted_at' => $item['deleted_at'] ),
+		array( '%s', '%s' ),
+		array( '%d', '%d', '%s' )
+	);
+	if ( false === $updated ) {
+		return new WP_Error( 'cer_event_item_restore_failed', __( 'The item could not be restored.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+	}
+	if ( 0 === $updated ) {
+		return new WP_Error( 'cer_event_item_not_trashed', __( 'The selected item is no longer in Trash.', 'custom-event-registration' ) );
+	}
+
+	cer_bump_event_item_cache_version();
+	return true;
+}
+
+function cer_permanently_delete_event_item( string $item_type, int $item_id, int $event_id ) {
+	global $wpdb;
+
+	$config = cer_event_item_config( $item_type );
+	if ( is_wp_error( $config ) ) {
+		return $config;
+	}
+	$item = $wpdb->get_row( $wpdb->prepare( "SELECT id, deleted_at FROM {$config['table']} WHERE id = %d AND event_id = %d", $item_id, $event_id ), ARRAY_A );
+	if ( ! $item || empty( $item['deleted_at'] ) ) {
+		return new WP_Error( 'cer_event_item_not_trashed', __( 'Only items in Trash can be permanently deleted.', 'custom-event-registration' ) );
+	}
+	if ( 'tickets' === $item_type ) {
+		$linked_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}evt_registrations WHERE ticket_type_id = %d", $item_id ) );
+		if ( $linked_registrations ) {
+			return new WP_Error( 'cer_ticket_has_history', __( 'This ticket has registration history and cannot be permanently deleted. Keep it in Trash to preserve those links.', 'custom-event-registration' ) );
+		}
+	}
+
+	$deleted = $wpdb->delete( $config['table'], array( 'id' => $item_id, 'event_id' => $event_id ), array( '%d', '%d' ) );
+	if ( false === $deleted ) {
+		return new WP_Error( 'cer_event_item_delete_failed', __( 'The item could not be permanently deleted.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+	}
+	if ( 0 === $deleted ) {
+		return new WP_Error( 'cer_event_item_not_trashed', __( 'The selected item is no longer in Trash.', 'custom-event-registration' ) );
+	}
+
+	cer_bump_event_item_cache_version();
+	return true;
+}
+
+function cer_render_event_item_trash_list( int $event_id, string $item_type ): void {
+	global $wpdb;
+
+	$config = cer_event_item_config( $item_type );
+	if ( is_wp_error( $config ) ) {
+		return;
+	}
+
+	$search = isset( $_GET['item_search'] ) ? sanitize_text_field( wp_unslash( $_GET['item_search'] ) ) : '';
+	$per_page = 5;
+	$total_where = 'event_id = %d AND deleted_at IS NOT NULL AND deleted_at >= %s';
+	$bindings = array( $event_id, cer_dashboard_trash_cutoff() );
+	if ( '' !== $search ) {
+		$total_where .= " AND {$config['name_field']} LIKE %s";
+		$bindings[] = '%' . $wpdb->esc_like( $search ) . '%';
+	}
+	$total_items = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$config['table']} WHERE {$total_where}", $bindings ) );
+	$total_pages = max( 1, (int) ceil( $total_items / $per_page ) );
+	$page = isset( $_GET['item_paged'] ) ? min( $total_pages, max( 1, absint( wp_unslash( $_GET['item_paged'] ) ) ) ) : 1;
+	$bindings[] = $per_page;
+	$bindings[] = ( $page - 1 ) * $per_page;
+	$items = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT id, {$config['name_field']} AS item_name, deleted_at FROM {$config['table']}
+			WHERE {$total_where}
+			ORDER BY deleted_at DESC, id DESC
+			LIMIT %d OFFSET %d",
+			$bindings
+		),
+		ARRAY_A
+	);
+
+	$active_tab_by_type = array( 'tickets' => 'setup', 'speakers' => 'program', 'sponsors' => 'partners', 'pillars' => 'program' );
+	$base_args = array(
+		'page' => 'cer-event-new',
+		'event_id' => $event_id,
+		'item_type' => $item_type,
+		'item_view' => 'trash',
+		'cer_event_active_tab' => $active_tab_by_type[ $item_type ],
+		'item_search' => $search,
+	);
+	?>
+	<div class="cer-item-trash-view">
+		<div class="cer-item-trash-search">
+			<label for="cer-item-trash-search-input"><?php esc_html_e( 'Search trashed items', 'custom-event-registration' ); ?></label>
+			<input id="cer-item-trash-search-input" type="search" value="<?php echo esc_attr( $search ); ?>" />
+			<button type="button" class="button cer-item-trash-search-submit"><?php esc_html_e( 'Search', 'custom-event-registration' ); ?></button>
+		</div>
+		<p class="description"><?php esc_html_e( 'Items remain recoverable for 30 days. Expired items are no longer listed or restorable.', 'custom-event-registration' ); ?></p>
+		<div class="cer-table-wrap" tabindex="0" role="region" aria-label="<?php esc_attr_e( 'Trashed items table, scroll to see all columns', 'custom-event-registration' ); ?>">
+			<table class="widefat striped cer-item-trash-table">
+				<thead><tr><th><?php esc_html_e( 'Removed item', 'custom-event-registration' ); ?></th><th><?php esc_html_e( 'Deleted', 'custom-event-registration' ); ?></th><th><?php esc_html_e( 'Actions', 'custom-event-registration' ); ?></th></tr></thead>
+				<tbody>
+					<?php if ( $items ) : ?>
+						<?php foreach ( $items as $item ) : ?>
+							<tr>
+								<td><?php echo esc_html( $item['item_name'] ?: sprintf( __( '%1$s #%2$d', 'custom-event-registration' ), ucfirst( $config['label'] ), (int) $item['id'] ) ); ?></td>
+								<td><?php echo esc_html( date_i18n( 'M j, Y H:i', strtotime( $item['deleted_at'] ) ) ); ?></td>
+								<td>
+									<?php
+									$restore_url = add_query_arg( array_merge( $base_args, array( 'cer_action' => 'restore_event_item', 'item_id' => (int) $item['id'], 'item_paged' => $page ) ), admin_url( 'admin.php' ) );
+									$delete_url = add_query_arg( array_merge( $base_args, array( 'cer_action' => 'delete_event_item_permanently', 'item_id' => (int) $item['id'], 'item_paged' => $page ) ), admin_url( 'admin.php' ) );
+									?>
+									<a class="button button-small" href="<?php echo esc_url( wp_nonce_url( $restore_url, 'restore_event_item_' . $item_type . '_' . (int) $item['id'] . '_' . $event_id ) ); ?>"><?php esc_html_e( 'Restore', 'custom-event-registration' ); ?></a>
+									<a class="button button-small cer-item-action-confirm" data-confirm-kind="delete" href="<?php echo esc_url( wp_nonce_url( $delete_url, 'delete_event_item_permanently_' . $item_type . '_' . (int) $item['id'] . '_' . $event_id ) ); ?>" data-confirm="<?php echo esc_attr__( 'Permanently delete this item? This cannot be undone. Ticket types with registration history cannot be deleted.', 'custom-event-registration' ); ?>"><?php esc_html_e( 'Delete permanently', 'custom-event-registration' ); ?></a>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					<?php else : ?>
+						<tr><td colspan="3"><?php esc_html_e( 'No items in Trash during the 30-day recovery period.', 'custom-event-registration' ); ?></td></tr>
+					<?php endif; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php cer_render_admin_pagination( $page, $total_pages, add_query_arg( $base_args, admin_url( 'admin.php' ) ), 'item_paged', sprintf( __( '%s trash pages', 'custom-event-registration' ), ucfirst( $config['label'] ) ) ); ?>
+	</div>
+	<?php
+}
+
+function cer_permanently_delete_dashboard_event( int $event_id, bool $expired_only = false ) {
+	global $wpdb;
+
+	$events_table = $wpdb->prefix . 'evt_events';
+	$registrations_table = $wpdb->prefix . 'evt_registrations';
+	$ticket_types_table = $wpdb->prefix . 'evt_ticket_types';
+	$event = $wpdb->get_row(
+		$wpdb->prepare( "SELECT id, deleted_at FROM {$events_table} WHERE id = %d LIMIT 1", $event_id ),
+		ARRAY_A
+	);
+	if ( ! $event || empty( $event['deleted_at'] ) ) {
+		return new WP_Error( 'cer_event_not_trashed', __( 'Only an event in the trash can be permanently deleted.', 'custom-event-registration' ) );
+	}
+	if ( $expired_only && $event['deleted_at'] >= cer_dashboard_trash_cutoff() ) {
+		return new WP_Error( 'cer_event_trash_not_expired', __( 'The event is still within its 30-day recovery period.', 'custom-event-registration' ) );
+	}
+	if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+		return new WP_Error( 'cer_event_delete_failed', __( 'The event could not be permanently deleted. Please try again.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+	}
+
+	$detached = $wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$registrations_table}
+			SET event_id = NULL, ticket_type_id = NULL
+			WHERE event_id = %d
+				OR ticket_type_id IN (SELECT id FROM {$ticket_types_table} WHERE event_id = %d)",
+			$event_id,
+			$event_id
+		)
+	);
+	if ( false === $detached ) {
+		$wpdb->query( 'ROLLBACK' );
+		return new WP_Error( 'cer_event_delete_failed', __( 'Registration history could not be detached from the event.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+	}
+
+	$child_tables = array(
+		$ticket_types_table,
+		$wpdb->prefix . 'evt_speakers',
+		$wpdb->prefix . 'evt_sponsorships',
+		$wpdb->prefix . 'evt_pillars',
+		$wpdb->prefix . 'evt_objectives',
+		$wpdb->prefix . 'evt_summit_structure',
+		$wpdb->prefix . 'evt_partners',
+		$wpdb->prefix . 'evt_faqs',
+	);
+	foreach ( $child_tables as $child_table ) {
+		if ( false === $wpdb->delete( $child_table, array( 'event_id' => $event_id ), array( '%d' ) ) ) {
+			$wpdb->query( 'ROLLBACK' );
+			return new WP_Error( 'cer_event_delete_failed', __( 'The event content could not be permanently deleted.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+		}
+	}
+
+	$deleted = $wpdb->delete(
+		$events_table,
+		array(
+			'id' => $event_id,
+			'deleted_at' => $event['deleted_at'],
+		),
+		array( '%d', '%s' )
+	);
+	if ( false === $deleted || 0 === $deleted ) {
+		$wpdb->query( 'ROLLBACK' );
+		return new WP_Error( 'cer_event_delete_failed', __( 'The event could not be permanently deleted. It may have changed; refresh and try again.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+	}
+
+	if ( false === $wpdb->query( 'COMMIT' ) ) {
+		$wpdb->query( 'ROLLBACK' );
+		return new WP_Error( 'cer_event_delete_failed', __( 'The event deletion could not be completed. Please try again.', 'custom-event-registration' ) . ' ' . $wpdb->last_error );
+	}
+
+	cer_invalidate_dashboard_trash_caches( 'event' );
+	return true;
+}
+
+function cer_purge_expired_event_trash(): int {
+	global $wpdb;
+
+	$events_table = $wpdb->prefix . 'evt_events';
+	$cutoff = cer_dashboard_trash_cutoff();
+	$event_ids = $wpdb->get_col(
+		$wpdb->prepare(
+			"SELECT id FROM {$events_table}
+			WHERE deleted_at IS NOT NULL AND deleted_at < %s
+			ORDER BY deleted_at ASC
+			LIMIT %d",
+			$cutoff,
+			25
+		)
+	);
+	if ( null === $event_ids ) {
+		error_log( 'CER expired event trash lookup failed: ' . $wpdb->last_error );
+		return 0;
+	}
+
+	$deleted_count = 0;
+	foreach ( $event_ids as $event_id ) {
+		$result = cer_permanently_delete_dashboard_event( (int) $event_id, true );
+		if ( is_wp_error( $result ) ) {
+			error_log( 'CER expired event purge failed for event ' . (int) $event_id . ': ' . $result->get_error_message() );
+			continue;
+		}
+		$deleted_count++;
+	}
+
+	$purged_items = 0;
+	$registrations_table = $wpdb->prefix . 'evt_registrations';
+	foreach ( array( 'tickets', 'speakers', 'sponsors', 'pillars' ) as $item_type ) {
+		$config = cer_event_item_config( $item_type );
+		if ( is_wp_error( $config ) ) {
+			error_log( 'CER expired item purge skipped: ' . $config->get_error_message() );
+			continue;
+		}
+
+		if ( 'tickets' === $item_type ) {
+			$deleted = $wpdb->query(
+				$wpdb->prepare(
+					"DELETE item FROM {$config['table']} item
+					LEFT JOIN {$registrations_table} registration ON registration.ticket_type_id = item.id
+					WHERE item.deleted_at IS NOT NULL AND item.deleted_at < %s AND registration.id IS NULL
+					LIMIT %d",
+					$cutoff,
+					100
+				)
+			);
+		} else {
+			$deleted = $wpdb->query(
+				$wpdb->prepare(
+					"DELETE FROM {$config['table']}
+					WHERE deleted_at IS NOT NULL AND deleted_at < %s
+					LIMIT %d",
+					$cutoff,
+					100
+				)
+			);
+		}
+
+		if ( false === $deleted ) {
+			error_log( sprintf( 'CER expired %s purge failed: %s', $item_type, $wpdb->last_error ) );
+			continue;
+		}
+		$purged_items += (int) $deleted;
+	}
+	if ( $purged_items ) {
+		cer_bump_event_item_cache_version();
+		$deleted_count += $purged_items;
+	}
+
+	return $deleted_count;
+}
+
+function cer_invalidate_dashboard_trash_caches( string $record_type ): void {
+	delete_transient( 'cer_dashboard_metrics' );
+	if ( 'event' === $record_type ) {
+		update_option( 'cer_event_cache_version', (int) get_option( 'cer_event_cache_version', 1 ) + 1, false );
+	}
 }
 
 function cer_generate_unique_event_slug( $source, $exclude_event_id = 0 ) {
@@ -938,11 +1436,15 @@ function cer_enqueue_frontend_assets() {
 		$event_slug = cer_get_requested_event_slug_from_path();
 		if ( ! empty( $event_slug ) && ! get_page_by_path( $event_slug ) ) {
 			global $wpdb;
-			$should_enqueue = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}evt_events WHERE slug = %s LIMIT 1", $event_slug ) );
+			$should_enqueue = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}evt_events WHERE slug = %s AND deleted_at IS NULL LIMIT 1", $event_slug ) );
 		}
 	}
 
 	if ( $should_enqueue ) {
+		if ( did_action( 'elementor/loaded' ) && class_exists( '\Elementor\Plugin' ) ) {
+			add_filter( 'body_class', 'cer_add_active_elementor_kit_body_class', 20 );
+		}
+
 		wp_dequeue_script( 'tweenMax' );
 		wp_deregister_script( 'tweenMax' );
 		wp_dequeue_script( 'wow' );
@@ -1007,6 +1509,22 @@ function cer_enqueue_frontend_assets() {
 	}
 }
 
+function cer_add_active_elementor_kit_body_class( array $classes ): array {
+	if ( ! did_action( 'elementor/loaded' ) || ! class_exists( '\Elementor\Plugin' ) ) {
+		return $classes;
+	}
+
+	$kit = \Elementor\Plugin::$instance->kits_manager->get_kit_for_frontend();
+	if ( $kit ) {
+		$kit_class = 'elementor-kit-' . $kit->get_main_id();
+		if ( ! in_array( $kit_class, $classes, true ) ) {
+			$classes[] = $kit_class;
+		}
+	}
+
+	return $classes;
+}
+
 function cer_force_elementor_frontend_config() {
 	$frontend = \Elementor\Plugin::$instance->frontend;
 	if ( $frontend && ! $frontend->has_elementor_in_page() ) {
@@ -1022,6 +1540,13 @@ function cer_enqueue_admin_assets( $hook ) {
 
 	wp_enqueue_style( 'cer-admin-modern', CER_PLUGIN_URL . 'assets/css/cer-admin-modern.css', array(), filemtime( CER_PLUGIN_DIR . 'assets/css/cer-admin-modern.css' ) );
 	wp_enqueue_style( 'cer-admin-reporting', CER_PLUGIN_URL . 'assets/css/cer-admin-reporting.css', array( 'cer-admin-modern' ), filemtime( CER_PLUGIN_DIR . 'assets/css/cer-admin-reporting.css' ) );
+	if ( in_array( $page, array( 'cer-events', 'cer-registrations' ), true ) ) {
+		wp_enqueue_script( 'cer-admin-list-controls', CER_PLUGIN_URL . 'assets/js/cer-admin-list-controls.js', array( 'jquery' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-admin-list-controls.js' ), true );
+		wp_localize_script( 'cer-admin-list-controls', 'cerAdminListStrings', array( 'selected' => __( 'selected', 'custom-event-registration' ) ) );
+	}
+	if ( 'cer-dashboard' === $page ) {
+		wp_enqueue_script( 'cer-admin-dashboard', CER_PLUGIN_URL . 'assets/js/cer-admin-dashboard.js', array(), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-admin-dashboard.js' ), true );
+	}
 	if ( 'cer-events' === $page ) {
 		wp_enqueue_script( 'cer-admin-events', CER_PLUGIN_URL . 'assets/js/cer-admin-events.js', array( 'jquery' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-admin-events.js' ), true );
 	}
@@ -1031,6 +1556,47 @@ function cer_enqueue_admin_assets( $hook ) {
 		wp_enqueue_style( 'cer-flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css', array(), null );
 		wp_enqueue_script( 'cer-flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js', array( 'jquery' ), null, true );
 		wp_enqueue_script( 'cer-admin-event-form', CER_PLUGIN_URL . 'assets/js/cer-admin-event-form.js', array( 'jquery', 'cer-flatpickr' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-admin-event-form.js' ), true );
+		wp_localize_script(
+			'cer-admin-event-form',
+			'cerAdminEventFormStrings',
+			array(
+				'tabs' => array(
+					'setup' => __( 'Event Setup', 'custom-event-registration' ),
+					'content' => __( 'Page Content', 'custom-event-registration' ),
+					'program' => __( 'Program', 'custom-event-registration' ),
+					'partners' => __( 'Partners & Sponsors', 'custom-event-registration' ),
+					'registration' => __( 'Registration & FAQ', 'custom-event-registration' ),
+					'appearance' => __( 'Branding & Location', 'custom-event-registration' ),
+					'mail' => __( 'Email', 'custom-event-registration' ),
+				),
+				'panels' => array(
+					'identity' => __( 'Event Identity & Publishing', 'custom-event-registration' ),
+					'content' => __( 'Page Content & Search Preview', 'custom-event-registration' ),
+					'appearance' => __( 'Branding & Media', 'custom-event-registration' ),
+				),
+				'expandField' => __( 'Edit in expanded view', 'custom-event-registration' ),
+				'expandRow' => __( 'Edit row', 'custom-event-registration' ),
+				'editorTitle' => __( 'Expanded editor', 'custom-event-registration' ),
+				'apply' => __( 'Apply', 'custom-event-registration' ),
+				'cancel' => __( 'Cancel', 'custom-event-registration' ),
+				'toggleSection' => __( 'Toggle section', 'custom-event-registration' ),
+				'eventSections' => __( 'Event sections', 'custom-event-registration' ),
+				'pageSaves' => __( 'Changing pages saves the event.', 'custom-event-registration' ),
+				'noMedia' => __( 'No image selected.', 'custom-event-registration' ),
+				'mediaSelected' => __( 'Image selected. Save the event to apply this change.', 'custom-event-registration' ),
+				'mediaCleared' => __( 'Image cleared. Save the event to apply this change.', 'custom-event-registration' ),
+				'locationApplied' => __( 'Location updated. Save the event to apply this change.', 'custom-event-registration' ),
+				'contentGroups' => array(
+					'information' => __( 'Event information', 'custom-event-registration' ),
+					'registration' => __( 'Registration', 'custom-event-registration' ),
+					'program' => __( 'Program headings', 'custom-event-registration' ),
+					'partners' => __( 'Partners & FAQ', 'custom-event-registration' ),
+					'description' => __( 'Description & audience', 'custom-event-registration' ),
+					'hero' => __( 'Hero content', 'custom-event-registration' ),
+					'search' => __( 'Search preview', 'custom-event-registration' ),
+				),
+			)
+		);
 	}
 }
 
@@ -1053,14 +1619,15 @@ function cer_activate_plugin() {
 		event_end_date DATETIME,
 		venue VARCHAR(255),
 		status VARCHAR(50) NOT NULL DEFAULT 'draft',
+		deleted_at DATETIME NULL,
 		max_attendees INT UNSIGNED,
-		featured_image_id BIGINT(20) UNSIGNED,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		UNIQUE KEY event_uuid (event_uuid),
 		UNIQUE KEY slug (slug),
-		KEY status (status)
+		KEY status (status),
+		KEY deleted_at (deleted_at)
 	) $charset_collate;";
 
 	// Ticket types table
@@ -1075,10 +1642,12 @@ function cer_activate_plugin() {
 		quantity_sold INT UNSIGNED DEFAULT 0,
 		description TEXT,
 		order_index INT UNSIGNED DEFAULT 0,
+		deleted_at DATETIME NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		KEY event_id (event_id),
+		KEY deleted_at (deleted_at),
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
 	) $charset_collate;";
 
@@ -1092,10 +1661,12 @@ function cer_activate_plugin() {
 		bio TEXT,
 		photo_id BIGINT(20) UNSIGNED,
 		order_index INT UNSIGNED DEFAULT 0,
+		deleted_at DATETIME NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		KEY event_id (event_id),
+		KEY deleted_at (deleted_at),
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
 	) $charset_collate;";
 
@@ -1109,10 +1680,12 @@ function cer_activate_plugin() {
 		benefits LONGTEXT,
 		cta_url VARCHAR(255),
 		order_index INT UNSIGNED DEFAULT 0,
+		deleted_at DATETIME NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
 		KEY event_id (event_id),
+		KEY deleted_at (deleted_at),
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE CASCADE
 	) $charset_collate;";
 
@@ -1133,6 +1706,7 @@ function cer_activate_plugin() {
 		amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
 		notes TEXT,
 		status VARCHAR(50) NOT NULL DEFAULT 'pending',
+		deleted_at DATETIME NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 		PRIMARY KEY (id),
@@ -1140,6 +1714,7 @@ function cer_activate_plugin() {
 		UNIQUE KEY payment_uuid (payment_uuid),
 		KEY event_id (event_id),
 		KEY ticket_type_id (ticket_type_id),
+		KEY deleted_at (deleted_at),
 		FOREIGN KEY (event_id) REFERENCES $events_table(id) ON DELETE SET NULL,
 		FOREIGN KEY (ticket_type_id) REFERENCES $ticket_types_table(id) ON DELETE SET NULL
 	) $charset_collate;";
@@ -1222,13 +1797,109 @@ function cer_handle_admin_actions() {
 		return;
 	}
 
+	if ( 'cer-registrations' === wp_unslash( $_GET['page'] ?? '' ) && '1' === wp_unslash( $_GET['cer_export'] ?? '' ) ) {
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['cer_export_nonce'] ?? '' ) ), 'cer_export_registrations' ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'custom-event-registration' ) );
+		}
+		// Reuse the export renderer before WordPress emits its admin HTML.
+		cer_render_registrations_page();
+		exit;
+	}
+
 	if ( ! isset( $_GET['cer_action'] ) ) {
 		return;
 	}
 
 	$action = sanitize_text_field( wp_unslash( $_GET['cer_action'] ) );
 	$registration_id = isset( $_GET['registration_id'] ) ? absint( wp_unslash( $_GET['registration_id'] ) ) : 0;
+	$event_id = isset( $_GET['event_id'] ) ? absint( wp_unslash( $_GET['event_id'] ) ) : 0;
+	$item_id = isset( $_GET['item_id'] ) ? absint( wp_unslash( $_GET['item_id'] ) ) : 0;
+	$item_type = isset( $_GET['item_type'] ) ? sanitize_key( wp_unslash( $_GET['item_type'] ) ) : '';
 	$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+
+	if ( in_array( $action, array( 'trash_event_item', 'restore_event_item', 'delete_event_item_permanently' ), true ) ) {
+		if ( ! $event_id || ! $item_id ) {
+			wp_die( esc_html__( 'The event item could not be found.', 'custom-event-registration' ) );
+		}
+		$nonce_action = $action . '_' . $item_type . '_' . $item_id . '_' . $event_id;
+		if ( ! wp_verify_nonce( $nonce, $nonce_action ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'custom-event-registration' ) );
+		}
+
+		if ( 'trash_event_item' === $action ) {
+			if ( '1' !== wp_unslash( $_GET['cer_confirm_item_trash'] ?? '' ) ) {
+				wp_die( esc_html__( 'Confirm moving this item to Trash. It will be recoverable for 30 days.', 'custom-event-registration' ) );
+			}
+			$result = cer_trash_event_item( $item_type, $item_id, $event_id );
+		} elseif ( 'restore_event_item' === $action ) {
+			$result = cer_restore_event_item( $item_type, $item_id, $event_id );
+		} else {
+			if ( '1' !== wp_unslash( $_GET['cer_confirm_item_delete'] ?? '' ) ) {
+				wp_die( esc_html__( 'Confirm permanently deleting this item. This cannot be undone.', 'custom-event-registration' ) );
+			}
+			$result = cer_permanently_delete_event_item( $item_type, $item_id, $event_id );
+		}
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ) );
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page' => 'cer-event-new',
+					'event_id' => $event_id,
+					'item_type' => $item_type,
+					'item_view' => 'trash',
+					'item_paged' => max( 1, absint( wp_unslash( $_GET['item_paged'] ?? 1 ) ) ),
+					'item_search' => sanitize_text_field( wp_unslash( $_GET['item_search'] ?? '' ) ),
+					'cer_event_active_tab' => array( 'tickets' => 'setup', 'speakers' => 'program', 'sponsors' => 'partners', 'pillars' => 'program' )[ $item_type ],
+					'cer_notice' => 'updated',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	if ( 'restore_event' === $action ) {
+		if ( empty( $event_id ) || ! wp_verify_nonce( $nonce, 'cer_restore_event_' . $event_id ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'custom-event-registration' ) );
+		}
+		$result = cer_restore_dashboard_record( 'event', $event_id );
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ) );
+		}
+		wp_safe_redirect( add_query_arg( array( 'page' => 'cer-events', 'cer_notice' => 'restored' ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	if ( in_array( $action, array( 'trash_event', 'delete_event_permanently' ), true ) ) {
+		if ( empty( $event_id ) ) {
+			wp_die( esc_html__( 'The event could not be found.', 'custom-event-registration' ) );
+		}
+		$nonce_action = 'trash_event' === $action ? 'cer_trash_event_' . $event_id : 'cer_delete_event_permanently_' . $event_id;
+		if ( ! wp_verify_nonce( $nonce, $nonce_action ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'custom-event-registration' ) );
+		}
+		if ( 'trash_event' === $action ) {
+			if ( '1' !== wp_unslash( $_GET['cer_confirm_trash'] ?? '' ) ) {
+				wp_die( esc_html__( 'Confirm moving this event to Trash. It will be recoverable for 30 days.', 'custom-event-registration' ) );
+			}
+			$result = cer_trash_dashboard_record( 'event', $event_id );
+			$notice = 'trashed';
+		} else {
+			if ( '1' !== wp_unslash( $_GET['cer_confirm_permanent_delete'] ?? '' ) ) {
+				wp_die( esc_html__( 'Confirm permanently deleting this event and its content. Registration and payment history will be kept without event or ticket links.', 'custom-event-registration' ) );
+			}
+			$result = cer_permanently_delete_dashboard_event( $event_id );
+			$notice = 'permanently_deleted';
+		}
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ) );
+		}
+		wp_safe_redirect( add_query_arg( array( 'page' => 'cer-events', 'view' => 'trash', 'cer_notice' => $notice ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
 
 	if ( empty( $registration_id ) ) {
 		return;
@@ -1239,24 +1910,48 @@ function cer_handle_admin_actions() {
 		$valid_nonce = wp_verify_nonce( $nonce, 'cer_toggle_status_' . $registration_id );
 	} elseif ( 'delete' === $action ) {
 		$valid_nonce = wp_verify_nonce( $nonce, 'cer_delete_' . $registration_id );
+	} elseif ( 'restore' === $action ) {
+		$valid_nonce = wp_verify_nonce( $nonce, 'cer_restore_registration_' . $registration_id );
 	}
 
 	if ( ! $valid_nonce ) {
 		wp_die( esc_html__( 'Security check failed.', 'custom-event-registration' ) );
+	}
+	if ( 'delete' === $action && '1' !== wp_unslash( $_GET['cer_confirm_trash'] ?? '' ) ) {
+		wp_die( esc_html__( 'Confirm moving this registration to Trash. It will be recoverable for 30 days.', 'custom-event-registration' ) );
 	}
 
 	global $wpdb;
 	$table = $wpdb->prefix . 'evt_registrations';
 
 	if ( 'toggle_status' === $action ) {
-		$status = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM $table WHERE id = %d", $registration_id ) );
+		$status = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM $table WHERE id = %d AND deleted_at IS NULL", $registration_id ) );
+		if ( null === $status ) {
+			wp_die( esc_html__( 'The registration is no longer active.', 'custom-event-registration' ) );
+		}
 		$new_status = 'pending' === $status ? 'confirmed' : 'pending';
-		$wpdb->update( $table, array( 'status' => $new_status, 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $registration_id ), array( '%s', '%s' ), array( '%d' ) );
+		$result = $wpdb->update( $table, array( 'status' => $new_status, 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $registration_id ), array( '%s', '%s' ), array( '%d' ) );
+		if ( false === $result ) {
+			wp_die( esc_html__( 'The registration status could not be updated.', 'custom-event-registration' ) . ' ' . esc_html( $wpdb->last_error ) );
+		}
+		delete_transient( 'cer_dashboard_metrics' );
 	} elseif ( 'delete' === $action ) {
-		$wpdb->delete( $table, array( 'id' => $registration_id ), array( '%d' ) );
+		$result = cer_trash_dashboard_record( 'registration', $registration_id );
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ) );
+		}
+		wp_safe_redirect( add_query_arg( array( 'page' => 'cer-registrations', 'cer_notice' => 'trashed' ), admin_url( 'admin.php' ) ) );
+		exit;
+	} elseif ( 'restore' === $action ) {
+		$result = cer_restore_dashboard_record( 'registration', $registration_id );
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ) );
+		}
+		wp_safe_redirect( add_query_arg( array( 'page' => 'cer-registrations', 'cer_notice' => 'restored' ), admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
-	$redirect_url = add_query_arg( array( 'page' => 'cer-registrations', 'updated' => 1 ), admin_url( 'admin.php' ) );
+	$redirect_url = add_query_arg( array( 'page' => 'cer-registrations', 'cer_notice' => 'updated' ), admin_url( 'admin.php' ) );
 	wp_safe_redirect( $redirect_url );
 	exit;
 }
@@ -1444,8 +2139,8 @@ function cer_process_registration_submission( $payload = array() ) {
 			$full_name = '';
 		}
 
-	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = %s LIMIT 1", $event_id, 'published' ) );
-	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d LIMIT 1", $ticket_type_id, $event_id ) );
+	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = %s AND deleted_at IS NULL LIMIT 1", $event_id, 'published' ) );
+	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL LIMIT 1", $ticket_type_id, $event_id ) );
 	if ( ! $event || ! $ticket ) {
 		return array( 'success' => false, 'message' => 'The selected event or ticket is no longer available.' );
 	}
@@ -1466,7 +2161,7 @@ function cer_process_registration_submission( $payload = array() ) {
 
 	$wpdb->query( 'START TRANSACTION' );
 	try {
-		$locked_ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d FOR UPDATE", $ticket_type_id, $event_id ) );
+		$locked_ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL FOR UPDATE", $ticket_type_id, $event_id ) );
 		if ( ! $locked_ticket ) {
 			throw new Exception( 'The selected ticket is no longer available.' );
 		}

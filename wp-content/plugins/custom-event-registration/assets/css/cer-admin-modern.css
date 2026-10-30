@@ -11,6 +11,14 @@
   --cer-danger: #d92d20;
   --cer-success: #0d8f5f;
   --cer-warning: #d97706;
+  --cer-space-1: 4px;
+  --cer-space-2: 8px;
+  --cer-space-3: 12px;
+  --cer-space-4: 16px;
+  --cer-font-small: 12px;
+  --cer-font-body: 13px;
+  --cer-font-heading: 16px;
+  --cer-touch-target: 42px;
 }
 
 .cer-admin-shell {
@@ -161,10 +169,6 @@
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02);
 }
 
-body.cer-share-modal-open {
-  overflow: hidden;
-}
-
 .cer-events-table .cer-share-event {
   display: inline-flex;
   align-items: center;
@@ -186,43 +190,42 @@ body.cer-share-modal-open {
 }
 
 .cer-share-modal {
+  display: contents;
+}
+
+.cer-admin-shell .cer-share-modal-dialog {
   position: fixed;
-  inset: 0;
-  z-index: 100000;
-}
-
-.cer-share-modal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.52);
-}
-
-.cer-share-modal-dialog {
-  position: relative;
-  width: min(520px, calc(100vw - 32px));
-  margin: 10vh auto 0;
-  padding: 28px;
+  left: 12px;
+  top: 12px;
+  transform: none;
+  width: min(300px, calc(100vw - 24px));
+  max-height: 180px;
+  overflow: auto;
+  margin: 0;
+  padding: 10px;
   background: #fff;
   border: 1px solid var(--cer-border);
-  border-radius: 14px;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+  border-radius: 8px;
+  z-index: 3;
 }
 
 .cer-share-modal-dialog h2 {
   margin: 0 32px 6px 0;
   color: var(--cer-brand-900);
+  font-size: 13px;
 }
 
 .cer-share-event-name {
-  margin: 0 0 20px;
+  margin: 0 0 6px;
   color: var(--cer-muted);
   font-weight: 600;
+  font-size: 11px;
 }
 
 .cer-share-modal-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 2px;
+  right: 2px;
   width: 34px;
   height: 34px;
   padding: 0;
@@ -241,8 +244,8 @@ body.cer-share-modal-open {
 .cer-share-url-row {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  margin-bottom: 22px;
+  gap: 4px;
+  margin: 0;
 }
 
 .cer-share-url-row label {
@@ -266,23 +269,132 @@ body.cer-share-modal-open {
 }
 
 .cer-share-platforms {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 .cer-share-platform {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
   gap: 9px;
-  min-height: 44px;
-  padding: 0 12px;
+  min-height: 64px;
+  padding: 4px;
   border: 1px solid var(--cer-border);
   border-radius: 8px;
   color: var(--cer-text);
   background: #fff;
   text-decoration: none;
   font-weight: 600;
+}
+
+.cer-admin-shell .cer-share-platform,
+.cer-admin-shell .cer-event-actions-dialog .cer-row-action-list > :is(a, button) {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform: none;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: #e3edf6;
+  color: #123954;
+  pointer-events: auto;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+  box-shadow: none;
+}
+
+.cer-admin-shell .cer-share-platform {
+  background: #d7eee9;
+}
+
+.cer-slice-label {
+  position: absolute;
+  left: var(--cer-label-x);
+  top: var(--cer-label-y);
+  transform: translate(-50%, -50%);
+  width: calc(var(--cer-radius) * 0.25);
+  font-size: clamp(10px, calc(var(--cer-radius) * 0.047), 13px);
+  font-weight: 600;
+  pointer-events: none;
+  overflow-wrap: anywhere;
+}
+
+.cer-slice-label .dashicons {
+  display: block;
+  margin: 0 auto 2px;
+}
+
+.cer-admin-shell .cer-event-actions-dialog :is(.cer-row-action-list > a, .cer-row-action-list > button, .cer-share-platform):is(:hover, :focus-visible, :active, [aria-expanded="true"]) {
+  background: #174e72;
+  color: #fff;
+  text-decoration: none;
+}
+
+.cer-admin-shell .cer-event-actions-dialog .cer-share-platform:is(:hover, :focus-visible, :active) {
+  background: #116357;
+  color: #fff;
+}
+
+.cer-event-actions-dialog :focus-visible .cer-slice-label {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cer-event-actions-dialog {
+  position: fixed;
+  width: calc(var(--cer-radius) * 2);
+  height: calc(var(--cer-radius) * 2);
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+.cer-event-actions-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.cer-event-actions-dialog .cer-row-action-list {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.cer-admin-shell .cer-event-actions-dialog .cer-radial-close {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--cer-border);
+  border-radius: 50%;
+  background: var(--cer-brand-700);
+  color: #fff;
+  cursor: pointer;
+}
+
+.cer-share-platform:active,
+.cer-admin-shell .cer-event-actions-dialog .cer-radial-close:active {
+  background: #ddeaf5;
+  color: var(--cer-brand-900);
 }
 
 .cer-share-platform:hover,
@@ -294,18 +406,7 @@ body.cer-share-modal-open {
 }
 
 .cer-share-platform .dashicons {
-  color: var(--cer-brand-700);
-}
-
-@media (max-width: 600px) {
-  .cer-share-modal-dialog {
-    margin-top: 5vh;
-    padding: 22px;
-  }
-
-  .cer-share-platforms {
-    grid-template-columns: 1fr;
-  }
+  color: inherit;
 }
 
 .cer-field textarea {

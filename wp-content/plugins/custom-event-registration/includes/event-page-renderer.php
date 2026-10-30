@@ -55,13 +55,13 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 			$show_summit_structure = isset( $current_event->show_summit_structure ) ? (int) $current_event->show_summit_structure : 1;
 			$show_partners = isset( $current_event->show_partners ) ? (int) $current_event->show_partners : 1;
 			$show_faq = isset( $current_event->show_faq ) ? (int) $current_event->show_faq : 1;
-			$event_speakers = $show_speakers ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_speakers', true ) : array();
-			$event_sponsors = $show_sponsors ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_sponsorships', true ) : array();
-			$event_pillars  = $show_pillars ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_pillars', true ) : array();
-			$event_objectives = $show_objectives ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_objectives', true ) : array();
-			$event_summit_structure = $show_summit_structure ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_summit_structure', true ) : array();
-			$event_partners = $show_partners ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_partners', true ) : array();
-			$event_faqs = $show_faq ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_faqs', true ) : array();
+			$event_speakers = $show_speakers ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_speakers' ) : array();
+			$event_sponsors = $show_sponsors ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_sponsorships' ) : array();
+			$event_pillars  = $show_pillars ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_pillars' ) : array();
+			$event_objectives = $show_objectives ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_objectives' ) : array();
+			$event_summit_structure = $show_summit_structure ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_summit_structure' ) : array();
+			$event_partners = $show_partners ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_partners' ) : array();
+			$event_faqs = $show_faq ? cer_event_page_get_related_rows( $event_id, $wpdb->prefix . 'evt_faqs' ) : array();
 			$secondary_logo_id = isset( $current_event->secondary_logo_id ) ? (int) $current_event->secondary_logo_id : 0;
 			$location_link = isset( $current_event->location_link ) ? trim( (string) $current_event->location_link ) : '';
 			$location_lat = isset( $current_event->location_lat ) ? trim( (string) $current_event->location_lat ) : '';
@@ -558,7 +558,10 @@ if ( ! function_exists( 'cer_event_page_get_current_event' ) ) {
 				return $cached_event;
 			}
 
-		$status_sql = $preview_allowed ? '' : $wpdb->prepare( ' AND status = %s', 'published' );
+		$status_sql = ' AND deleted_at IS NULL';
+		if ( ! $preview_allowed ) {
+			$status_sql .= $wpdb->prepare( ' AND status = %s', 'published' );
+		}
 
 		if ( is_numeric( $identifier ) && (int) $identifier > 0 ) {
 				$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$events_table} WHERE id = %d{$status_sql} LIMIT 1", (int) $identifier ) );
@@ -572,32 +575,31 @@ if ( ! function_exists( 'cer_event_page_get_current_event' ) ) {
 				return $event;
 		}
 
-			$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$events_table} WHERE status = %s ORDER BY event_date DESC LIMIT 1", 'published' ) );
+			$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$events_table} WHERE status = %s AND deleted_at IS NULL ORDER BY event_date DESC LIMIT 1", 'published' ) );
 			wp_cache_set( $cache_key, $event, 'cer_events', HOUR_IN_SECONDS );
 			return $event;
 	}
 }
 
 if ( ! function_exists( 'cer_event_page_get_related_rows' ) ) {
-	function cer_event_page_get_related_rows( $event_id, $table, $respect_visibility = true ) {
+	function cer_event_page_get_related_rows( $event_id, $table ) {
 		global $wpdb;
-			$cache_key = (int) get_option( 'cer_event_cache_version', 1 ) . ':' . md5( $table . ':' . (int) $event_id . ':' . (int) $respect_visibility );
+			$item_tables = array(
+				$wpdb->prefix . 'evt_ticket_types',
+				$wpdb->prefix . 'evt_speakers',
+				$wpdb->prefix . 'evt_sponsorships',
+				$wpdb->prefix . 'evt_pillars',
+			);
+			$deleted_sql = in_array( $table, $item_tables, true ) ? ' AND deleted_at IS NULL' : '';
+			$cache_key = (int) get_option( 'cer_event_cache_version', 1 ) . ':' . md5( $table . ':' . (int) $event_id . ':' . $deleted_sql );
 			$cached_rows = wp_cache_get( $cache_key, 'cer_event_related' );
 			if ( false !== $cached_rows ) {
 				return $cached_rows;
 			}
 
-			$visibility_sql = $respect_visibility ? ' AND is_visible = 1' : '';
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE event_id = %d{$visibility_sql} ORDER BY order_index ASC, id ASC", $event_id ) );
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE event_id = %d{$deleted_sql} ORDER BY order_index ASC, id ASC", $event_id ) );
 			wp_cache_set( $cache_key, $rows, 'cer_event_related', HOUR_IN_SECONDS );
 			return $rows;
-	}
-}
-
-if ( ! function_exists( 'cer_event_page_table_has_visibility' ) ) {
-	function cer_event_page_table_has_visibility( $table ) {
-		global $wpdb;
-		return ! empty( $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", 'is_visible' ) ) );
 	}
 }
 
@@ -621,7 +623,7 @@ if ( ! function_exists( 'cer_event_page_organiser_logos' ) ) {
 		global $wpdb;
 		$logos = array();
 
-		$partner_rows = $event ? cer_event_page_get_related_rows( (int) $event->id, $wpdb->prefix . 'evt_partners', true ) : array();
+		$partner_rows = $event ? cer_event_page_get_related_rows( (int) $event->id, $wpdb->prefix . 'evt_partners' ) : array();
 		foreach ( $partner_rows as $partner ) {
 			$id = isset( $partner->logo_id ) ? (int) $partner->logo_id : 0;
 			if ( ! $id ) {

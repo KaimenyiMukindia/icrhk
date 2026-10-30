@@ -31,6 +31,7 @@ if ( ! class_exists( 'CER_Registration_List_Table' ) ) {
                 'amount'         => esc_html__( 'Amount', 'custom-event-registration' ),
                 'status'         => esc_html__( 'Status', 'custom-event-registration' ),
                 'created_at'     => esc_html__( 'Date', 'custom-event-registration' ),
+                'deleted_at'     => esc_html__( 'Deleted', 'custom-event-registration' ),
             );
         }
 
@@ -53,32 +54,48 @@ if ( ! class_exists( 'CER_Registration_List_Table' ) ) {
 
         public function column_full_name( $item ) {
             $actions = array();
-            $actions['confirm'] = sprintf(
-                '<a href="%s">%s</a>',
-                esc_url( wp_nonce_url( add_query_arg( array( 'page' => 'event-registrations', 'cer_action' => 'toggle_status', 'registration_id' => absint( $item['id'] ) ) ), 'cer_toggle_status_' . absint( $item['id'] ) ) ),
-                esc_html__( 'Confirm', 'custom-event-registration' )
-            );
-            $actions['delete'] = sprintf(
-                '<a href="%s" onclick="return confirm(\'%s\');">%s</a>',
-                esc_url( wp_nonce_url( add_query_arg( array( 'page' => 'event-registrations', 'cer_action' => 'delete', 'registration_id' => absint( $item['id'] ) ) ), 'cer_delete_' . absint( $item['id'] ) ) ),
-                esc_html__( 'Delete this registration?', 'custom-event-registration' ),
-                esc_html__( 'Delete', 'custom-event-registration' )
-            );
+            $registration_id = absint( $item['id'] );
+            if ( ! empty( $_REQUEST['view'] ) && 'trash' === sanitize_key( wp_unslash( $_REQUEST['view'] ) ) ) {
+                $actions['restore'] = sprintf(
+                    '<a href="%s">%s</a>',
+                    esc_url( wp_nonce_url( add_query_arg( array( 'page' => 'event-registrations', 'cer_action' => 'restore', 'registration_id' => $registration_id ), admin_url( 'admin.php' ) ), 'cer_restore_registration_' . $registration_id ) ),
+                    esc_html__( 'Restore', 'custom-event-registration' )
+                );
+            } else {
+                $actions['confirm'] = sprintf(
+                    '<a href="%s">%s</a>',
+                    esc_url( wp_nonce_url( add_query_arg( array( 'page' => 'event-registrations', 'cer_action' => 'toggle_status', 'registration_id' => $registration_id ), admin_url( 'admin.php' ) ), 'cer_toggle_status_' . $registration_id ) ),
+                    esc_html__( 'Confirm', 'custom-event-registration' )
+                );
+                $actions['delete'] = sprintf(
+                    '<a class="cer-confirm-trash" href="%s" data-confirm="%s">%s</a>',
+                    esc_url( wp_nonce_url( add_query_arg( array( 'page' => 'event-registrations', 'cer_action' => 'delete', 'registration_id' => $registration_id ), admin_url( 'admin.php' ) ), 'cer_delete_' . $registration_id ) ),
+                    esc_attr__( 'Move this registration to trash? It can be restored for 30 days.', 'custom-event-registration' ),
+                    esc_html__( 'Move to Trash', 'custom-event-registration' )
+                );
+            }
 
             return sprintf( '%1$s %2$s', esc_html( $item['full_name'] ), $this->row_actions( $actions ) );
         }
 
         public function column_default( $item, $column_name ) {
             if ( isset( $item[ $column_name ] ) ) {
+                if ( 'deleted_at' === $column_name ) {
+                    return empty( $item[ $column_name ] ) ? '&ndash;' : esc_html( date_i18n( 'M j, Y H:i', strtotime( $item[ $column_name ] ) ) );
+                }
                 return esc_html( $item[ $column_name ] );
             }
             return '&ndash;';
         }
 
         public function get_bulk_actions() {
+            if ( ! empty( $_REQUEST['view'] ) && 'trash' === sanitize_key( wp_unslash( $_REQUEST['view'] ) ) ) {
+                return array( 'restore' => esc_html__( 'Restore', 'custom-event-registration' ) );
+            }
+
             return array(
                 'mark_confirmed' => esc_html__( 'Mark as Confirmed', 'custom-event-registration' ),
-                'delete'         => esc_html__( 'Delete', 'custom-event-registration' ),
+                'delete'         => esc_html__( 'Move to Trash', 'custom-event-registration' ),
             );
         }
 
@@ -95,6 +112,9 @@ if ( ! class_exists( 'CER_Registration_List_Table' ) ) {
             if ( ! isset( $_REQUEST['cer_bulk_action_nonce'] ) || ! wp_verify_nonce( wp_unslash( $_REQUEST['cer_bulk_action_nonce'] ), 'cer_bulk_action' ) ) {
                 return;
             }
+            if ( 'delete' === $action && '1' !== wp_unslash( $_REQUEST['cer_confirm_trash'] ?? '' ) ) {
+                wp_die( esc_html__( 'Confirm moving the selected registrations to Trash. They will be recoverable for 30 days.', 'custom-event-registration' ) );
+            }
 
             $registration_ids = array_map( 'absint', (array) wp_unslash( $_REQUEST['registration_ids'] ) );
             global $wpdb;
@@ -102,7 +122,7 @@ if ( ! class_exists( 'CER_Registration_List_Table' ) ) {
 
             if ( 'mark_confirmed' === $action ) {
                 foreach ( $registration_ids as $registration_id ) {
-                    $wpdb->update(
+                    $updated = $wpdb->update(
                         $table,
                         array(
                             'status'     => 'confirmed',
@@ -112,22 +132,61 @@ if ( ! class_exists( 'CER_Registration_List_Table' ) ) {
                         array( '%s', '%s' ),
                         array( '%d' )
                     );
+                    if ( false === $updated ) {
+                        wp_die( esc_html__( 'The selected registrations could not be confirmed.', 'custom-event-registration' ) . ' ' . esc_html( $wpdb->last_error ) );
+                    }
                 }
-                wp_safe_redirect( remove_query_arg( array( 'action', 'registration_ids', 'cer_bulk_action_nonce' ) ) );
+                delete_transient( 'cer_dashboard_metrics' );
+                wp_safe_redirect( add_query_arg( array( 'page' => 'event-registrations', 'cer_notice' => 'updated' ), admin_url( 'admin.php' ) ) );
                 exit;
             }
 
             if ( 'delete' === $action ) {
                 foreach ( $registration_ids as $registration_id ) {
-                    $wpdb->delete( $table, array( 'id' => $registration_id ), array( '%d' ) );
+                    $result = cer_trash_dashboard_record( 'registration', $registration_id );
+                    if ( is_wp_error( $result ) ) {
+                        wp_die( esc_html( $result->get_error_message() ) );
+                    }
                 }
-                wp_safe_redirect( remove_query_arg( array( 'action', 'registration_ids', 'cer_bulk_action_nonce' ) ) );
+                wp_safe_redirect( add_query_arg( array( 'page' => 'event-registrations', 'cer_notice' => 'trashed' ), admin_url( 'admin.php' ) ) );
+                exit;
+            }
+
+            if ( 'restore' === $action ) {
+                foreach ( $registration_ids as $registration_id ) {
+                    $result = cer_restore_dashboard_record( 'registration', $registration_id );
+                    if ( is_wp_error( $result ) ) {
+                        wp_die( esc_html( $result->get_error_message() ) );
+                    }
+                }
+                wp_safe_redirect( add_query_arg( array( 'page' => 'event-registrations', 'cer_notice' => 'restored' ), admin_url( 'admin.php' ) ) );
                 exit;
             }
         }
 
         protected function get_views() {
-            return array();
+            global $wpdb;
+            $table = $wpdb->prefix . 'evt_registrations';
+            $is_trash = ! empty( $_REQUEST['view'] ) && 'trash' === sanitize_key( wp_unslash( $_REQUEST['view'] ) );
+            $active_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE deleted_at IS NULL" );
+            $trash_count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE deleted_at IS NOT NULL AND deleted_at >= %s", cer_dashboard_trash_cutoff() ) );
+
+            return array(
+                'active' => sprintf(
+                    '<a href="%s" class="%s">%s <span class="count">(%s)</span></a>',
+                    esc_url( add_query_arg( array( 'page' => 'event-registrations' ), admin_url( 'admin.php' ) ) ),
+                    $is_trash ? '' : 'current',
+                    esc_html__( 'Active', 'custom-event-registration' ),
+                    esc_html( number_format_i18n( $active_count ) )
+                ),
+                'trash' => sprintf(
+                    '<a href="%s" class="%s">%s <span class="count">(%s)</span></a>',
+                    esc_url( add_query_arg( array( 'page' => 'event-registrations', 'view' => 'trash' ), admin_url( 'admin.php' ) ) ),
+                    $is_trash ? 'current' : '',
+                    esc_html__( 'Trash', 'custom-event-registration' ),
+                    esc_html( number_format_i18n( $trash_count ) )
+                ),
+            );
         }
 
         protected function extra_tablenav( $which ) {
@@ -161,13 +220,16 @@ if ( ! class_exists( 'CER_Registration_List_Table' ) ) {
 
             global $wpdb;
             $table = $wpdb->prefix . 'evt_registrations';
-            $per_page = 20;
+            $per_page = 5;
             $current_page = $this->get_pagenum();
             $search = isset( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '';
             $status = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
             $ticket_type = isset( $_REQUEST['ticket_type'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['ticket_type'] ) ) : '';
 
-            $where = array();
+            $is_trash = ! empty( $_REQUEST['view'] ) && 'trash' === sanitize_key( wp_unslash( $_REQUEST['view'] ) );
+            $where = $is_trash
+                ? array( $wpdb->prepare( 'deleted_at IS NOT NULL AND deleted_at >= %s', cer_dashboard_trash_cutoff() ) )
+                : array( 'deleted_at IS NULL' );
             if ( $search ) {
                 $search_like = '%' . $wpdb->esc_like( $search ) . '%';
                 $where[] = $wpdb->prepare( '(full_name LIKE %s OR email LIKE %s OR phone LIKE %s OR ticket_type LIKE %s)', $search_like, $search_like, $search_like, $search_like );
