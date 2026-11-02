@@ -508,8 +508,6 @@
         partners: 'name',
         faqs: 'question'
     };
-    var repeaterPageSize = 5;
-
     function initializeRepeaterTabs($container, preferredIndex) {
         var type = $container.data('repeater');
         var field = tabbedRepeaterFields[type];
@@ -518,7 +516,7 @@
         }
 
         var $rows = $container.find('.cer-repeater-row').detach();
-        $container.children('.cer-item-tab-list, .cer-item-tab-panels, .cer-item-page-controls').remove();
+        $container.children('.cer-item-tab-list, .cer-item-tab-panels').remove();
         if (!$rows.length) {
             return;
         }
@@ -526,7 +524,6 @@
         var $tabList = $('<div class="cer-item-tab-list" role="tablist"></div>')
             .attr('aria-label', $container.closest('.cer-panel').find('h2').first().text());
         var $panels = $('<div class="cer-item-tab-panels"></div>');
-        var $pageControls = $('<nav class="cer-item-page-controls" aria-label="' + (strings.itemPages || 'Item pages') + '"></nav>');
         var $activeTabInput = $('[name="cer_item_active_tabs[' + type + ']"]');
         var rows = [];
         var selectedIndex = preferredIndex;
@@ -563,11 +560,6 @@
         if (selectedPosition < 0) {
             selectedPosition = 0;
         }
-        var pageCount = Math.max(1, Math.ceil(rows.length / repeaterPageSize));
-        var page = Math.min(pageCount, Math.max(1, Math.floor(selectedPosition / repeaterPageSize) + 1));
-        if (typeof preferredIndex !== 'undefined') {
-            page = Math.floor(selectedPosition / repeaterPageSize) + 1;
-        }
 
         function rowLabel(entry, position) {
             var selector = '[name^="' + type + '["][name$="][' + field + ']"]';
@@ -589,20 +581,11 @@
         });
 
         $container.append($tabList, $panels);
-        if (pageCount > 1) {
-            $container.append($pageControls);
-        }
-
-        function renderPage(focusSelected) {
-            var start = (page - 1) * repeaterPageSize;
-            var end = Math.min(rows.length, start + repeaterPageSize);
-            var pageSelected = Math.min(Math.max(selectedPosition, start), end - 1);
+        function selectItem(focusSelected) {
             rows.forEach(function (entry, position) {
-                var onPage = position >= start && position < end;
-                var selected = position === pageSelected;
+                var selected = position === selectedPosition;
                 var $tab = $tabList.children().eq(position);
-                $tab.prop('hidden', !onPage)
-                    .attr('aria-selected', selected ? 'true' : 'false')
+                $tab.attr('aria-selected', selected ? 'true' : 'false')
                     .attr('tabindex', selected ? '0' : '-1');
                 entry.panel.prop('hidden', !selected);
                 if (selected) {
@@ -611,34 +594,18 @@
                 }
             });
             $activeTabInput.val(selectedIndex);
-            $pageControls.empty();
-            if (pageCount > 1) {
-                var label = $('<span class="cer-item-page-count"></span>')
-                    .text((strings.page || 'Page') + ' ' + page + ' ' + (strings.of || 'of') + ' ' + pageCount);
-                $pageControls.append(label);
-                var $previous = $('<button type="button" class="button button-small"></button>')
-                    .text(strings.previous || 'Previous')
-                    .prop('disabled', page <= 1)
-                    .attr('aria-label', strings.previousItems || 'Previous items');
-                var $next = $('<button type="button" class="button button-small"></button>')
-                    .text(strings.next || 'Next')
-                    .prop('disabled', page >= pageCount)
-                    .attr('aria-label', strings.nextItems || 'Next items');
-                $pageControls.append($previous);
-                if (pageCount <= 7) {
-                    for (var pageNumber = 1; pageNumber <= pageCount; pageNumber++) {
-                        var $pageButton = $('<button type="button" class="button button-small"></button>')
-                            .text(pageNumber)
-                            .attr('aria-label', (strings.page || 'Page') + ' ' + pageNumber)
-                            .attr('aria-current', pageNumber === page ? 'page' : null)
-                            .data('page', pageNumber);
-                        $pageControls.append($pageButton);
-                    }
-                }
-                $pageControls.append($next);
-            }
             if (focusSelected) {
                 $tabList.children().eq(selectedPosition).trigger('focus');
+            }
+            var tab = $tabList.children().get(selectedPosition);
+            if (tab && $tabList[0].getClientRects().length) {
+                var tabBounds = tab.getBoundingClientRect();
+                var listBounds = $tabList[0].getBoundingClientRect();
+                if (tabBounds.left < listBounds.left) {
+                    $tabList[0].scrollLeft += tabBounds.left - listBounds.left;
+                } else if (tabBounds.right > listBounds.right) {
+                    $tabList[0].scrollLeft += tabBounds.right - listBounds.right;
+                }
             }
         }
 
@@ -646,7 +613,7 @@
             var position = $tabList.children().index(this);
             selectedPosition = position;
             selectedIndex = rows[position].index;
-            renderPage(false);
+            selectItem(false);
         }).on('keydown.cerItemTabs', '[role="tab"]', function (event) {
             var position = $tabList.children().index(this);
             if (event.key === 'ArrowRight' || event.key === 'ArrowLeft' || event.key === 'Home' || event.key === 'End') {
@@ -662,26 +629,8 @@
                 }
                 selectedPosition = position;
                 selectedIndex = rows[position].index;
-                page = Math.floor(position / repeaterPageSize) + 1;
-                renderPage(true);
+                selectItem(true);
             }
-        });
-
-        $pageControls.on('click.cerItemTabs', 'button', function () {
-            var $button = $(this);
-            if ($button.prop('disabled')) {
-                return;
-            }
-            if ($button.data('page')) {
-                page = parseInt($button.data('page'), 10);
-            } else if ($button.attr('aria-label') === (strings.previousItems || 'Previous items')) {
-                page = Math.max(1, page - 1);
-            } else {
-                page = Math.min(pageCount, page + 1);
-            }
-            selectedPosition = (page - 1) * repeaterPageSize;
-            selectedIndex = rows[selectedPosition].index;
-            renderPage(true);
         });
 
         $container.off('.cerItemTabs').on('input.cerItemTabs change.cerItemTabs', '[name^="' + type + '["][name$="][' + field + ']"]', function () {
@@ -693,84 +642,7 @@
             }
         });
 
-        renderPage(false);
-    }
-
-    function initializeRepeaterPagination($container, preferredIndex) {
-        var type = $container.data('repeater');
-        if (tabbedRepeaterFields[type]) {
-            return;
-        }
-
-        var $rows = $container.find('.cer-repeater-row');
-        if ($rows.length <= repeaterPageSize) {
-            $container.children('.cer-repeater-page-controls').remove();
-            $rows.prop('hidden', false);
-            return;
-        }
-        var pageCount = Math.max(1, Math.ceil($rows.length / repeaterPageSize));
-        var page = 1;
-        if (typeof preferredIndex !== 'undefined') {
-            $rows.each(function (position) {
-                if (String($(this).attr('data-row-index')) === String(preferredIndex)) {
-                    page = Math.floor(position / repeaterPageSize) + 1;
-                }
-            });
-        }
-
-        $container.children('.cer-repeater-page-controls').remove();
-
-        function renderPage() {
-            var start = (page - 1) * repeaterPageSize;
-            $rows.each(function (position) {
-                $(this).prop('hidden', position < start || position >= start + repeaterPageSize);
-            });
-            var $controls = $('<nav class="cer-repeater-page-controls" aria-label="' + (strings.itemPages || 'Item pages') + '"></nav>');
-            $controls.append(
-                $('<span class="cer-item-page-count"></span>')
-                    .text((strings.page || 'Page') + ' ' + page + ' ' + (strings.of || 'of') + ' ' + pageCount)
-            );
-            if (pageCount > 1) {
-                $controls.append(
-                    $('<button type="button" class="button button-small"></button>')
-                        .text(strings.previous || 'Previous')
-                        .prop('disabled', page <= 1)
-                        .attr('data-page-direction', 'previous')
-                );
-                if (pageCount <= 7) {
-                    for (var pageNumber = 1; pageNumber <= pageCount; pageNumber++) {
-                        $controls.append(
-                            $('<button type="button" class="button button-small"></button>')
-                                .text(pageNumber)
-                                .attr('aria-current', pageNumber === page ? 'page' : null)
-                                .attr('data-page-number', pageNumber)
-                        );
-                    }
-                }
-                $controls.append(
-                    $('<button type="button" class="button button-small"></button>')
-                        .text(strings.next || 'Next')
-                        .prop('disabled', page >= pageCount)
-                        .attr('data-page-direction', 'next')
-                );
-            }
-            $container.after($controls);
-            $controls.on('click', 'button', function () {
-                var $button = $(this);
-                if ($button.prop('disabled')) {
-                    return;
-                }
-                if ($button.attr('data-page-number')) {
-                    page = parseInt($button.attr('data-page-number'), 10);
-                } else {
-                    page += 'previous' === $button.attr('data-page-direction') ? -1 : 1;
-                }
-                renderPage();
-                $controls.find('[aria-current="page"]').trigger('focus');
-            });
-        }
-
-        renderPage();
+        selectItem(false);
     }
 
     function controlLabel($control) {
@@ -1090,17 +962,13 @@
         });
     }
 
-    $('.cer-add-row').on('click', function () {
+    $(document).on('click', '.cer-add-row', function () {
         var type = $(this).data('repeater');
         var container = $('.cer-repeater[data-repeater="' + type + '"]');
         var index = getNextIndex(container);
         var row = createRow(type, index);
         container.append(row);
-        if (tabbedRepeaterFields[type]) {
-            initializeRepeaterTabs(container, String(index));
-        } else {
-            initializeRepeaterPagination(container, String(index));
-        }
+        initializeRepeaterTabs(container, String(index));
         enhanceRepeaterEditing(container);
         row.find('input:not([type="hidden"]), textarea').first().trigger('focus');
     });
@@ -1120,11 +988,7 @@
         if (repeater.find('.cer-repeater-row').length < 1) {
             repeater.append(createRow(type, getNextIndex(repeater)));
         }
-        if (tabbedRepeaterFields[type]) {
-            initializeRepeaterTabs(repeater);
-        } else {
-            initializeRepeaterPagination(repeater);
-        }
+        initializeRepeaterTabs(repeater);
         enhanceRepeaterEditing(repeater);
         repeater.find('[role="tab"][aria-selected="true"]').trigger('focus');
     });
@@ -1140,6 +1004,9 @@
     });
 
     function submitItemTrashSearch() {
+        if (document.querySelector('.cer-item-trash-view[data-cer-live-ready]')) {
+            return;
+        }
         var $search = $('#cer-item-trash-search-input');
         if (!$search.length) {
             return;
@@ -1285,7 +1152,7 @@
     /* Max Attendees is derived: always the sum of the individual ticket
        quantities, so the field is read-only and recounted live. */
     function refreshMaxAttendees(soft) {
-        var total = parseInt($('#max-attendees').attr('data-other-ticket-capacity') || '0', 10);
+        var total = 0;
         $('[name^="tickets["][name$="[quantity_available]"]').each(function () {
             var value = parseInt($(this).val(), 10);
             if (!isNaN(value) && value > 0) {
@@ -1309,11 +1176,7 @@
     prepareEventTabs();
     initializeContentTabs();
     $('.cer-repeater[data-repeater]').each(function () {
-        if (tabbedRepeaterFields[$(this).data('repeater')]) {
-            initializeRepeaterTabs($(this));
-        } else {
-            initializeRepeaterPagination($(this));
-        }
+        initializeRepeaterTabs($(this));
     });
     initializeExpandedEditing();
     initializePanelAccordions();
@@ -1330,9 +1193,6 @@
             $panel.find('.cer-panel-toggle').trigger('click');
         }
     }, true);
-    $('.cer-item-page-controls').not('.cer-repeater .cer-item-page-controls')
-        .attr('title', strings.pageSaves || 'Changing pages saves the event.')
-        .after($('<p class="cer-help-text"></p>').text(strings.pageSaves || 'Changing pages saves the event.'));
     $('.cer-media-clear').each(function () {
         $(this).prop('disabled', !(parseInt($('#' + $(this).data('target')).val(), 10) > 0));
     });

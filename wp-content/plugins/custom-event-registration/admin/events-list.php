@@ -22,7 +22,7 @@ $registrations_table = $wpdb->prefix . 'evt_registrations';
 $where = $trash_view ? array( 'e.deleted_at IS NOT NULL AND e.deleted_at >= %s' ) : array( 'e.deleted_at IS NULL' );
 $bindings = $trash_view ? array( cer_dashboard_trash_cutoff() ) : array();
 
-if ( $search ) {
+if ( '' !== $search ) {
 	$where[] = '(e.name LIKE %s OR e.venue LIKE %s)';
 	$search_like = '%' . $wpdb->esc_like( $search ) . '%';
 	$bindings[] = $search_like;
@@ -68,10 +68,18 @@ $query = $select_sql . $where_sql . ' ORDER BY e.event_date DESC LIMIT %d OFFSET
 $total_query = 'SELECT COUNT(*) FROM ' . $events_table . ' e' . $where_sql;
 $total_prepared = $wpdb->prepare( $total_query, $bindings );
 $total_events = (int) $wpdb->get_var( $total_prepared );
+if ( $wpdb->last_error ) {
+	error_log( 'CER event filtering count failed: ' . $wpdb->last_error );
+	wp_die( esc_html__( 'Unable to load events. Please try again.', 'custom-event-registration' ), '', array( 'response' => 500 ) );
+}
 $page = min( $page, max( 1, (int) ceil( $total_events / $per_page ) ) );
 $offset = ( $page - 1 ) * $per_page;
 $prepared_query = $wpdb->prepare( $query, array_merge( $bindings, array( $per_page, $offset ) ) );
 $events = $wpdb->get_results( $prepared_query );
+if ( $wpdb->last_error ) {
+	error_log( 'CER event filtering failed: ' . $wpdb->last_error );
+	wp_die( esc_html__( 'Unable to load events. Please try again.', 'custom-event-registration' ), '', array( 'response' => 500 ) );
+}
 
 $bulk_action = isset( $_POST['bulk_action'] ) ? sanitize_key( wp_unslash( $_POST['bulk_action'] ) ) : '';
 $event_ids = isset( $_POST['event_ids'] ) && is_array( $_POST['event_ids'] ) ? array_map( 'absint', $_POST['event_ids'] ) : array();
@@ -128,7 +136,7 @@ if ( ! empty( $event_ids ) && ! empty( $bulk_action ) && check_admin_referer( 'c
 	exit;
 }
 ?>
-<div class="wrap cer-admin-shell">
+<div class="wrap cer-admin-shell" data-cer-live-list="events">
 	<hr class="wp-header-end" />
 	<?php cer_render_trash_admin_notice(); ?>
 	<div class="cer-admin-header">
@@ -141,7 +149,7 @@ if ( ! empty( $event_ids ) && ! empty( $bulk_action ) && check_admin_referer( 'c
 		<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'cer-events', 'view' => 'trash' ), admin_url( 'admin.php' ) ) ); ?>" class="<?php echo $trash_view ? 'current' : ''; ?>"><?php esc_html_e( 'Trash', 'custom-event-registration' ); ?></a>
 	</nav>
 
-	<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+	<form method="get" data-cer-live-filters action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
 		<input type="hidden" name="page" value="cer-events" />
 		<?php if ( $trash_view ) : ?><input type="hidden" name="view" value="trash" /><?php endif; ?>
 		<div class="cer-filter-bar">
@@ -177,6 +185,8 @@ if ( ! empty( $event_ids ) && ! empty( $bulk_action ) && check_admin_referer( 'c
 		</div>
 	</form>
 
+	<div data-cer-live-results>
+	<p class="description"><?php printf( esc_html__( '%s matching events', 'custom-event-registration' ), esc_html( number_format_i18n( $total_events ) ) ); ?></p>
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=cer-events' . ( $trash_view ? '&view=trash' : '' ) ) ); ?>">
 		<?php wp_nonce_field( 'cer_event_bulk_action', 'cer_event_bulk_nonce' ); ?>
 		<input type="hidden" name="cer_confirm_trash" value="0" />
@@ -299,6 +309,7 @@ if ( ! empty( $event_ids ) && ! empty( $bulk_action ) && check_admin_referer( 'c
 	);
 	?>
 	<?php cer_render_admin_pagination( $page, $total_pages, $pagination_url, 'paged', __( 'Event pages', 'custom-event-registration' ) ); ?>
+	</div>
 <div id="cer-share-modal" class="cer-share-modal" hidden>
 	<div class="cer-share-modal-dialog" role="group" aria-labelledby="cer-share-modal-title">
 		<button type="button" class="cer-share-modal-close" data-cer-share-close="1" aria-label="<?php esc_attr_e( 'Close share dialog', 'custom-event-registration' ); ?>"><span class="dashicons dashicons-no-alt" aria-hidden="true"></span></button>
@@ -324,10 +335,7 @@ if ( ! empty( $event_ids ) && ! empty( $bulk_action ) && check_admin_referer( 'c
 </div>
 <script>
 	jQuery(function($){
-		$('#cer-select-all-events').on('change', function () {
-			$('.cer-event-checkbox').prop('checked', $(this).is(':checked'));
-		});
-		$('form[method="post"]').on('submit', function (event) {
+		$(document).on('submit', '[data-cer-live-list="events"] form[method="post"]', function (event) {
 			var action = $(this).find('[name="bulk_action"]').val();
 			if ('delete' === action) {
 				if (!window.confirm('<?php echo esc_js( __( 'Move the selected event(s) to trash? They can be restored for 30 days.', 'custom-event-registration' ) ); ?>')) {

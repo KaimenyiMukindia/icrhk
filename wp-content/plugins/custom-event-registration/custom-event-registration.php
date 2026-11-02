@@ -35,6 +35,7 @@ add_action( 'plugins_loaded', 'cer_maybe_install_event_item_trash_schema' );
 add_action( 'cer_purge_expired_event_trash', 'cer_purge_expired_event_trash' );
 add_action( 'wp_ajax_cer_submit_registration', 'cer_handle_ajax_submission' );
 add_action( 'wp_ajax_nopriv_cer_submit_registration', 'cer_handle_ajax_submission' );
+add_action( 'wp_ajax_cer_dashboard_event_metrics', 'cer_ajax_dashboard_event_metrics' );
 add_action( 'rest_api_init', 'cer_register_rest_routes' );
 add_action( 'cer_sync_registration', 'cer_sync_registration_async' );
 add_action( 'cer_release_expired_registrations', 'cer_release_expired_registrations' );
@@ -83,7 +84,7 @@ function cer_normalize_datetime_value( $value ) {
 
 function cer_format_datetime_for_picker( $value ) {
 	$value = trim( (string) $value );
-	if ( '' === $value ) {
+	if ( '' === $value || '0000-00-00' === $value || '0000-00-00 00:00:00' === $value ) {
 		return '';
 	}
 
@@ -218,9 +219,26 @@ function cer_maybe_ensure_event_schema() {
 	$partners_table = $wpdb->prefix . 'evt_partners';
 	$ticket_types_table = $wpdb->prefix . 'evt_ticket_types';
 	$schema_version = get_option( 'cer_schema_version', '' );
-	cer_add_column_if_missing( $events_table, 'brand_color_1', 'VARCHAR(20) NULL', 'secondary_logo_id' );
-	cer_add_column_if_missing( $events_table, 'brand_color_2', 'VARCHAR(20) NULL', 'brand_color_1' );
-	cer_add_column_if_missing( $events_table, 'background_image_id', 'BIGINT(20) UNSIGNED NULL', 'brand_color_2' );
+	$branding_columns = array(
+		'brand_color_1' => array( 'VARCHAR(20) NULL', 'secondary_logo_id' ),
+		'brand_color_2' => array( 'VARCHAR(20) NULL', 'brand_color_1' ),
+		'background_image_id' => array( 'BIGINT(20) UNSIGNED NULL', 'brand_color_2' ),
+	);
+	$existing_branding_columns = $wpdb->get_col(
+		$wpdb->prepare(
+			"SHOW COLUMNS FROM {$events_table} WHERE Field IN (%s, %s, %s)",
+			array_keys( $branding_columns )
+		)
+	);
+	if ( $wpdb->last_error ) {
+		error_log( 'CER branding schema check failed: ' . $wpdb->last_error );
+		$existing_branding_columns = array();
+	}
+	foreach ( $branding_columns as $column => $definition ) {
+		if ( ! in_array( $column, $existing_branding_columns, true ) ) {
+			cer_add_column_if_missing( $events_table, $column, $definition[0], $definition[1] );
+		}
+	}
 
 	if ( in_array( $schema_version, array( '9', '10' ), true ) ) {
 		return;
@@ -1195,6 +1213,10 @@ function cer_render_event_item_trash_list( int $event_id, string $item_type ): v
 		$bindings[] = '%' . $wpdb->esc_like( $search ) . '%';
 	}
 	$total_items = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$config['table']} WHERE {$total_where}", $bindings ) );
+	if ( $wpdb->last_error ) {
+		error_log( 'CER item Trash filtering count failed: ' . $wpdb->last_error );
+		wp_die( esc_html__( 'Unable to load trashed items. Please try again.', 'custom-event-registration' ), '', array( 'response' => 500 ) );
+	}
 	$total_pages = max( 1, (int) ceil( $total_items / $per_page ) );
 	$page = isset( $_GET['item_paged'] ) ? min( $total_pages, max( 1, absint( wp_unslash( $_GET['item_paged'] ) ) ) ) : 1;
 	$bindings[] = $per_page;
@@ -1209,6 +1231,10 @@ function cer_render_event_item_trash_list( int $event_id, string $item_type ): v
 		),
 		ARRAY_A
 	);
+	if ( $wpdb->last_error ) {
+		error_log( 'CER item Trash filtering failed: ' . $wpdb->last_error );
+		wp_die( esc_html__( 'Unable to load trashed items. Please try again.', 'custom-event-registration' ), '', array( 'response' => 500 ) );
+	}
 
 	$active_tab_by_type = array( 'tickets' => 'setup', 'speakers' => 'program', 'sponsors' => 'partners', 'pillars' => 'program' );
 	$base_args = array(
@@ -1220,12 +1246,14 @@ function cer_render_event_item_trash_list( int $event_id, string $item_type ): v
 		'item_search' => $search,
 	);
 	?>
-	<div class="cer-item-trash-view">
-		<div class="cer-item-trash-search">
+	<div class="cer-item-trash-view" data-cer-live-list="items-<?php echo esc_attr( $item_type ); ?>">
+		<div class="cer-item-trash-search" data-cer-live-filters data-cer-filter-url="<?php echo esc_url( add_query_arg( $base_args, admin_url( 'admin.php' ) ) ); ?>">
 			<label for="cer-item-trash-search-input"><?php esc_html_e( 'Search trashed items', 'custom-event-registration' ); ?></label>
-			<input id="cer-item-trash-search-input" type="search" value="<?php echo esc_attr( $search ); ?>" />
+			<input id="cer-item-trash-search-input" name="item_search" type="search" value="<?php echo esc_attr( $search ); ?>" />
 			<button type="button" class="button cer-item-trash-search-submit"><?php esc_html_e( 'Search', 'custom-event-registration' ); ?></button>
 		</div>
+		<div data-cer-live-results>
+		<p class="description"><?php printf( esc_html__( '%s matching trashed items', 'custom-event-registration' ), esc_html( number_format_i18n( $total_items ) ) ); ?></p>
 		<p class="description"><?php esc_html_e( 'Items remain recoverable for 30 days. Expired items are no longer listed or restorable.', 'custom-event-registration' ); ?></p>
 		<div class="cer-table-wrap" tabindex="0" role="region" aria-label="<?php esc_attr_e( 'Trashed items table, scroll to see all columns', 'custom-event-registration' ); ?>">
 			<table class="widefat striped cer-item-trash-table">
@@ -1253,6 +1281,7 @@ function cer_render_event_item_trash_list( int $event_id, string $item_type ): v
 			</table>
 		</div>
 		<?php cer_render_admin_pagination( $page, $total_pages, add_query_arg( $base_args, admin_url( 'admin.php' ) ), 'item_paged', sprintf( __( '%s trash pages', 'custom-event-registration' ), ucfirst( $config['label'] ) ) ); ?>
+		</div>
 	</div>
 	<?php
 }
@@ -1540,12 +1569,29 @@ function cer_enqueue_admin_assets( $hook ) {
 
 	wp_enqueue_style( 'cer-admin-modern', CER_PLUGIN_URL . 'assets/css/cer-admin-modern.css', array(), filemtime( CER_PLUGIN_DIR . 'assets/css/cer-admin-modern.css' ) );
 	wp_enqueue_style( 'cer-admin-reporting', CER_PLUGIN_URL . 'assets/css/cer-admin-reporting.css', array( 'cer-admin-modern' ), filemtime( CER_PLUGIN_DIR . 'assets/css/cer-admin-reporting.css' ) );
-	if ( in_array( $page, array( 'cer-events', 'cer-registrations' ), true ) ) {
+	if ( in_array( $page, array( 'cer-events', 'cer-registrations', 'cer-event-new' ), true ) ) {
 		wp_enqueue_script( 'cer-admin-list-controls', CER_PLUGIN_URL . 'assets/js/cer-admin-list-controls.js', array( 'jquery' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-admin-list-controls.js' ), true );
-		wp_localize_script( 'cer-admin-list-controls', 'cerAdminListStrings', array( 'selected' => __( 'selected', 'custom-event-registration' ) ) );
+		wp_localize_script( 'cer-admin-list-controls', 'cerAdminListStrings', array(
+			'selected' => __( 'selected', 'custom-event-registration' ),
+			'loading' => __( 'Updating results…', 'custom-event-registration' ),
+			'updated' => __( 'Results updated.', 'custom-event-registration' ),
+			'error' => __( 'Could not update results. The previous results are disabled. Retry Filter/Search or reset the filters.', 'custom-event-registration' ),
+			'reset' => __( 'Reset filters', 'custom-event-registration' ),
+		) );
 	}
 	if ( 'cer-dashboard' === $page ) {
 		wp_enqueue_script( 'cer-admin-dashboard', CER_PLUGIN_URL . 'assets/js/cer-admin-dashboard.js', array(), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-admin-dashboard.js' ), true );
+		wp_localize_script(
+			'cer-admin-dashboard',
+			'cerDashboardMetrics',
+			array(
+				'url' => admin_url( 'admin-ajax.php' ),
+				'nonce' => wp_create_nonce( 'cer_dashboard_metrics' ),
+				'loading' => __( 'Loading event metrics…', 'custom-event-registration' ),
+				'updated' => __( 'Event metrics updated.', 'custom-event-registration' ),
+				'error' => __( 'Could not load event metrics. Please try again or reload the page.', 'custom-event-registration' ),
+			)
+		);
 	}
 	if ( 'cer-events' === $page ) {
 		wp_enqueue_script( 'cer-admin-events', CER_PLUGIN_URL . 'assets/js/cer-admin-events.js', array( 'jquery' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-admin-events.js' ), true );
@@ -1553,8 +1599,8 @@ function cer_enqueue_admin_assets( $hook ) {
 
 	if ( 'cer-event-new' === $page ) {
 		wp_enqueue_media();
-		wp_enqueue_style( 'cer-flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css', array(), null );
-		wp_enqueue_script( 'cer-flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js', array( 'jquery' ), null, true );
+		wp_enqueue_style( 'cer-flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css', array(), '4.6.13' );
+		wp_enqueue_script( 'cer-flatpickr', 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js', array( 'jquery' ), '4.6.13', true );
 		wp_enqueue_script( 'cer-admin-event-form', CER_PLUGIN_URL . 'assets/js/cer-admin-event-form.js', array( 'jquery', 'cer-flatpickr' ), filemtime( CER_PLUGIN_DIR . 'assets/js/cer-admin-event-form.js' ), true );
 		wp_localize_script(
 			'cer-admin-event-form',
@@ -1581,7 +1627,6 @@ function cer_enqueue_admin_assets( $hook ) {
 				'cancel' => __( 'Cancel', 'custom-event-registration' ),
 				'toggleSection' => __( 'Toggle section', 'custom-event-registration' ),
 				'eventSections' => __( 'Event sections', 'custom-event-registration' ),
-				'pageSaves' => __( 'Changing pages saves the event.', 'custom-event-registration' ),
 				'noMedia' => __( 'No image selected.', 'custom-event-registration' ),
 				'mediaSelected' => __( 'Image selected. Save the event to apply this change.', 'custom-event-registration' ),
 				'mediaCleared' => __( 'Image cleared. Save the event to apply this change.', 'custom-event-registration' ),

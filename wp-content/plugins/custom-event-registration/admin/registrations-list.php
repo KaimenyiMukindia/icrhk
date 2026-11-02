@@ -59,7 +59,7 @@ if ( $date_end ) {
 		$bindings[] = $end_datetime->format( 'Y-m-d H:i:s' );
 	}
 }
-if ( $search ) {
+if ( '' !== $search ) {
 	$search_hash = cer_registration_search_hash( $search );
 	$where[] = '(r.registration_uuid = %s OR r.full_name_search_hash = %s OR r.email_search_hash = %s OR r.phone_search_hash = %s)';
 	$bindings[] = $search;
@@ -93,9 +93,17 @@ $registrations_query = "SELECT r.*, e.name AS event_name, tt.name AS ticket_name
 	LIMIT %d OFFSET %d";
 
 $total_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$registrations_table} r {$where_sql}", $bindings ) );
+if ( $wpdb->last_error ) {
+	error_log( 'CER registration filtering count failed: ' . $wpdb->last_error );
+	wp_die( esc_html__( 'Unable to load registrations. Please try again.', 'custom-event-registration' ), '', array( 'response' => 500 ) );
+}
 $page = min( $page, max( 1, (int) ceil( $total_registrations / $per_page ) ) );
 $offset = ( $page - 1 ) * $per_page;
 $registrations = $wpdb->get_results( $wpdb->prepare( $registrations_query, array_merge( $bindings, array( $per_page, $offset ) ) ) );
+if ( $wpdb->last_error ) {
+	error_log( 'CER registration filtering failed: ' . $wpdb->last_error );
+	wp_die( esc_html__( 'Unable to load registrations. Please try again.', 'custom-event-registration' ), '', array( 'response' => 500 ) );
+}
 $registrations = array_map( 'cer_decrypt_registration_row', $registrations ?: array() );
 
 if ( isset( $_POST['bulk_action'] ) && isset( $_POST['registration_ids'] ) && check_admin_referer( 'cer_reg_bulk_action', 'cer_reg_bulk_nonce' ) ) {
@@ -156,12 +164,12 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 	exit;
 }
 ?>
-<div class="wrap cer-admin-shell">
+<div class="wrap cer-admin-shell" data-cer-live-list="registrations">
 	<hr class="wp-header-end" />
 	<?php cer_render_trash_admin_notice(); ?>
 	<div class="cer-admin-header">
 		<h1><?php esc_html_e( 'Event Registrations', 'custom-event-registration' ); ?></h1>
-		<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'cer_export', '1', $list_url ), 'cer_export_registrations', 'cer_export_nonce' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Export CSV', 'custom-event-registration' ); ?></a>
+		<a data-cer-filter-export href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'cer_export', '1', $list_url ), 'cer_export_registrations', 'cer_export_nonce' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Export CSV', 'custom-event-registration' ); ?></a>
 	</div>
 
 	<nav class="cer-list-view-links" aria-label="<?php esc_attr_e( 'Registration list views', 'custom-event-registration' ); ?>">
@@ -169,7 +177,7 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 		<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'cer-registrations', 'view' => 'trash' ), admin_url( 'admin.php' ) ) ); ?>" class="<?php echo $trash_view ? 'current' : ''; ?>"><?php esc_html_e( 'Trash', 'custom-event-registration' ); ?></a>
 	</nav>
 
-	<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+	<form method="get" data-cer-live-filters action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
 		<input type="hidden" name="page" value="cer-registrations" />
 		<?php if ( $trash_view ) : ?><input type="hidden" name="view" value="trash" /><?php endif; ?>
 		<div class="cer-filter-bar">
@@ -227,6 +235,8 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 		</div>
 	</form>
 
+	<div data-cer-live-results>
+	<p class="description"><?php printf( esc_html__( '%s matching registrations', 'custom-event-registration' ), esc_html( number_format_i18n( $total_registrations ) ) ); ?></p>
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=cer-registrations' . ( $trash_view ? '&view=trash' : '' ) ) ); ?>">
 		<?php wp_nonce_field( 'cer_reg_bulk_action', 'cer_reg_bulk_nonce' ); ?>
 		<input type="hidden" name="cer_confirm_trash" value="0" />
@@ -301,13 +311,11 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 	$total_pages = max( 1, (int) ceil( $total_registrations / $per_page ) );
 	cer_render_admin_pagination( $page, $total_pages, $list_url, 'paged', __( 'Registration pages', 'custom-event-registration' ) );
 	?>
+	</div>
 </div>
 <script>
 	jQuery(function($){
-		$('#cer-select-all-registrations').on('change', function () {
-			$('.cer-registration-checkbox').prop('checked', $(this).is(':checked'));
-		});
-		$('form[method="post"]').on('submit', function (event) {
+		$(document).on('submit', '[data-cer-live-list="registrations"] form[method="post"]', function (event) {
 			if ('delete' === $(this).find('[name="bulk_action"]').val()) {
 				if (!window.confirm('<?php echo esc_js( __( 'Move the selected registration(s) to trash? They can be restored for 30 days.', 'custom-event-registration' ) ); ?>')) {
 					event.preventDefault();

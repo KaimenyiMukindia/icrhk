@@ -1046,7 +1046,6 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 .cer-latest-event-select:focus-visible,
 .cer-latest-event-manage:focus-visible,
 .cer-item-tab:focus-visible,
-.cer-item-page-controls button:focus-visible,
 .cer-item-view-nav a:focus-visible,
 .cer-list-pagination a:focus-visible {
   outline: 2px solid var(--cer-brand-500);
@@ -1095,12 +1094,8 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
   scrollbar-width: thin;
 }
 
-.cer-item-tab-list .cer-item-tab[hidden] {
-  display: none;
-}
-
 .cer-item-tab {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 72px;
   max-width: 220px;
   min-height: 36px;
@@ -1136,7 +1131,6 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
   margin-top: 8px;
 }
 
-.cer-item-page-controls,
 .cer-list-pagination {
   display: flex;
   flex-wrap: wrap;
@@ -1145,14 +1139,12 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
   margin-top: 8px;
 }
 
-.cer-item-page-count,
 .cer-list-pagination > span {
   margin-right: 4px;
   color: var(--cer-muted);
   font-size: 12px;
 }
 
-.cer-item-page-controls .button[aria-current="page"],
 .cer-list-pagination a.current,
 .cer-dashboard-pagination .page-numbers.current {
   border-color: var(--cer-brand-700);
@@ -1355,9 +1347,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
   box-shadow: none;
 }
 
-.cer-list-pagination,
-.cer-item-page-controls,
-.cer-repeater-page-controls {
+.cer-list-pagination {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1366,8 +1356,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
   font-variant-numeric: tabular-nums;
 }
 
-.cer-admin-shell :is(.cer-list-pagination, .cer-dashboard-pagination) .page-numbers,
-.cer-admin-shell .cer-item-page-controls .button {
+.cer-admin-shell :is(.cer-list-pagination, .cer-dashboard-pagination) .page-numbers {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1383,8 +1372,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
   text-decoration: none;
 }
 
-.cer-admin-shell .page-numbers.current,
-.cer-admin-shell .cer-item-page-controls [aria-current="page"] {
+.cer-admin-shell .page-numbers.current {
   border-color: var(--cer-brand-700);
   background: var(--cer-brand-700);
   color: #fff;

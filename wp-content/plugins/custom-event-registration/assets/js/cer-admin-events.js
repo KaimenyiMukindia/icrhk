@@ -5,6 +5,7 @@
     var $url = $('#cer-share-url');
     var $name = $modal.find('.cer-share-event-name');
     var $copyStatus = $modal.find('.cer-share-copy-status');
+    var modalParent = $modal.parent()[0];
     var activeDialog = null;
 
     function arrangeRadial($items, inner, outer, start) {
@@ -63,28 +64,42 @@
         arrangeRadial($modal.find('.cer-share-platform'), 0.59, 0.99, direction.start);
     }
 
-    $('.cer-event-actions-dialog').each(function () {
-        var dialog = this;
-        $(dialog).on('click', '.cer-radial-close', function () { dialog.close(); });
-        $(dialog).on('cancel', function (event) {
-            if (!$modal.is('[hidden]')) {
-                event.preventDefault();
-                closeModal();
-            }
+    function initializeDialogs() {
+        $('.cer-event-actions-dialog').not('[data-cer-dialog-ready]').each(function () {
+            var dialog = this;
+            dialog.setAttribute('data-cer-dialog-ready', '');
+            $(dialog).on('click', '.cer-radial-close', function () { dialog.close(); });
+            $(dialog).on('cancel', function (event) {
+                if (!$modal.is('[hidden]')) {
+                    event.preventDefault();
+                    closeModal();
+                }
+            });
+            $(dialog).on('close', function () {
+                closeModal(false);
+                $('[aria-controls="' + dialog.id + '"]').attr('aria-expanded', 'false');
+                if (activeDialog === dialog) {
+                    activeDialog = null;
+                }
+            });
+            $(dialog).on('click', function (event) {
+                if (event.target === dialog || event.target.classList.contains('cer-row-action-list')) {
+                    dialog.close();
+                }
+            });
         });
-        $(dialog).on('close', function () {
-            closeModal(false);
-            $('[aria-controls="' + dialog.id + '"]').attr('aria-expanded', 'false');
-            if (activeDialog === dialog) {
-                activeDialog = null;
-            }
-        });
-        $(dialog).on('click', function (event) {
-            if (event.target === dialog || event.target.classList.contains('cer-row-action-list')) {
-                dialog.close();
-            }
-        });
+    }
+
+    initializeDialogs();
+    document.addEventListener('cer:list-before-update', function () {
+        if (activeDialog && activeDialog.open) {
+            activeDialog.close();
+        }
+        if (modalParent) {
+            modalParent.appendChild($modal[0]);
+        }
     });
+    document.addEventListener('cer:list-updated', initializeDialogs);
 
     $(document).on('click', '.cer-event-actions-trigger', function () {
         this.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
