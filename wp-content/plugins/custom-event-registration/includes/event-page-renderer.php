@@ -42,7 +42,6 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 		$faq_heading = cer_event_page_copy_value( $current_event, 'faq_heading', 'Frequently Asked Questions' );
 		$faq_intro = cer_event_page_copy_value( $current_event, 'faq_intro', '' );
 		$summary_heading = cer_event_page_copy_value( $current_event, 'summary_heading', 'Payment Summary' );
-		$summary_note = cer_event_page_copy_value( $current_event, 'summary_note', 'Payment verification and receipt delivery are handled after registration using the secure gateway workflow.' );
 		$primary_cta_text = cer_event_page_copy_value( $current_event, 'primary_cta_text', 'Register Now' );
 		$secondary_cta_text = cer_event_page_copy_value( $current_event, 'secondary_cta_text', 'Learn More' );
 		if ( $current_event ) {
@@ -128,7 +127,6 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 					$hero_badge_text = cer_event_page_copy_value( $current_event, 'hero_badge_text', 'Event Registration' );
 					$hero_convened_by = cer_event_page_copy_value( $current_event, 'hero_convened_by', '' );
 					$registration_intro = cer_event_page_copy_value( $current_event, 'registration_intro', 'Complete your registration and payment details below.' );
-					$summary_note = cer_event_page_copy_value( $current_event, 'summary_note', 'Payment verification and receipt delivery are handled after registration using the secure gateway workflow.' );
 					$target_audience_text = ! empty( $current_event->target_audience ) ? wp_strip_all_tags( $current_event->target_audience ) : wp_strip_all_tags( $current_event->description );
 					?>
 					<div class="cer-event-page cer-kamgc-page">
@@ -376,7 +374,6 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 											<h2><?php echo esc_html( $registration_heading ); ?></h2>
 											<p class="cer-kamgc-form-intro"><?php echo wp_kses_post( $registration_intro ); ?></p>
 											<?php echo cer_get_registration_form_markup( $event_id ); ?>
-											<div id="cer-form-message" class="cer-form-message"></div>
 										</div>
 									</div>
 									<div class="cer-kamgc-sidebar-column">
@@ -402,7 +399,6 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 											<div class="cer-kamgc-summary-row"><span>Selected Ticket</span><strong id="cer-summary-ticket">Select a ticket</strong></div>
 											<div class="cer-kamgc-summary-row"><span>Payment Method</span><strong id="cer-summary-method">M-Pesa</strong></div>
 											<div class="cer-kamgc-summary-total"><span>Total</span><strong id="cer-summary-amount">KES 0.00</strong></div>
-											<p><?php echo wp_kses_post( $summary_note ); ?></p>
 											<div class="cer-kamgc-security"><span class="material-symbols-outlined">lock</span><span>Secure Payment</span></div>
 										</div>
 									</div>

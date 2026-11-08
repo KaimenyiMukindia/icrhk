@@ -20,7 +20,13 @@ function cer_get_registration_form_markup( $event_id = null ) {
 	}
 
 	$event_reference = ! empty( $event->slug ) ? strtoupper( str_replace( '-', '-', $event->slug ) ) : strtoupper( get_bloginfo( 'name' ) );
-	$summary_note = ! empty( $event->summary_note ) ? $event->summary_note : 'Payment verification and receipt delivery are handled after registration using a secure gateway workflow.';
+	$summary_note = ! empty( $event->summary_note ) ? $event->summary_note : '';
+	if ( '' === trim( $summary_note ) || in_array( trim( wp_strip_all_tags( $summary_note ) ), array(
+		'Payment verification and receipt delivery are handled after registration using a secure gateway workflow.',
+		'Payment verification and receipt delivery are handled after registration using the secure gateway workflow.',
+	), true ) ) {
+		$summary_note = 'Your registration is secure. Once submitted, payment verification and your receipt will be processed automatically through our secure gateway.';
+	}
 	$payee_name = get_bloginfo( 'name' );
 	?>
 	<form id="cer-registration-form" class="cer-registration-form" method="post" data-payment-method="mpesa" novalidate>
@@ -67,7 +73,7 @@ function cer_get_registration_form_markup( $event_id = null ) {
 		<input type="hidden" id="cer-payee-name" value="<?php echo esc_attr( $payee_name ); ?>" />
 		<?php wp_nonce_field( 'cer_registration_form', 'security' ); ?>
 		<input type="hidden" name="action" value="cer_submit_registration" />
-		<div class="cer-form-footnote">
+		<div id="cer-form-message" class="cer-form-footnote cer-form-message cer-form-message-idle" role="status" aria-live="polite" aria-atomic="true" aria-busy="false">
 			<?php echo wp_kses_post( $summary_note ); ?>
 		</div>
 	</form>

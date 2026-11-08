@@ -2102,6 +2102,39 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     min-height: 3rem;
     background: #f7fafd;
     color: #51607a;
+    text-align: right;
+    overflow-wrap: anywhere;
+    transition: background-color 180ms ease, color 180ms ease;
+    animation: cer-payment-message-in 220ms ease-out;
+}
+
+.cer-form-message-idle {
+    text-align: left;
+}
+
+.cer-form-message-pending {
+    text-align: center;
+    animation-name: cer-payment-progress-in;
+}
+
+@keyframes cer-payment-message-in {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cer-payment-progress-in {
+    from { opacity: 0; transform: translateX(8px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cer-form-message {
+        animation: none;
+        transition: none;
+    }
+    .cer-form-message-pending::before {
+        animation: none;
+    }
 }
 
 .cer-form-message-info {
@@ -2117,6 +2150,11 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 .cer-form-message-error {
     background: #fff1f0;
     color: #b42318;
+}
+
+.cer-form-message-warning {
+    background: #fff8e6;
+    color: #805900;
 }
 
 .cer-summary-row {

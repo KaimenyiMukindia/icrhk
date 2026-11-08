@@ -4,6 +4,17 @@
 
 The payment path is WordPress registration -> Laravel payment bridge -> Paystack -> Laravel webhook or verification reconciliation -> WordPress ticket callback.
 
+## Registration feedback update (2026-11-08)
+
+- The existing registration handler saves contact details for tickets with no positive price, then returns `payment_status=not_on_sale`. It does not call the gateway, reserve inventory, mark the registration paid, or issue a ticket. The visitor is told tickets are not on sale yet and the event team will get in touch. This acknowledgement does not itself send a follow-up email.
+- Priced tickets retain the existing AJAX/REST and Paystack checkout contracts. Gateway diagnostics remain in server logs, while visitors receive actionable payment guidance without Laravel/HTTP errors.
+- One live status area inside the form replaces the footnote and empty message placeholder. It starts with the secure-registration copy, centers progress and its spinner, then right-aligns results. The repeated summary note is removed. Custom event notes are preserved; both legacy default phrases use the new copy.
+- Verification handles failed/cancelled payments and stops after 40 completed checks. Delays and connection errors advise visitors not to pay again if already charged. Submission stays disabled during active verification to prevent duplicate checkout requests.
+- Isolated regression checks (no real payments or database writes):
+  - `node --test wp-content/plugins/custom-event-registration/tests/registration-feedback.test.cjs`
+  - `php wp-content/plugins/custom-event-registration/tests/registration-feedback-test.php`
+- Validation: 24 JavaScript tests passed (including the existing header-offset regressions), isolated PHP handler/markup checks passed, and all changed PHP files passed syntax checks. An isolated browser fixture using the actual CSS and JavaScript confirmed a single region alternating from left-aligned introduction to centered spinner/progress to right-aligned result. Full local event-page verification was blocked by an unrelated Charitable/Square plugin maximum-execution-time fatal error; no live charge was attempted.
+
 ## Paystack contract verified
 
 - Transaction initialization and charge requests send `amount` in the currency subunit. For KES, a KES amount is multiplied by 100.

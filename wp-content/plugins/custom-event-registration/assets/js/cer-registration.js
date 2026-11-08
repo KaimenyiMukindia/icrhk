@@ -58,10 +58,42 @@
             return;
         }
 
-        messageBox.textContent = text;
-        messageBox.className = 'cer-form-message cer-form-message-' + state;
-        messageBox.setAttribute('aria-busy', state === 'info' ? 'true' : 'false');
-        messageBox.classList.toggle('cer-form-message-pending', state === 'info');
+        runUiTransition(function () {
+            messageBox.textContent = text;
+            messageBox.className = 'cer-form-footnote cer-form-message cer-form-message-' + state;
+            messageBox.setAttribute('aria-busy', state === 'info' ? 'true' : 'false');
+            messageBox.classList.toggle('cer-form-message-pending', state === 'info');
+        });
+    }
+
+    function registrationErrorMessage(message) {
+        var messages = [
+            'Your session has expired. Please refresh this page and submit again.',
+            'Please check your email, Kenyan phone number and required fields, then try again.',
+            'The selected event or ticket is no longer available.',
+            'The selected ticket is no longer available.',
+            'This event has reached its attendance capacity.',
+            'This ticket type is sold out.',
+            'The registration could not be saved.',
+            'We have saved your registration details, but could not start your payment. Please try again later. If you approved a payment or were charged, do not pay again; contact the event team for help.'
+        ];
+        if (messages.indexOf(message) >= 0) {
+            if (message === 'This ticket type is sold out.') {
+                return 'This ticket type is sold out. Please choose another available ticket.';
+            }
+            if (message === 'This event has reached its attendance capacity.') {
+                return 'This event is fully booked. Please contact the event team about future availability.';
+            }
+            if (message === 'The registration could not be saved.') {
+                return 'We could not save your registration details. Please try again in a moment.';
+            }
+            if (message === 'The selected event or ticket is no longer available.' || message === 'The selected ticket is no longer available.') {
+                return 'This event or ticket is no longer available. Please refresh the page or choose another ticket.';
+            }
+            return message;
+        }
+        console.error('CER registration failed:', message);
+        return 'We could not complete your registration or start payment. Please try again later. If you were charged, do not pay again; contact the event team for help.';
     }
 
     function setPaymentMethod(method) {
@@ -150,6 +182,13 @@
     function pollPaymentStatus(reference) {
         var attempts = 0;
         var verificationInFlight = false;
+        var verificationUnavailable = false;
+        function finish(text, state) {
+            window.clearInterval(timer);
+            setMessage(text, state);
+            requestInFlight = false;
+            updateSubmitState();
+        }
         var timer = window.setInterval(function () {
             if (verificationInFlight) {
                 return;
@@ -160,17 +199,41 @@
             fetch((window.cerRegistrationSettings || {}).payment_verify_url, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reference: reference }), credentials: 'same-origin'
-            }).then(function (response) { return response.json(); }).then(function (verification) {
-                if (verification.status === 'success' && verification.registration_status === 'paid') {
-                    window.clearInterval(timer);
-                    setMessage('Payment confirmed. Your ticket will be emailed shortly.', 'success');
+            }).then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Payment verification returned HTTP ' + response.status);
                 }
-            }).catch(function () {}).finally(function () {
+                return response.json();
+            }).then(function (verification) {
+                if (!verification || typeof verification.status !== 'string') {
+                    throw new Error('Invalid payment verification response.');
+                }
+                if (verificationUnavailable) {
+                    setMessage('Checking your payment status. Please keep this page open.', 'info');
+                    verificationUnavailable = false;
+                }
+                if (verification.status === 'success' && verification.registration_status === 'paid') {
+                    finish('Payment confirmed. Your ticket and receipt will be emailed shortly.', 'success');
+                    return;
+                }
+                if (['failed', 'abandoned', 'cancelled', 'canceled', 'reversed', 'timeout'].indexOf(verification.status) >= 0) {
+                    finish('Your payment was not completed. Your registration details are saved. Please try again when ready. If you were charged, do not pay again; contact the event team for help.', 'error');
+                    return;
+                }
+                if (attempts >= 40) {
+                    finish('Your payment is still awaiting confirmation. If you approved it or were charged, do not pay again. Your ticket and receipt will be emailed once confirmed; contact the event team if you need help.', 'warning');
+                }
+            }).catch(function (error) {
+                console.error('CER payment verification failed:', error);
+                verificationUnavailable = true;
+                if (attempts >= 40) {
+                    finish('We cannot confirm your payment right now. If you approved it or were charged, do not pay again. Please contact the event team to check your payment status.', 'warning');
+                } else {
+                    setMessage('We are having trouble checking your payment. Retrying automatically; please do not pay again.', 'info');
+                }
+            }).finally(function () {
                 verificationInFlight = false;
             });
-            if (attempts >= 40) {
-                window.clearInterval(timer);
-            }
         }, 3000);
     }
 
@@ -214,9 +277,9 @@
 
         requestInFlight = true;
         updateSubmitState();
-        runUiTransition(function () {
-            setMessage(method === 'card' ? 'Preparing secure card checkout...' : 'Submitting registration...', 'info');
-        });
+        setMessage(method === 'card' ? 'Preparing secure card checkout...' : 'Submitting registration...', 'info');
+        var paymentStarted = false;
+        var registrationSaved = false;
 
         var formData = new FormData(form);
         formData.set('security', window.cerRegistrationSettings.nonce);
@@ -231,25 +294,37 @@
             credentials: 'same-origin'
         })
             .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Registration returned HTTP ' + response.status);
+                }
                 return response.json();
             })
             .then(function (result) {
+                if (!result || typeof result.success !== 'boolean') {
+                    throw new Error('Invalid registration response.');
+                }
                 if (!result.success) {
-                    var message = (result.data && result.data.message) ? result.data.message : 'Registration failed.';
-                    setMessage(message, 'error');
+                    setMessage(registrationErrorMessage(result.data && result.data.message), 'error');
                     return;
                 }
 
+                registrationSaved = true;
+                if (result.data && result.data.payment_status === 'not_on_sale') {
+                    setMessage(result.data.message, 'success');
+                    return;
+                }
+                if (!result.data) {
+                    throw new Error('Missing payment checkout details.');
+                }
                 var reference = result.data.reference || '';
                 if (!reference) {
                     throw new Error('Paystack checkout is not available.');
                 }
 
                 if (method === 'mpesa') {
-                    runUiTransition(function () {
-                        setMessage(result.data.display_text || 'Approve the M-Pesa payment request on your phone.', 'info');
-                    });
+                    setMessage('Approve the M-Pesa payment request on your phone. We will confirm your payment automatically.', 'info');
                     pollPaymentStatus(reference);
+                    paymentStarted = true;
                     return;
                 }
 
@@ -258,17 +333,21 @@
                 if (!accessCode || !popup) {
                     throw new Error('Paystack card checkout is not available.');
                 }
-                runUiTransition(function () {
-                    setMessage('Complete your card payment in the secure checkout.', 'info');
-                });
+                setMessage('Complete your card payment in the secure checkout. We will confirm your payment automatically.', 'info');
                 popup.resumeTransaction(accessCode);
                 pollPaymentStatus(reference);
+                paymentStarted = true;
             })
             .catch(function (error) {
-                setMessage(error.message || 'Unable to submit registration, please try again.', 'error');
+                console.error('CER registration checkout failed:', error);
+                setMessage(registrationSaved
+                    ? 'Your registration details are saved, but we could not open payment checkout. Please try again later. If you approved a payment or were charged, do not pay again; contact the event team for help.'
+                    : 'We could not confirm your submission. Please check your connection and try again later. If you approved a payment or were charged, do not pay again; contact the event team for help.', 'error');
             })
             .finally(function () {
-                requestInFlight = false;
+                if (!paymentStarted) {
+                    requestInFlight = false;
+                }
                 updateSubmitState();
             });
     }

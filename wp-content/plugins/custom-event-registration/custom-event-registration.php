@@ -2151,7 +2151,7 @@ function cer_process_registration_submission( $payload = array() ) {
 	$payload = is_array( $payload ) ? $payload : array();
 	$nonce = isset( $payload['security'] ) ? sanitize_text_field( wp_unslash( $payload['security'] ) ) : '';
 	if ( ! wp_verify_nonce( $nonce, 'cer_registration_form' ) ) {
-		return array( 'success' => false, 'message' => 'Security verification failed.' );
+		return array( 'success' => false, 'message' => 'Your session has expired. Please refresh this page and submit again.' );
 	}
 
 	global $wpdb;
@@ -2178,7 +2178,7 @@ function cer_process_registration_submission( $payload = array() ) {
 		}
 
 		if ( empty( $email ) || empty( $payment_method ) || empty( $phone ) || ( 'mpesa' === $payment_method && empty( $full_name ) ) ) {
-		return array( 'success' => false, 'message' => 'Please complete all required fields.' );
+		return array( 'success' => false, 'message' => 'Please check your email, Kenyan phone number and required fields, then try again.' );
 	}
 		if ( 'card' === $payment_method ) {
 			$full_name = '';
@@ -2206,7 +2206,7 @@ function cer_process_registration_submission( $payload = array() ) {
 
 	$wpdb->query( 'START TRANSACTION' );
 	try {
-		$locked_ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL FOR UPDATE", $ticket_type_id, $event_id ) );
+		$locked_ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL FOR UPDATE", $ticket_type_id, $event_id ) );
 		if ( ! $locked_ticket ) {
 			throw new Exception( 'The selected ticket is no longer available.' );
 		}
@@ -2214,7 +2214,9 @@ function cer_process_registration_submission( $payload = array() ) {
 			throw new Exception( 'This ticket type is sold out.' );
 		}
 
-		$reserved_until = gmdate( 'Y-m-d H:i:s', time() + cer_get_registration_hold_seconds() );
+		$amount = number_format( (float) $locked_ticket->price, 2, '.', '' );
+		$tickets_not_on_sale = (float) $amount <= 0;
+		$reserved_until = $tickets_not_on_sale ? null : gmdate( 'Y-m-d H:i:s', time() + cer_get_registration_hold_seconds() );
 		$inserted = $wpdb->insert(
 			$registrations_table,
 			cer_prepare_registration_row( array(
@@ -2238,16 +2240,21 @@ function cer_process_registration_submission( $payload = array() ) {
 			throw new Exception( 'The registration could not be saved.' );
 		}
 
-		$wpdb->update(
-			$wpdb->prefix . 'evt_ticket_types',
-			array(
-				'quantity_sold' => (int) $locked_ticket->quantity_sold + 1,
-				'updated_at' => current_time( 'mysql' ),
-			),
-			array( 'id' => (int) $locked_ticket->id ),
-			array( '%d', '%s' ),
-			array( '%d' )
-		);
+		if ( ! $tickets_not_on_sale ) {
+			$ticket_updated = $wpdb->update(
+				$wpdb->prefix . 'evt_ticket_types',
+				array(
+					'quantity_sold' => (int) $locked_ticket->quantity_sold + 1,
+					'updated_at' => current_time( 'mysql' ),
+				),
+				array( 'id' => (int) $locked_ticket->id ),
+				array( '%d', '%s' ),
+				array( '%d' )
+			);
+			if ( false === $ticket_updated ) {
+				throw new Exception( 'The registration could not be saved.' );
+			}
+		}
 		$wpdb->query( 'COMMIT' );
 	} catch ( Exception $e ) {
 		$wpdb->query( 'ROLLBACK' );
@@ -2259,6 +2266,16 @@ function cer_process_registration_submission( $payload = array() ) {
 	}
 
 	if ( $inserted ) {
+		if ( $tickets_not_on_sale ) {
+			delete_transient( 'cer_dashboard_metrics' );
+			return array(
+				'success' => true,
+				'data' => array(
+					'payment_status' => 'not_on_sale',
+					'message' => 'Tickets for this event are not on sale yet. We have your contact details and will get in touch when tickets become available.',
+				),
+			);
+		}
 		$sync_data = array(
 			'registration_uuid' => $registration_uuid,
 			'payment_uuid' => $payment_uuid,
@@ -2316,7 +2333,7 @@ function cer_process_registration_submission( $payload = array() ) {
 				array( '%s', '%s' ),
 				array( '%s' )
 			);
-			return array( 'success' => false, 'message' => 'Payment initiation failed: ' . $e->getMessage() );
+			return array( 'success' => false, 'message' => 'We have saved your registration details, but could not start your payment. Please try again later. If you approved a payment or were charged, do not pay again; contact the event team for help.' );
 		}
 	}
 	return array( 'success' => false, 'message' => 'The registration could not be saved.' );
