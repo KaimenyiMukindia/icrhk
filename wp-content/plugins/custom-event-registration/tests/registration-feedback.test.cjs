@@ -7,19 +7,20 @@ const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'cer-registration.js'), 'utf8')
     .split('})(document, window);')[0] + '})(document, window);';
 
-function render({ result, method = 'mpesa', requestError, verification, verificationError, popup = true } = {}) {
+function render({ result, method = 'mpesa', requestError, verification, verificationError, popup = true,
+    tickets = [{ name: 'Delegate', price: '100', id: '1' }], single = false, selectedIndex = 0 } = {}) {
     const elements = new Map();
     function element(id, value = '') {
         const handlers = new Map();
         const attributes = new Map();
         const classes = new Set();
         const node = {
-            value, textContent: '', className: '', disabled: false, handlers, attributes,
+            value, textContent: '', innerHTML: '', className: '', disabled: false, handlers, attributes, dataset: {},
             addEventListener: (event, callback) => handlers.set(event, callback),
             setAttribute: (name, value) => attributes.set(name, value),
             checkValidity: () => true,
             closest: () => ({ style: {} }),
-            classList: { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name) },
+            classList: { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name), add: (name) => classes.add(name), contains: (name) => classes.has(name) },
             classes,
         };
         elements.set(id, node);
@@ -27,13 +28,24 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
     }
     const button = element('submit');
     const form = element('cer-registration-form');
+    form.dataset = {
+        paymentRequired: tickets.some(ticket => Number(ticket.price) > 0) ? 'true' : 'false',
+        paymentNote: 'Your registration is secure. Payment is processed through our secure gateway.',
+        contactNote: 'Your contact details will be saved securely. No payment is required to submit this form.',
+        soldOutNote: 'Tickets for this event are sold out. Please contact the event team about future availability.',
+    };
     form.querySelector = () => button;
     form.querySelectorAll = () => [];
     const message = element('cer-form-message');
-    const ticket = element('cer-ticket-type', 'Delegate');
-    ticket.selectedIndex = 0;
-    ticket.options = [{ dataset: { price: '100', id: '1' } }];
-    element('cer-ticket-type-id');
+    const ticket = element('cer-ticket-type', tickets[selectedIndex] ? tickets[selectedIndex].name : '');
+    if (single) {
+        ticket.dataset = { price: tickets[0].price, id: tickets[0].id };
+    } else {
+        ticket.selectedIndex = selectedIndex;
+        ticket.options = tickets.map(option => ({ value: option.name, textContent: option.name, disabled: !!option.soldOut, dataset: { price: option.price, id: option.id } }));
+    }
+    const ticketId = element('cer-ticket-type-id');
+    const amount = element('cer-amount');
     element('payment_method_hidden', method);
     element('cer-full-name', 'Test Visitor');
     element('cer-email', 'test@example.com');
@@ -66,14 +78,19 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
     });
     const settle = () => new Promise((resolve) => setImmediate(resolve));
     return {
-        message, button, calls, timers, errors,
+        message, button, calls, timers, errors, form, ticketId, amount, elements, ticket,
+        select: (index) => {
+            ticket.selectedIndex = index;
+            ticket.value = tickets[index].name;
+            ticket.handlers.get('change')();
+        },
         submit: async () => { form.handlers.get('submit')({ preventDefault() {} }); await settle(); },
         tick: async () => { timers.get(1)(); await settle(); },
     };
 }
 
 test('unpriced ticket confirms contact capture without checkout or polling', async () => {
-    const ui = render({ result: { success: true, data: {
+    const ui = render({ tickets: [{ name: 'Delegate', price: '0', id: '1' }], single: true, result: { success: true, data: {
         payment_status: 'not_on_sale', message: 'Tickets for this event are not on sale yet. We have your contact details and will get in touch.',
     } } });
     await ui.submit();
@@ -83,6 +100,60 @@ test('unpriced ticket confirms contact capture without checkout or polling', asy
     assert.deepEqual(ui.calls, ['register']);
     assert.equal(ui.timers.size, 0);
     assert.equal(ui.button.disabled, false);
+});
+
+for (const price of ['', '0', null]) {
+    test(`single ticket with ${JSON.stringify(price)} price auto-selects without payment UI`, async () => {
+        const ui = render({ single: true, tickets: [{ name: 'Delegate', price, id: '9' }], method: 'card' });
+        assert.equal(ui.ticketId.value, '9');
+        assert.equal(ui.amount.value, '0.00');
+        assert.equal(ui.form.dataset.paymentRequired, 'false');
+        assert.equal(ui.button.textContent, 'Register');
+        assert.equal(ui.elements.get('payment_method_hidden').value, 'mpesa');
+        assert.equal(ui.elements.get('cer-full-name').required, true);
+        assert.match(ui.message.innerHTML, /No payment is required/);
+        assert.equal(ui.button.disabled, false);
+    });
+}
+
+for (const method of ['mpesa', 'card']) {
+    test(`single priced ticket retains ${method} checkout without needing a select element`, async () => {
+        const ui = render({ single: true, method,
+            result: { success: true, data: { reference: 'ref', access_code: 'code' } } });
+        assert.equal(ui.ticketId.value, '1');
+        assert.equal(ui.amount.value, '100.00');
+        assert.equal(ui.form.dataset.paymentRequired, 'true');
+        assert.equal(ui.button.textContent, method === 'card' ? 'Pay with Card' : 'Register & Pay');
+        await ui.submit();
+        assert.equal(ui.timers.size, 1);
+        assert.equal(ui.calls.includes('code'), method === 'card');
+    });
+}
+
+test('mixed tickets alternate payment UI, contact fields and idle copy with selection', () => {
+    const ui = render({ method: 'card', tickets: [
+        { name: 'Paid', price: '100', id: '1' },
+        { name: 'Contact registration', price: '0', id: '2' },
+    ] });
+    ui.select(1);
+    assert.equal(ui.form.dataset.paymentRequired, 'false');
+    assert.equal(ui.button.textContent, 'Register');
+    assert.equal(ui.elements.get('cer-full-name').required, true);
+    assert.equal(ui.ticketId.value, '2');
+    assert.match(ui.message.innerHTML, /No payment is required/);
+    ui.select(0);
+    assert.equal(ui.form.dataset.paymentRequired, 'true');
+    assert.equal(ui.button.textContent, 'Register & Pay');
+    assert.equal(ui.amount.value, '100.00');
+    assert.match(ui.message.innerHTML, /secure gateway/);
+});
+
+test('registration-only network errors do not mention payments or charges', async () => {
+    const ui = render({ single: true, tickets: [{ name: 'Delegate', price: '0', id: '1' }],
+        requestError: new Error('Failed to fetch') });
+    await ui.submit();
+    assert.match(ui.message.textContent, /could not confirm your registration/);
+    assert.doesNotMatch(ui.message.textContent, /payment|charged|checkout/);
 });
 
 test('technical registration errors never reach the visitor', async () => {
@@ -102,10 +173,8 @@ test('validation errors remain actionable', async () => {
     assert.equal(ui.message.textContent, message);
 });
 
-test('sold-out tickets and failed contact saves provide a next step', async () => {
+test('failed contact saves and unavailable tickets provide a next step', async () => {
     for (const [message, expected] of [
-        ['This ticket type is sold out.', /choose another available ticket/],
-        ['This event has reached its attendance capacity.', /contact the event team/],
         ['The registration could not be saved.', /try again in a moment/],
         ['The selected ticket is no longer available.', /refresh the page/],
     ]) {
@@ -181,4 +250,47 @@ test('network and malformed-response errors do not falsely claim contacts were s
         assert.doesNotMatch(ui.message.textContent, /details are saved|Failed to fetch/);
         assert.equal(ui.button.disabled, false);
     }
+});
+
+test('a ticket selling out mid-checkout is disabled while other tickets stay available', async () => {
+    const ui = render({ tickets: [{ name: 'Early', price: '100', id: '1' }, { name: 'Regular', price: '200', id: '2' }],
+        result: { success: false, data: { message: 'This ticket type is sold out.' } } });
+    await ui.submit();
+    assert.equal(ui.ticket.options[0].disabled, true);
+    assert.match(ui.ticket.options[0].textContent, /Sold out/);
+    assert.equal(ui.ticket.value, '');
+    assert.match(ui.message.textContent, /just sold out.*choose another/);
+    assert.match(ui.message.className, /warning/);
+    assert.equal(ui.form.classes.has('cer-sold-out'), false);
+    assert.equal(ui.button.disabled, true);
+    ui.select(1);
+    assert.equal(ui.button.disabled, false);
+});
+
+for (const [label, options] of [
+    ['last dropdown ticket', { tickets: [{ name: 'Early', price: '100', id: '1' }, { name: 'Regular', price: '200', id: '2', soldOut: true }] }],
+    ['single ticket', { single: true }],
+]) {
+    test(`${label} selling out locks the form without payment UI`, async () => {
+        const ui = render({ ...options, result: { success: false, data: { message: 'This ticket type is sold out.' } } });
+        await ui.submit();
+        assert.equal(ui.form.classes.has('cer-sold-out'), true);
+        assert.equal(ui.form.dataset.paymentRequired, 'false');
+        assert.equal(ui.button.textContent, 'Sold Out');
+        assert.equal(ui.button.disabled, true);
+        assert.match(ui.message.textContent, /sold out/);
+        assert.doesNotMatch(ui.message.textContent, /choose another/);
+    });
+}
+
+test('reaching event capacity locks the form as fully booked', async () => {
+    const ui = render({ tickets: [{ name: 'Early', price: '100', id: '1' }, { name: 'Regular', price: '0', id: '2' }],
+        result: { success: false, data: { message: 'This event has reached its attendance capacity.' } } });
+    await ui.submit();
+    assert.equal(ui.form.classes.has('cer-sold-out'), true);
+    assert.match(ui.message.textContent, /fully booked/);
+    assert.equal(ui.button.disabled, true);
+    ui.select(1);
+    assert.equal(ui.button.disabled, true);
+    assert.equal(ui.button.textContent, 'Sold Out');
 });

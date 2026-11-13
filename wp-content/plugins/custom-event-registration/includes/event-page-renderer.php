@@ -27,7 +27,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 		$event_info_paragraph_2 = cer_event_page_copy_value( $current_event, 'event_info_paragraph_2', '' );
 		$target_audience_heading = cer_event_page_copy_value( $current_event, 'target_audience_heading', 'Target Audience' );
 		$registration_heading = cer_event_page_copy_value( $current_event, 'registration_heading', 'Secure Your Place' );
-		$registration_intro = cer_event_page_copy_value( $current_event, 'registration_intro', 'Complete your registration and payment details below.' );
+		$registration_intro = cer_event_page_copy_value( $current_event, 'registration_intro', 'Complete your registration details below.' );
 		$sponsorship_heading = cer_event_page_copy_value( $current_event, 'sponsorship_heading', 'Partner With Us' );
 		$sponsorship_intro = cer_event_page_copy_value( $current_event, 'sponsorship_intro', 'Explore sponsorship opportunities for the event.' );
 		$speakers_heading = cer_event_page_copy_value( $current_event, 'speakers_heading', 'Keynote Speakers' );
@@ -126,7 +126,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 					$hero_features = cer_event_page_split_lines( cer_event_page_copy_value( $current_event, 'hero_features', '' ) );
 					$hero_badge_text = cer_event_page_copy_value( $current_event, 'hero_badge_text', 'Event Registration' );
 					$hero_convened_by = cer_event_page_copy_value( $current_event, 'hero_convened_by', '' );
-					$registration_intro = cer_event_page_copy_value( $current_event, 'registration_intro', 'Complete your registration and payment details below.' );
+					$registration_intro = cer_event_page_copy_value( $current_event, 'registration_intro', 'Complete your registration details below.' );
 					$target_audience_text = ! empty( $current_event->target_audience ) ? wp_strip_all_tags( $current_event->target_audience ) : wp_strip_all_tags( $current_event->description );
 					?>
 					<div class="cer-event-page cer-kamgc-page">

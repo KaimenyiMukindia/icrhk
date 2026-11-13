@@ -2760,6 +2760,43 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     flex-shrink: 0;
 }
 
+.cer-registration-form[data-payment-required="false"] .cer-payment-toggle,
+.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]) .cer-kamgc-summary-box {
+    display: none;
+}
+
+.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]) {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]) .cer-kamgc-sidebar-column:not(:has(.cer-kamgc-sponsor-box)) {
+    display: none;
+}
+
+.cer-ticket-selection {
+    margin: 0 0 1rem;
+    color: var(--cer-text-muted);
+}
+
+.cer-registration-form.cer-sold-out .cer-payment-toggle,
+.cer-registration-form.cer-sold-out .cer-ticket-selection,
+.cer-registration-form.cer-sold-out .cer-form-grid {
+    display: none;
+}
+
+.cer-registration-form.cer-sold-out .cer-primary-button {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.cer-registration-form.cer-single-ticket .cer-full-name-group {
+    grid-column: 1 / -1;
+}
+
+.cer-registration-form.cer-single-ticket.cer-card-selected .cer-email-group {
+    grid-column: auto;
+}
+
 .cer-kamgc-card,
 .cer-kamgc-sponsor-box,
 .cer-kamgc-summary-box,

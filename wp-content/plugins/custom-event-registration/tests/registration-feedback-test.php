@@ -67,16 +67,19 @@ class CER_Feedback_DB_Fixture {
 	public $insert_fails = false;
 	public $queries = array();
 	public $summary_note = '';
+	public $tickets = null;
+	public $max_attendees = null;
+	public $paid = 0;
 	public function __construct( $price ) { $this->price = $price; }
 	public function prepare( $query, ...$args ) { return $query; }
 	public function get_row( $query ) {
 		if ( false !== strpos( $query, 'evt_events' ) ) {
-			return (object) array( 'id' => 1, 'max_attendees' => null, 'slug' => 'test-event', 'summary_note' => $this->summary_note );
+			return (object) array( 'id' => 1, 'max_attendees' => $this->max_attendees, 'slug' => 'test-event', 'summary_note' => $this->summary_note );
 		}
 		return (object) array( 'id' => 2, 'name' => 'Delegate', 'price' => $this->price, 'quantity_available' => 10, 'quantity_sold' => 0 );
 	}
-	public function get_var( $query ) { return 0; }
-	public function get_results( $query ) { return array( $this->get_row( 'evt_ticket_types' ) ); }
+	public function get_var( $query ) { return $this->paid; }
+	public function get_results( $query ) { return $this->tickets ?? array( $this->get_row( 'evt_ticket_types' ) ); }
 	public function query( $query ) { $this->queries[] = $query; return 1; }
 	public function insert( $table, $row, $formats ) {
 		if ( $this->insert_fails ) { return false; }
@@ -143,9 +146,68 @@ foreach ( array(
 	$wpdb->summary_note = $note;
 	$markup = cer_get_registration_form_markup( 1 );
 	expect_feedback( 1 === substr_count( $markup, 'id="cer-form-message"' ), 'There must be one shared status region.' );
-	expect_feedback( 1 === substr_count( $markup, $secure_copy ), 'New secure-registration copy must appear exactly once.' );
+	preg_match( '/<div id="cer-form-message"[^>]*>(.*?)<\/div>/s', $markup, $status_region );
+	expect_feedback( 1 === substr_count( $status_region[1], $secure_copy ), 'New secure-registration copy must appear exactly once in the visible status region.' );
 	expect_feedback( false !== strpos( $markup, 'aria-live="polite"' ), 'Feedback must be announced accessibly.' );
 }
 $wpdb->summary_note = 'Custom event payment guidance.';
 expect_feedback( false !== strpos( cer_get_registration_form_markup( 1 ), $wpdb->summary_note ), 'Custom event notes must be preserved.' );
+foreach ( array( null, '', '0', '100.00' ) as $price ) {
+	$wpdb = new CER_Feedback_DB_Fixture( $price );
+	$markup = cer_get_registration_form_markup( 1 );
+	expect_feedback( false === strpos( $markup, '<select' ), 'A single ticket must not render a dropdown.' );
+	expect_feedback( false !== strpos( $markup, 'id="cer-ticket-type" name="ticket_type" type="hidden" value="Delegate"' ), 'A single ticket name must still be submitted.' );
+	expect_feedback( false !== strpos( $markup, 'name="ticket_type_id" value="2"' ), 'A single ticket id must be selected without JavaScript.' );
+	expect_feedback( false !== strpos( $markup, 'Ticket: <strong>Delegate</strong>' ), 'A single ticket must have a visible label.' );
+	foreach ( array( 'full_name', 'email', 'phone' ) as $field ) {
+		expect_feedback( false !== strpos( $markup, 'name="' . $field . '"' ), 'Contact fields must be retained.' );
+	}
+	$required = (float) $price > 0;
+	expect_feedback( false !== strpos( $markup, 'data-payment-required="' . ( $required ? 'true' : 'false' ) . '"' ), 'Initial payment UI must reflect the stored price.' );
+	if ( ! $required ) {
+		expect_feedback( false !== strpos( $markup, '>Register</button>' ), 'Unpriced tickets need a registration-only action.' );
+		expect_feedback( false !== strpos( $markup, 'No payment is required to submit this form.' ), 'Unpriced tickets need registration-only guidance.' );
+	}
+}
+$wpdb->tickets = array(
+	(object) array( 'id' => 2, 'name' => 'Contact registration', 'price' => null, 'quantity_available' => null, 'quantity_sold' => 0 ),
+	(object) array( 'id' => 3, 'name' => 'Paid ticket', 'price' => '100.00', 'quantity_available' => null, 'quantity_sold' => 0 ),
+);
+$markup = cer_get_registration_form_markup( 1 );
+expect_feedback( 1 === substr_count( $markup, '<select' ), 'Multiple tickets must retain the selector.' );
+expect_feedback( false !== strpos( $markup, '>Contact registration</option>' ), 'Unpriced options must not display a misleading zero-price charge.' );
+expect_feedback( false !== strpos( $markup, '>Paid ticket (KES 100.00)</option>' ), 'Paid option labels must retain their prices.' );
+$wpdb->tickets = array();
+$markup = cer_get_registration_form_markup( 1 );
+expect_feedback( false !== strpos( $markup, 'No ticket types available' ), 'No-ticket events must not auto-select a fictitious ticket.' );
+function cer_test_ticket( $id, $name, $price, $available, $sold ) {
+	return (object) array( 'id' => $id, 'name' => $name, 'price' => $price, 'quantity_available' => $available, 'quantity_sold' => $sold );
+}
+$wpdb = new CER_Feedback_DB_Fixture( 100 );
+$wpdb->tickets = array( cer_test_ticket( 2, 'Early bird', '100.00', 5, 5 ), cer_test_ticket( 3, 'Regular', '200.00', 5, 1 ), cer_test_ticket( 4, 'VIP', '500.00', null, 9 ) );
+$markup = cer_get_registration_form_markup( 1 );
+expect_feedback( false !== strpos( $markup, 'data-price="100.00" disabled data-sold-out="true">Early bird (KES 100.00) - Sold out</option>' ), 'Sold-out options must be disabled and labelled.' );
+expect_feedback( false !== strpos( $markup, '>Regular (KES 200.00)</option>' ) && false !== strpos( $markup, '>VIP (KES 500.00)</option>' ), 'Available options must remain selectable.' );
+expect_feedback( false === strpos( $markup, 'cer-sold-out' ), 'Partial sell-out must not lock the form.' );
+$wpdb->tickets = array( cer_test_ticket( 2, 'Early bird', '100.00', 5, 5 ), cer_test_ticket( 3, 'Regular', '0', 5, 1 ) );
+$markup = cer_get_registration_form_markup( 1 );
+expect_feedback( false === strpos( $markup, '<select' ) && false !== strpos( $markup, 'Ticket: <strong>Regular</strong>' ), 'One remaining ticket must display without a dropdown.' );
+expect_feedback( false !== strpos( $markup, 'data-payment-required="false"' ), 'Payment must follow the remaining ticket, not the sold-out one.' );
+foreach ( array(
+	array( array( cer_test_ticket( 2, 'Delegate', '100.00', 3, 3 ) ), null, 0, 'Tickets for this event are sold out.' ),
+	array( array( cer_test_ticket( 2, 'A', '100.00', 3, 3 ), cer_test_ticket( 3, 'B', '0', 1, 4 ) ), null, 0, 'Tickets for this event are sold out.' ),
+	array( array( cer_test_ticket( 2, 'Delegate', '100.00', null, 0 ) ), 50, 50, 'This event is fully booked.' ),
+) as $case ) {
+	$wpdb = new CER_Feedback_DB_Fixture( 100 );
+	list( $wpdb->tickets, $wpdb->max_attendees, $wpdb->paid, $copy ) = $case;
+	$markup = cer_get_registration_form_markup( 1 );
+	expect_feedback( false !== strpos( $markup, 'cer-sold-out' ) && false !== strpos( $markup, 'disabled>Sold Out</button>' ), 'Sold-out events must lock the form.' );
+	expect_feedback( false !== strpos( $markup, 'data-payment-required="false"' ), 'Sold-out events must hide payment UI.' );
+	preg_match( '/<div id="cer-form-message"[^>]*>(.*?)<\/div>/s', $markup, $status_region );
+	expect_feedback( false !== strpos( $status_region[1], $copy ), 'Sold-out copy must use the shared status region.' );
+}
+$wpdb = new CER_Feedback_DB_Fixture( 100 );
+$wpdb->max_attendees = 50;
+$wpdb->paid = 49;
+expect_feedback( false === strpos( cer_get_registration_form_markup( 1 ), 'cer-sold-out' ), 'Events below capacity must remain open.' );
 echo "Registration feedback handler tests passed.\n";

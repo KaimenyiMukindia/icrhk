@@ -15,6 +15,7 @@
     var submitButton = form ? form.querySelector('button[type="submit"]') : null;
     var requestInFlight = false;
     var paystackHandler = null;
+    var feedbackState = 'idle';
     var supportsViewTransitions = typeof document.startViewTransition === 'function';
 
     var currency = (window.cerRegistrationSettings && window.cerRegistrationSettings.currency) || 'KES';
@@ -54,6 +55,7 @@
     }
 
     function setMessage(text, state) {
+        feedbackState = state;
         if (!messageBox) {
             return;
         }
@@ -64,6 +66,61 @@
             messageBox.setAttribute('aria-busy', state === 'info' ? 'true' : 'false');
             messageBox.classList.toggle('cer-form-message-pending', state === 'info');
         });
+    }
+
+    function selectedTicket() {
+        if (!ticketType) {
+            return null;
+        }
+        return ticketType.options ? ticketType.options[ticketType.selectedIndex] : ticketType;
+    }
+
+    function paymentRequired() {
+        var selected = selectedTicket();
+        if (selected && ticketType.value) {
+            return parseFloat(selected.dataset.price || 0) > 0;
+        }
+        return !!form && form.dataset.paymentRequired === 'true';
+    }
+
+    function isSoldOut() {
+        return !!form && form.classList.contains('cer-sold-out');
+    }
+
+    function showSoldOut(text) {
+        form.classList.add('cer-sold-out');
+        form.dataset.paymentRequired = 'false';
+        if (submitButton) {
+            submitButton.textContent = 'Sold Out';
+            submitButton.disabled = true;
+        }
+        setMessage(text, 'warning');
+    }
+
+    // Reflects inventory that ran out after the page loaded; the server remains the source of truth.
+    function handleSoldOut(eventFull) {
+        var selected = selectedTicket();
+        if (eventFull || !ticketType || !ticketType.options) {
+            showSoldOut(eventFull
+                ? 'This event is fully booked. Please contact the event team about future availability.'
+                : form.dataset.soldOutNote);
+            return;
+        }
+        if (selected && selected.value) {
+            selected.disabled = true;
+            selected.dataset.soldOut = 'true';
+            selected.textContent += ' - Sold out';
+        }
+        ticketType.value = '';
+        var remaining = Array.prototype.filter.call(ticketType.options, function (option) {
+            return option.value && !option.disabled;
+        });
+        if (!remaining.length) {
+            showSoldOut(form.dataset.soldOutNote);
+            return;
+        }
+        setPaymentMethod(paymentMethodHidden ? paymentMethodHidden.value : 'mpesa');
+        setMessage('That ticket has just sold out. Please choose another available ticket.', 'warning');
     }
 
     function registrationErrorMessage(message) {
@@ -93,10 +150,15 @@
             return message;
         }
         console.error('CER registration failed:', message);
+        if (!paymentRequired()) {
+            return 'We could not complete your registration. Please try again later or contact the event team for help.';
+        }
         return 'We could not complete your registration or start payment. Please try again later. If you were charged, do not pay again; contact the event team for help.';
     }
 
     function setPaymentMethod(method) {
+        var needsPayment = paymentRequired();
+        method = needsPayment && method === 'card' ? 'card' : 'mpesa';
         var isCard = method === 'card';
         if (form) {
             form.classList.toggle('cer-card-selected', isCard);
@@ -120,8 +182,8 @@
             }
         }
 
-        if (submitButton) {
-            submitButton.textContent = isCard ? 'Pay with Card' : 'Register & Pay';
+        if (submitButton && !isSoldOut()) {
+            submitButton.textContent = needsPayment ? (isCard ? 'Pay with Card' : 'Register & Pay') : 'Register';
         }
         updateSubmitState();
         updateSummary();
@@ -136,8 +198,8 @@
         var ticket = safeText(activeTicketType && activeTicketType.value);
         var amountValue = '0.00';
 
-        if ( activeTicketType && activeTicketType.selectedIndex >= 0 ) {
-            var selected = activeTicketType.options[activeTicketType.selectedIndex];
+        if ( activeTicketType && activeTicketType.value ) {
+            var selected = selectedTicket();
             if ( selected && selected.dataset.price ) {
                 amountValue = parseFloat(selected.dataset.price).toFixed(2);
             }
@@ -164,6 +226,13 @@
             summaryMethod.textContent = methodLabel;
         }
 
+        if (form && !isSoldOut()) {
+            var needsPayment = paymentRequired();
+            form.dataset.paymentRequired = needsPayment ? 'true' : 'false';
+            if (messageBox && feedbackState === 'idle') {
+                messageBox.innerHTML = needsPayment ? form.dataset.paymentNote : form.dataset.contactNote;
+            }
+        }
     }
 
     function updateSubmitState() {
@@ -176,7 +245,7 @@
         var valid = !!ticketType && !!ticketType.value && !!emailField && emailField.checkValidity();
         valid = valid && !!phoneField && phoneField.value.trim() !== '';
         valid = valid && (method === 'card' || (!!fullNameField && fullNameField.checkValidity()));
-        submitButton.disabled = !valid || requestInFlight;
+        submitButton.disabled = !valid || requestInFlight || isSoldOut();
     }
 
     function pollPaymentStatus(reference) {
@@ -239,8 +308,7 @@
 
     if (ticketType) {
         ticketType.addEventListener('change', function () {
-            updateSummary();
-            updateSubmitState();
+            setPaymentMethod(paymentMethodHidden ? paymentMethodHidden.value : 'mpesa');
         });
     }
 
@@ -271,13 +339,17 @@
         var method = paymentMethodHidden && paymentMethodHidden.value === 'card' ? 'card' : 'mpesa';
 
         if (!ticketType || !ticketType.value) {
+            if (isSoldOut()) {
+                return;
+            }
             setMessage('Please select a ticket type.', 'error');
             return;
         }
 
         requestInFlight = true;
         updateSubmitState();
-        setMessage(method === 'card' ? 'Preparing secure card checkout...' : 'Submitting registration...', 'info');
+        var needsPayment = paymentRequired();
+        setMessage(needsPayment && method === 'card' ? 'Preparing secure card checkout...' : 'Submitting registration...', 'info');
         var paymentStarted = false;
         var registrationSaved = false;
 
@@ -304,7 +376,12 @@
                     throw new Error('Invalid registration response.');
                 }
                 if (!result.success) {
-                    setMessage(registrationErrorMessage(result.data && result.data.message), 'error');
+                    var serverMessage = result.data && result.data.message;
+                    if (serverMessage === 'This ticket type is sold out.' || serverMessage === 'This event has reached its attendance capacity.') {
+                        handleSoldOut(serverMessage === 'This event has reached its attendance capacity.');
+                        return;
+                    }
+                    setMessage(registrationErrorMessage(serverMessage), 'error');
                     return;
                 }
 
@@ -340,6 +417,10 @@
             })
             .catch(function (error) {
                 console.error('CER registration checkout failed:', error);
+                if (!needsPayment) {
+                    setMessage('We could not confirm your registration. Please check your connection and try again later, or contact the event team for help.', 'error');
+                    return;
+                }
                 setMessage(registrationSaved
                     ? 'Your registration details are saved, but we could not open payment checkout. Please try again later. If you approved a payment or were charged, do not pay again; contact the event team for help.'
                     : 'We could not confirm your submission. Please check your connection and try again later. If you approved a payment or were charged, do not pay again; contact the event team for help.', 'error');
