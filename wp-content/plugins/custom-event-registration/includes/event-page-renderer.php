@@ -101,7 +101,6 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 		}
 		?>
 		<div class="cer-event-page" style="<?php echo esc_attr( $event_style ); ?>">
-			<div class="cer-top-glass-backdrop" aria-hidden="true"></div>
 			<div class="cer-event-shell">
 				<?php if ( ! $current_event ) : ?>
 					<section class="cer-empty-state">

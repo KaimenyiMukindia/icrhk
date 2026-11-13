@@ -30,8 +30,13 @@ register_deactivation_hook( __FILE__, 'cer_deactivate_plugin' );
 add_action( 'admin_menu', 'cer_register_admin_menu' );
 add_action( 'admin_init', 'cer_maybe_ensure_event_schema' );
 add_action( 'admin_init', 'cer_handle_admin_actions' );
-add_action( 'plugins_loaded', 'cer_maybe_install_dashboard_trash_schema' );
-add_action( 'plugins_loaded', 'cer_maybe_install_event_item_trash_schema' );
+if ( did_action( 'plugins_loaded' ) ) {
+	cer_maybe_install_dashboard_trash_schema();
+	cer_maybe_install_event_item_trash_schema();
+} else {
+	add_action( 'plugins_loaded', 'cer_maybe_install_dashboard_trash_schema' );
+	add_action( 'plugins_loaded', 'cer_maybe_install_event_item_trash_schema' );
+}
 add_action( 'cer_purge_expired_event_trash', 'cer_purge_expired_event_trash' );
 add_action( 'wp_ajax_cer_submit_registration', 'cer_handle_ajax_submission' );
 add_action( 'wp_ajax_nopriv_cer_submit_registration', 'cer_handle_ajax_submission' );
@@ -55,7 +60,8 @@ add_filter( 'wp_mail_from', 'cer_mail_from_address' );
 add_filter( 'wp_mail_from_name', 'cer_mail_from_name' );
 add_action( 'template_redirect', 'cer_maybe_render_clean_event_url', 0 );
 add_filter( 'query_vars', 'cer_register_query_vars' );
-add_filter( 'template_include', 'cer_maybe_load_event_template' );
+// 99: after Elementor Pro's Theme Builder (11), which would otherwise swap in its archive template.
+add_filter( 'template_include', 'cer_maybe_load_event_template', 99 );
 add_action( 'init', 'cer_maybe_flush_rewrite_rules', 99 );
 
 function cer_get_event_route_base() {
@@ -580,21 +586,17 @@ function cer_maybe_render_clean_event_url() {
 		require_once CER_PLUGIN_DIR . 'includes/event-page-renderer.php';
 	}
 
-	$template = locate_template( 'page-templates/template-event-registration.php' );
-	if ( empty( $template ) ) {
-		$template = CER_PLUGIN_DIR . 'includes/event-page-renderer.php';
-	}
-
 	status_header( 200 );
 	nocache_headers();
+	set_query_var( 'event_slug', $event_slug );
 	global $wp_query;
 	if ( isset( $wp_query ) ) {
 		$wp_query->is_404 = false;
 		$wp_query->is_page = true;
 	}
 
-	include $template;
-	exit;
+	// Rendering is left to cer_maybe_load_event_template(). Exiting here would skip the rest of
+	// template_redirect, where Elementor initialises its frontend and queues the header's fonts.
 }
 
 function cer_maybe_load_event_template( $template ) {
@@ -604,7 +606,53 @@ function cer_maybe_load_event_template( $template ) {
 	}
 
 	$located = locate_template( 'page-templates/template-event-registration.php' );
-	return $located ? $located : $template;
+	if ( ! $located ) {
+		return $template;
+	}
+
+	add_filter( 'elementor/frontend/builder_content_data', 'cer_unwrap_event_header_container', 10, 2 );
+	return $located;
+}
+
+/**
+ * The event header template nests the site header's container inside an extra full-width
+ * container that adds its own padding, min-height and z-index. On event pages only, render
+ * the inner container as the header's top level. The saved template is not modified.
+ */
+function cer_unwrap_event_header_container( $data, $post_id ) {
+	if ( ! is_array( $data ) || 1 !== count( $data ) || 'header' !== get_post_meta( $post_id, '_elementor_template_type', true ) ) {
+		return $data;
+	}
+
+	$outer    = $data[0];
+	$children = isset( $outer['elements'] ) && is_array( $outer['elements'] ) ? $outer['elements'] : array();
+	if (
+		'container' !== ( $outer['elType'] ?? '' ) ||
+		'48909e04' !== ( $outer['id'] ?? '' ) ||
+		1 !== count( $children ) ||
+		'container' !== ( $children[0]['elType'] ?? '' ) ||
+		'6423679' !== ( $children[0]['id'] ?? '' )
+	) {
+		return $data;
+	}
+
+	// Elementor's element cache is per document: a cached copy would ignore this data, and a fresh
+	// render would store the unwrapped markup for every other page that uses this header. Skip the
+	// cache for this one render only.
+	add_filter( 'pre_option_elementor_element_cache_ttl', 'cer_disable_element_cache' );
+	add_filter( 'elementor/frontend/the_content', 'cer_restore_element_cache' );
+
+	return $children;
+}
+
+function cer_disable_element_cache() {
+	return 'disable';
+}
+
+function cer_restore_element_cache( $content ) {
+	remove_filter( 'pre_option_elementor_element_cache_ttl', 'cer_disable_element_cache' );
+	remove_filter( 'elementor/frontend/the_content', 'cer_restore_element_cache' );
+	return $content;
 }
 
 function cer_column_exists( string $table, string $column ): bool {
@@ -673,7 +721,8 @@ function cer_maybe_install_event_item_trash_schema(): void {
 	foreach ( $tables as $table ) {
 		cer_add_column_if_missing( $table, 'deleted_at', 'DATETIME NULL', 'updated_at' );
 		cer_add_index_if_missing( $table, 'deleted_at', 'deleted_at' );
-		if ( ! cer_column_exists( $table, 'deleted_at' ) ) {
+		$index_exists = $wpdb->get_var( $wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", 'deleted_at' ) );
+		if ( ! cer_column_exists( $table, 'deleted_at' ) || ! $index_exists ) {
 			error_log( sprintf( 'CER schema migration incomplete for %s.deleted_at; schema version remains 9.', $table ) );
 			return;
 		}

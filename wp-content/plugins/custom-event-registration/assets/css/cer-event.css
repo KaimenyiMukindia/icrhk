@@ -1710,21 +1710,15 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     color: #233047;
 }
 
-.cer-top-glass-backdrop {
-    width: 100%;
-    min-height: 10rem;
-    margin: 0 auto;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-top: 0;
-    border-radius: 0;
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* The site header template pulls the content below it up by 150px so the homepage slider sits
+   underneath it. The event page has no slider, so that overlap is not applied here; the header
+   keeps its own size, padding and stacking. This stylesheet is only enqueued on event pages. */
+body:has(.cer-event-page) .elementor-location-header > .e-con {
+    --margin-bottom: 0px !important;
+}
 
+.cer-event-page section[id] {
+    scroll-margin-top: calc(var(--cer-header-offset, 0px) + 1rem);
 }
 
 .cer-event-page .site-header,
@@ -4584,16 +4578,6 @@ html.cer-js .cer-reveal.is-visible {
     #cer-registration-form input,
     #cer-registration-form select {
         font-size: 16px !important;
-    }
-}
-
-/* --- The pale band above the hero on small screens.
-       `.cer-top-glass-backdrop` reserves min-height:10rem — 160px of empty
-       frosted panel that reads as a rendering fault on a phone. It has no
-       content, so it collapses below the desktop breakpoint. ------------- */
-@media (max-width: 1024px) {
-    .cer-top-glass-backdrop {
-        display: none !important;
     }
 }
 

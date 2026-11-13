@@ -1,5 +1,125 @@
 # Event Header Parity Audit
 
+## 2026-10-31 follow-up: preserve the event menu and colors
+
+This follow-up supersedes the earlier recommendation to replace production header
+`10256` with `8603`. The confirmed requirement is to retain the event-section
+links and event header colors, matching only the normal header's geometry,
+typography and responsive behavior.
+
+### Audit before editing
+
+- Read the custom route, event renderer, frontend assets, Goodsoul header and
+  template integrations, Elementor frontend/theme-location lifecycle, and the
+  cPanel/release scripts.
+- Compared the public homepage and event DOM and generated Elementor styles.
+  Both navigation widgets now compute to Roboto 15px/600 with 22.5px leading.
+  The event body's different display/body fonts are intentional content styles,
+  not the source of the header's dimensions; no page-wide Roboto/600 override
+  was introduced.
+- The event template's boxed container `6423679`, logo, and navigation retain
+  the standard header's sizing rules. Its additional full-width parent
+  `48909e04` adds a 130px minimum height and desktop padding of 30px/100px.
+  The inner container's negative bottom margin also explains why simply
+  resetting the outer minimum height collapses the reserved header space.
+- A static `<header>` moves to a negative viewport coordinate on scroll while
+  its sticky child remains fixed at top zero. The reported negative header
+  rectangle is not evidence that event content pushed the visible header away.
+- The final event layout explicitly overrides the shell's maximum width to
+  `none` and uses a separate 1240px content width, rather than the active site's
+  1140px container.
+- Started the existing local XAMPP MySQL with permission. Read the active
+  plugins, theme, kit, header display conditions, event-page assignments, event
+  appearance fields, and all 11 event-table schemas and row totals. No personal
+  registration data or secrets were printed, and no database migration or
+  header-condition update was performed as part of the fix.
+- Local and production data are not interchangeable: local has no `10256`,
+  local `9788` is an archive, and local `8603` and `7726` both have general
+  inclusion conditions. Production database/admin access was unavailable; the
+  user agreed to public-output plus local-database inspection.
+
+### Implemented correction
+
+- [custom-event-registration.php](../wp-content/plugins/custom-event-registration/custom-event-registration.php)
+  now resolves the clean event URL without rendering/exiting during the first
+  `template_redirect` callback. Elementor can initialize normally. The event
+  `template_include` filter runs at priority 99, after Elementor's priority-11
+  template selection, so an archive template cannot replace the event body.
+  The previous forced frontend-config enqueue workaround was removed.
+- Added an event-only body class. The active Elementor kit supplies the shell
+  width through its existing container-width setting (1140px fallback matches
+  Elementor's default); header markup and template assignments are unchanged.
+- [cer-event.css](../wp-content/plugins/custom-event-registration/assets/css/cer-event.css)
+  removes only the extra event header wrapper's size/spacing, retains the boxed
+  header's existing logo/navigation/responsive styles, and neutralizes its
+  negative bottom margin to reserve its actual height. No color declarations
+  were copied from the homepage.
+- The outer event shell is capped to the site's container width. Inner content
+  uses the same width token, while the existing cards, section order and
+  responsive grids remain. The decorative glass backdrop is taken out of
+  normal flow instead of reserving an extra 160px above the desktop hero.
+- The event body has an isolated stacking context so event tooltip z-indices
+  cannot overtake the header. [cer-registration.js](../wp-content/plugins/custom-event-registration/assets/js/cer-registration.js)
+  measures the visible sticky header for section anchor offsets and updates
+  them on load and resize, including header ResizeObserver notifications.
+
+### Verification and deployment boundary
+
+- PHP and JavaScript syntax checks and `git diff --check` pass.
+- Five dependency-free Node regressions pass:
+  `node --test wp-content/plugins/custom-event-registration/tests/event-layout.test.cjs`.
+  They execute the existing frontend script and test exact responsive offsets,
+  hidden/static spacer exclusion, resize/load updates, missing ResizeObserver,
+  and no changes on ordinary pages or absent Elementor headers.
+- Local HTTP checks return 200 for both published event slugs and 404 with
+  "Event not found" for an unknown slug. The event body and registration form
+  are rendered through the event template, alongside one Elementor header and
+  the normal `elementorFrontendConfig`.
+- In a browser-only test against production markup, the wrapper correction
+  yields 98.3px at 1440 CSS px, 76.1px at 768 CSS px, and 89.5px at 390 CSS px,
+  matching the standard header. This is not a production deployment.
+- Local anchor activation places registration at approximately 114.8px while
+  the sticky header ends at 98.3px, leaving the intended 16px clearance.
+- The local mobile header matches the homepage at 89.5px. Its visible menu
+  toggle responds to Enter and pointer clicks (`aria-expanded=true`). The desktop event shell and
+  header inner container both measure 1140px; no horizontal document overflow
+  is introduced. The homepage has no event body class or registration script.
+  The earlier zero-height dropdown samples were caused by hidden integrated
+  browser tabs freezing CSS animation time at zero, not a dropdown defect.
+  Once the user made the browser pane visible, native pointer clicks opened
+  and closed the dropdown at mobile and tablet widths. Device metrics were
+  controlled through CDP because the visible VS Code pane overwrites ordinary
+  Playwright viewport changes. Final open dropdown height is 132px, with
+  identity scale transform and successful link hit-testing above event content.
+  Mobile registration navigation lands at approximately 105.0px, below the
+  89.5px header, with a computed 105.5px scroll margin. The desktop shell begins
+  directly at the header's bottom (98.3px), without the old 160px blank band.
+- Initial local browser verification uses the existing DB with a temporary,
+  request-only active-plugin allowlist for Elementor/Pro, Goodsoul Core,
+  Meta Box, Redux, Sticky Header Effects and CER. Other plugins' cold bootstrap
+  exceeded the local PHP timeout. The allowlist and cron suppression exist
+  only in the temporary verification router, not in WordPress options/source.
+  Bundled PHP OPcache was enabled for that helper; no dependencies or permanent
+  server configuration were changed.
+- Final HTTP regression checks removed that request-only allowlist and used
+  the full existing active-plugin set. The event and canonical homepage return
+  200; an unknown event returns 404 with "Event not found". Each contains
+  exactly one header and one Elementor frontend configuration. The event
+  contains exactly one registration form; the homepage and unknown event
+  contain none. No fatal errors are present in those responses. These are
+  rendering/routing checks, not live payment, mail or production acceptance tests.
+- After the helper's graceful shutdown, its complete MariaDB output reported
+  a corrupt local `wp_yoast_indexable.MYI` index during validation. This is a
+  separate local database issue, not evidence about production or the header.
+  No repair was attempted; back up and inspect that table before repairing it.
+- [deploy-cpanel.sh](../deploy-cpanel.sh) already copies this plugin and the
+  Goodsoul theme to the configured document root. `.cpanel.yml` invokes it;
+  the GitHub release workflow builds an artifact rather than deploying it.
+  No deployment-script changes are required for this source correction.
+  After deploying, purge the event page from LiteSpeed/CDN caches and repeat
+  desktop/mobile header, menu and anchor checks. Do not import local Elementor
+  condition records into production.
+
 ## Scope and evidence
 
 Audited the repository implementation and the public standard and event pages in a browser on 2026-10-29:

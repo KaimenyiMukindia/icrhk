@@ -917,6 +917,88 @@
     Array.prototype.forEach.call(roots, setup);
 })(document, window);
 
+(function (document, window) {
+    var eventPage = document.querySelector('.cer-event-page');
+    var header = document.querySelector('.elementor-location-header');
+    if (!eventPage || !header) {
+        return;
+    }
+
+    var lastOffset = -1;
+    var frame = 0;
+    var initialHash = window.location.hash;
+    var interactionEvents = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+
+    function measureHeader() {
+        var bottom = 0;
+        Array.prototype.forEach.call(header.querySelectorAll('.elementor-sticky'), function (element) {
+            var style = window.getComputedStyle(element);
+            var rect = element.getBoundingClientRect();
+            if ((style.position === 'fixed' || style.position === 'sticky') &&
+                style.visibility !== 'hidden' && style.display !== 'none' && rect.height > 0) {
+                bottom = Math.max(bottom, rect.bottom);
+            }
+        });
+
+        var offset = Math.max(0, Math.ceil(bottom));
+        if (offset !== lastOffset) {
+            eventPage.style.setProperty('--cer-header-offset', offset + 'px');
+            lastOffset = offset;
+        }
+    }
+
+    function scheduleMeasure() {
+        if (!frame) {
+            frame = window.requestAnimationFrame(function () {
+                frame = 0;
+                measureHeader();
+            });
+        }
+    }
+
+    function cancelInitialAnchor() {
+        initialHash = '';
+    }
+
+    function finishInitialAnchor() {
+        measureHeader();
+        interactionEvents.forEach(function (name) {
+            window.removeEventListener(name, cancelInitialAnchor);
+        });
+
+        // The browser can navigate to a fragment before Elementor makes the header sticky.
+        var hash = initialHash;
+        initialHash = '';
+        if (!hash || hash !== window.location.hash || lastOffset <= 0) {
+            return;
+        }
+
+        var target = document.getElementById(hash.slice(1));
+        if (target && target.tagName === 'SECTION' && eventPage.contains(target)) {
+            target.scrollIntoView({ block: 'start', behavior: 'instant' });
+        }
+    }
+
+    if (initialHash) {
+        interactionEvents.forEach(function (name) {
+            window.addEventListener(name, cancelInitialAnchor, { passive: true });
+        });
+    }
+
+    measureHeader();
+    window.addEventListener('load', finishInitialAnchor);
+    window.addEventListener('resize', scheduleMeasure, { passive: true });
+    window.addEventListener('scroll', scheduleMeasure, { passive: true });
+
+    if (window.ResizeObserver) {
+        var observer = new window.ResizeObserver(scheduleMeasure);
+        observer.observe(header);
+        Array.prototype.forEach.call(header.querySelectorAll('.elementor-sticky'), function (element) {
+            observer.observe(element);
+        });
+    }
+})(document, window);
+
 /* --- Blob layer offset ---------------------------------------------------
    The blobs are 80% orange, so they start below the section heading and the
    white title and intro never sit on one. Sections without a heading
