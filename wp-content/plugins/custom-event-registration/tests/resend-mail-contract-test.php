@@ -55,6 +55,9 @@ require dirname( __DIR__ ) . '/includes/class-cer-mailer.php';
 $http_calls = 0;
 $failures = array();
 $atts = array( 'to' => 'attendee@example.test', 'subject' => 'Fixture', 'message' => '<p>Thank you</p>' );
+expect_mail_contract( null === cer_maybe_send_via_resend( null, $atts ) && 0 === $http_calls, 'Mail from other plugins must keep the default WordPress transport and never use Resend.' );
+expect_mail_contract( 'site@example.test' === cer_mail_from_address( 'site@example.test' ) && 'Site' === cer_mail_from_name( 'Site' ), 'Other plugins must keep their own sender.' );
+$GLOBALS['cer_current_mail_config'] = array( 'event_id' => 7, 'display_name' => '' );
 expect_mail_contract( false === cer_maybe_send_via_resend( false, $atts ) && 0 === $http_calls, 'An earlier failed short circuit must not trigger another send.' );
 expect_mail_contract( true === cer_maybe_send_via_resend( true, $atts ) && 0 === $http_calls, 'An earlier accepted send must not send twice.' );
 foreach ( array(
@@ -70,7 +73,7 @@ expect_mail_contract( false === cer_maybe_send_via_resend( null, array_merge( $a
 expect_mail_contract( false === cer_maybe_send_via_resend( null, array_merge( $atts, array( 'attachments' => array( __DIR__ . '/nonexistent-fixture.pdf' ) ) ) ), 'Missing ticket attachment must fail explicitly.' );
 $http_response = array( 'response' => array( 'code' => 200 ), 'body' => '{"id":"fixture-message"}' );
 expect_mail_contract( true === cer_maybe_send_via_resend( null, $atts ), 'Accepted mail must preserve the successful transport contract.' );
-expect_mail_contract( 'Fixture Tickets <tickets@example.test>' === $http_payload['from'] && ! isset( $http_payload['reply_to'] ), 'Without event context the configured sender must be unchanged.' );
+expect_mail_contract( 'Fixture Tickets <tickets@example.test>' === $http_payload['from'] && ! isset( $http_payload['reply_to'] ), 'Without an event name the configured sender must be unchanged.' );
 $GLOBALS['cer_current_mail_config'] = array( 'event_id' => 7, 'display_name' => "KAMGC \"2026\" <x>\r\nBcc: evil@example.test" );
 expect_mail_contract( true === cer_maybe_send_via_resend( null, array_merge( $atts, array( 'headers' => array( 'Content-Type: text/html; charset=UTF-8', 'Reply-To: organizer@example.test' ) ) ) ), 'Event mail must send.' );
 expect_mail_contract( '"KAMGC 2026 x Bcc: evil@example.test" <tickets@example.test>' === $http_payload['from'], 'Event name must be a sanitised display name on the verified no-reply address: ' . $http_payload['from'] );

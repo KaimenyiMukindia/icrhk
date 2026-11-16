@@ -35,6 +35,12 @@ function cer_clear_current_mail_config(): void {
 	unset( $GLOBALS['cer_current_mail_config'] );
 }
 
+// Only mail sent by this plugin carries a context; all other wp_mail() calls keep the site's default transport.
+function cer_has_current_mail_config(): bool {
+	$config = $GLOBALS['cer_current_mail_config'] ?? null;
+	return is_array( $config ) && array_key_exists( 'event_id', $config );
+}
+
 function cer_get_resend_from(): string {
 	$from = defined( 'CER_RESEND_FROM' ) ? trim( (string) CER_RESEND_FROM ) : '';
 	if ( preg_match( '/<([^>]+)>/', $from, $matches ) ) {
@@ -87,7 +93,7 @@ function cer_resend_mail_failure( WP_Error $error ): bool {
 }
 
 function cer_maybe_send_via_resend( $pre, array $atts ) {
-	if ( null !== $pre ) {
+	if ( null !== $pre || ! cer_has_current_mail_config() ) {
 		return $pre;
 	}
 	$api_key = defined( 'CER_RESEND_API_KEY' ) ? trim( (string) CER_RESEND_API_KEY ) : '';
@@ -168,6 +174,9 @@ function cer_maybe_send_via_resend( $pre, array $atts ) {
 }
 
 function cer_configure_smtp( $phpmailer ): void {
+	if ( ! cer_has_current_mail_config() ) {
+		return;
+	}
 	$config = $GLOBALS['cer_current_mail_config'] ?? array();
 	if ( empty( $config ) ) {
 		if ( ! defined( 'CER_SMTP_HOST' ) || ! defined( 'CER_SMTP_USERNAME' ) || ! defined( 'CER_SMTP_PASSWORD' ) ) {
@@ -214,6 +223,9 @@ function cer_configure_smtp( $phpmailer ): void {
 }
 
 function cer_mail_from_address( string $from ): string {
+	if ( ! cer_has_current_mail_config() ) {
+		return $from;
+	}
 	$config = $GLOBALS['cer_current_mail_config'] ?? array();
 	if ( ! empty( $config['from_email'] ) ) {
 		return $config['from_email'];
@@ -222,6 +234,9 @@ function cer_mail_from_address( string $from ): string {
 }
 
 function cer_mail_from_name( string $from_name ): string {
+	if ( ! cer_has_current_mail_config() ) {
+		return $from_name;
+	}
 	$config = $GLOBALS['cer_current_mail_config'] ?? array();
 	if ( ! empty( $config['from_name'] ) ) {
 		return $config['from_name'];

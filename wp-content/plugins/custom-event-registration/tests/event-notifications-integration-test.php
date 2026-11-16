@@ -93,7 +93,7 @@ try {
 	}, 1, 2 );
 	cer_schedule_event_notifications();
 	cer_schedule_event_notifications();
-	cer_notify_assert( '1' === get_option( 'cer_notification_schema_version' ) && false !== wp_next_scheduled( 'cer_event_notifications' ), 'Schema and recurring worker must be installed idempotently.' );
+	cer_notify_assert( '2' === get_option( 'cer_notification_schema_version' ) && false !== wp_next_scheduled( 'cer_event_notifications' ), 'Schema and recurring worker must be installed idempotently.' );
 	$now = current_datetime();
 	$event = cer_notify_insert( 'evt_events', array(
 		'event_uuid' => wp_generate_uuid4(), 'name' => 'Notification fixture', 'slug' => $database,
@@ -325,6 +325,78 @@ try {
 	$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => 3 ), array( 'id' => $second_ticket ) );
 	$full_ticket = cer_process_registration_submission( array_merge( $payload, array( 'ticket_type_id' => $second_ticket, 'email' => 'soldout@example.test' ) ) );
 	cer_notify_assert( ! $full_ticket['success'] && false !== strpos( $full_ticket['message'], 'sold out' ), 'No-cost confirmed tickets must enforce ticket inventory.' );
+
+	$nairobi = new DateTimeZone( 'Africa/Nairobi' );
+	$window_start = new DateTimeImmutable( '2030-03-10 09:00:00', $nairobi );
+	$no_end = array( 'event_date' => $window_start->format( 'Y-m-d H:i:s' ), 'event_end_date' => null );
+	cer_notify_assert( ! cer_event_vendor_realtime( $no_end, $window_start->modify( '-37 hours' ) ) && cer_event_vendor_realtime( $no_end, $window_start->modify( '-35 hours' ) ), 'Real-time vendor notices must start 36 hours before the event.' );
+	cer_notify_assert( cer_event_vendor_realtime( $no_end, $window_start->setTime( 23, 30 ) ) && ! cer_event_vendor_realtime( $no_end, $window_start->modify( '+1 day' )->setTime( 0, 30 ) ), 'Without an end date real-time ends with the start day in Kenyan time.' );
+	$with_end = array_merge( $no_end, array( 'event_end_date' => $window_start->modify( '+2 days' )->format( 'Y-m-d H:i:s' ) ) );
+	cer_notify_assert( cer_event_vendor_realtime( $with_end, $window_start->modify( '+1 day' ) ) && ! cer_event_vendor_realtime( $with_end, $window_start->modify( '+2 days +1 minute' ) ), 'Real-time must continue until the event end date.' );
+
+	$vendor_event = cer_notify_insert( 'evt_events', array(
+		'event_uuid' => wp_generate_uuid4(), 'name' => 'Vendor fixture', 'slug' => $database . '-vendor',
+		'event_date' => $now->modify( '+30 days' )->format( 'Y-m-d H:i:s' ), 'status' => 'published',
+		'mail_sender_email' => 'organizer@example.test', 'mail_notification_email' => 'vendor@example.test',
+	) );
+	$vendor_ticket = cer_notify_insert( 'evt_ticket_types', array( 'event_id' => $vendor_event, 'name' => 'Vendor Delegate', 'price' => 0 ) );
+	$vendor_base = array_merge( $base, array( 'event_id' => $vendor_event, 'ticket_type_id' => $vendor_ticket, 'status' => 'confirmed', 'amount' => 0 ) );
+	$insert_vendor_row = static function ( string $email, string $sent_at ) use ( $vendor_base ): int {
+		return cer_notify_insert( 'evt_registrations', cer_prepare_registration_row( array_merge( $vendor_base, array(
+			'registration_uuid' => wp_generate_uuid4(), 'payment_uuid' => wp_generate_uuid4(), 'email' => $email, 'ticket_sent_at' => $sent_at,
+		) ) ) );
+	};
+	$vendor_mail = static function () use ( &$mail ): array {
+		return array_values( array_filter( $mail, static function ( $message ) { return 'vendor@example.test' === $message['to']; } ) );
+	};
+
+	$historic = $insert_vendor_row( 'historic@example.test', current_time( 'mysql' ) );
+	update_option( 'cer_notification_schema_version', '1', false );
+	cer_schedule_event_notifications();
+	cer_notify_assert( '2' === get_option( 'cer_notification_schema_version' ) && null !== $wpdb->get_var( "SELECT vendor_notified_at FROM {$prefix}evt_registrations WHERE id = {$historic}" ), 'Existing admissions must be baselined so no historical notices are replayed.' );
+
+	$mail = array();
+	$queued = cer_process_registration_submission( array_merge( $payload, array( 'event_id' => $vendor_event, 'ticket_type_id' => $vendor_ticket, 'email' => 'queued@example.test' ) ) );
+	cer_notify_assert( $queued['success'] && $queued['data']['ticket_sent'] && 1 === count( $mail ) && empty( $vendor_mail() ), 'Outside the real-time window the attendee ticket is immediate and the vendor notice is queued.' );
+	$today = current_datetime()->setTimezone( $nairobi )->setTime( 0, 0 );
+	cer_notify_query( "UPDATE {$prefix}evt_registrations SET ticket_sent_at = '" . $today->modify( '-1 hour' )->format( 'Y-m-d H:i:s' ) . "' WHERE event_id = {$vendor_event} AND vendor_notified_at IS NULL" );
+	$yesterday_failed = $insert_vendor_row( 'yesterday@example.test', $today->modify( '-2 hours' )->format( 'Y-m-d H:i:s' ) );
+	$today_row = $insert_vendor_row( 'today@example.test', $today->modify( '+30 minutes' )->format( 'Y-m-d H:i:s' ) );
+	delete_option( 'cer_vendor_digest_last_date' );
+	$mail = array();
+	cer_process_vendor_notifications( $today->setTime( 2, 0 ) );
+	cer_notify_assert( empty( $mail ), 'The vendor digest must not be sent before 03:05 Nairobi time.' );
+	cer_process_vendor_notifications( $today->setTime( 3, 10 ) );
+	$digests = $vendor_mail();
+	cer_notify_assert( 1 === count( $mail ) && 1 === count( $digests ) && 0 === strpos( $digests[0]['subject'], 'Daily registrations for Vendor fixture' ), 'One daily digest per event must be sent at 03:05.' );
+	cer_notify_assert( false !== strpos( $digests[0]['message'], 'queued@example.test' ) && false !== strpos( $digests[0]['message'], 'yesterday@example.test' ) && false === strpos( $digests[0]['message'], 'today@example.test' ) && false === strpos( $digests[0]['message'], 'historic@example.test' ), 'The digest must list only the previous day\'s new admissions.' );
+	cer_notify_assert( in_array( 'Reply-To: organizer@example.test', $digests[0]['headers'], true ), 'Digest replies must go to the event Sender Email.' );
+	cer_notify_assert( null !== $wpdb->get_var( "SELECT vendor_notified_at FROM {$prefix}evt_registrations WHERE id = {$yesterday_failed}" ) && null === $wpdb->get_var( "SELECT vendor_notified_at FROM {$prefix}evt_registrations WHERE id = {$today_row}" ), 'Digested rows are marked and later rows stay queued.' );
+	$mail = array();
+	cer_process_vendor_notifications( $today->setTime( 4, 0 ) );
+	cer_notify_assert( empty( $mail ), 'Only one digest may be sent per day.' );
+	$mail_success = false;
+	cer_process_vendor_notifications( $today->modify( '+1 day' )->setTime( 3, 10 ) );
+	cer_notify_assert( 1 === count( $mail ) && null === $wpdb->get_var( "SELECT vendor_notified_at FROM {$prefix}evt_registrations WHERE id = {$today_row}" ), 'A failed digest must leave its admissions queued.' );
+	$mail_success = true;
+	$mail = array();
+	cer_process_vendor_notifications( $today->modify( '+2 days' )->setTime( 3, 10 ) );
+	cer_notify_assert( 1 === count( $mail ) && false !== strpos( $mail[0]['message'], 'today@example.test' ), 'Failed digest admissions must be carried into the next digest.' );
+
+	$insert_vendor_row( 'catchup1@example.test', current_time( 'mysql' ) );
+	$insert_vendor_row( 'catchup2@example.test', current_time( 'mysql' ) );
+	$wpdb->update( $prefix . 'evt_events', array( 'event_date' => current_datetime()->modify( '+30 hours' )->format( 'Y-m-d H:i:s' ) ), array( 'id' => $vendor_event ) );
+	$mail = array();
+	cer_process_vendor_notifications( current_datetime() );
+	cer_notify_assert( 1 === count( $mail ) && 0 === strpos( $mail[0]['subject'], 'Registration summary for Vendor fixture' ) && false !== strpos( $mail[0]['message'], 'catchup1@example.test' ) && false !== strpos( $mail[0]['message'], 'catchup2@example.test' ), 'Entering the 36-hour window must send one catch-up summary.' );
+	$mail = array();
+	$live = cer_process_registration_submission( array_merge( $payload, array( 'event_id' => $vendor_event, 'ticket_type_id' => $vendor_ticket, 'email' => 'live@example.test' ) ) );
+	$live_notices = $vendor_mail();
+	cer_notify_assert( $live['success'] && 2 === count( $mail ) && 1 === count( $live_notices ) && 0 === strpos( $live_notices[0]['subject'], 'New registration for Vendor fixture' ), 'Inside the window each admission must notify the vendor immediately.' );
+	cer_notify_assert( in_array( 'Reply-To: live@example.test', $live_notices[0]['headers'], true ), 'Real-time notices keep the attendee as Reply-To.' );
+	$mail = array();
+	cer_process_vendor_notifications( current_datetime() );
+	cer_notify_assert( empty( $mail ), 'Real-time notices must not be repeated by the worker.' );
 	cer_clear_event_notifications();
 	cer_notify_assert( false === wp_next_scheduled( 'cer_event_notifications' ), 'Deactivation must remove the recurring notification hook.' );
 	echo "Event notifications integration tests passed (real isolated MySQL, PDF generation, intercepted mail).\n";

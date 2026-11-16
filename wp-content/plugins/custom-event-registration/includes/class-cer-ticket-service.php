@@ -145,7 +145,7 @@ function cer_deliver_ticket_for_registration( int $registration_id ): bool {
 		return false;
 	}
 	cer_clear_current_mail_config();
-	cer_send_admin_receipt_for_registration( $registration_id );
+	cer_notify_vendor_of_registration( $registration_id );
 
 	if ( false === $wpdb->update( $table, array( 'ticket_sent_at' => current_time( 'mysql' ) ), array( 'id' => $registration_id ), array( '%s' ), array( '%d' ) ) ) {
 		error_log( 'CER ticket delivery timestamp could not be saved for ' . $registration_id . ': ' . $wpdb->last_error );
