@@ -361,11 +361,6 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 														</div>
 													</div>
 												<?php endif; ?>
-												<div class="cer-kamgc-stats-grid">
-													<div><strong>2 Days</strong><span>Plenary keynotes, panels &amp; workshops</span></div>
-													<div><strong>47 Counties</strong><span>Multi-sectoral devolution representation</span></div>
-													<div><strong>500+</strong><span>Delegates, experts and global partners</span></div>
-												</div>
 											</div>
 										<?php endif; ?>
 

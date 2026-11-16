@@ -23,6 +23,7 @@ require_once CER_PLUGIN_DIR . 'includes/class-cer-security.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-mail-smtp-resolver.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-mailer.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-ticket-service.php';
+require_once CER_PLUGIN_DIR . 'includes/class-cer-event-notifications.php';
 require_once CER_PLUGIN_DIR . 'admin/admin-functions.php';
 
 register_activation_hook( __FILE__, 'cer_activate_plugin' );
@@ -439,7 +440,7 @@ function cer_backfill_paid_ticket_inventory(): void {
 	global $wpdb;
 	$registrations_table = $wpdb->prefix . 'evt_registrations';
 	$ticket_types_table = $wpdb->prefix . 'evt_ticket_types';
-	$rows = $wpdb->get_results( $wpdb->prepare( "SELECT ticket_type_id, COUNT(*) AS paid_count FROM {$registrations_table} WHERE status = %s AND ticket_type_id IS NOT NULL GROUP BY ticket_type_id", 'paid' ) );
+	$rows = $wpdb->get_results( "SELECT ticket_type_id, COUNT(*) AS paid_count FROM {$registrations_table} WHERE (status = 'paid' OR (status = 'confirmed' AND amount <= 0)) AND ticket_type_id IS NOT NULL GROUP BY ticket_type_id" );
 	if ( empty( $rows ) ) {
 		return;
 	}
@@ -1034,6 +1035,7 @@ function cer_install_event_schema() {
 
 function cer_deactivate_plugin() {
 	wp_clear_scheduled_hook( 'cer_purge_expired_event_trash' );
+	cer_clear_event_notifications();
 	flush_rewrite_rules();
 }
 
@@ -2110,7 +2112,7 @@ function cer_confirm_registration_paid( int $registration_id ): array {
 			throw new Exception( 'The event or selected ticket is no longer available.' );
 		}
 
-		$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$registrations_table} WHERE event_id = %d AND status = %s", $event->id, 'paid' ) );
+		$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$registrations_table} WHERE event_id = %d AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0))", $event->id ) );
 		if ( ! empty( $event->max_attendees ) && $paid_registrations >= (int) $event->max_attendees ) {
 			throw new Exception( 'This event has reached its attendance capacity.' );
 		}
@@ -2229,17 +2231,13 @@ function cer_process_registration_submission( $payload = array() ) {
 		if ( empty( $email ) || empty( $payment_method ) || empty( $phone ) || ( 'mpesa' === $payment_method && empty( $full_name ) ) ) {
 		return array( 'success' => false, 'message' => 'Please check your email, Kenyan phone number and required fields, then try again.' );
 	}
-		if ( 'card' === $payment_method ) {
-			$full_name = '';
-		}
-
 	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = %s AND deleted_at IS NULL LIMIT 1", $event_id, 'published' ) );
 	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL LIMIT 1", $ticket_type_id, $event_id ) );
 	if ( ! $event || ! $ticket ) {
 		return array( 'success' => false, 'message' => 'The selected event or ticket is no longer available.' );
 	}
 
-	$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d AND status = %s", $event_id, 'paid' ) );
+	$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0))", $event_id ) );
 	if ( ! empty( $event->max_attendees ) && $paid_registrations >= (int) $event->max_attendees ) {
 		return array( 'success' => false, 'message' => 'This event has reached its attendance capacity.' );
 	}
@@ -2255,6 +2253,10 @@ function cer_process_registration_submission( $payload = array() ) {
 
 	$wpdb->query( 'START TRANSACTION' );
 	try {
+		$locked_event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = 'published' AND deleted_at IS NULL FOR UPDATE", $event_id ) );
+		if ( ! $locked_event ) {
+			throw new Exception( 'The selected event or ticket is no longer available.' );
+		}
 		$locked_ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL FOR UPDATE", $ticket_type_id, $event_id ) );
 		if ( ! $locked_ticket ) {
 			throw new Exception( 'The selected ticket is no longer available.' );
@@ -2264,45 +2266,90 @@ function cer_process_registration_submission( $payload = array() ) {
 		}
 
 		$amount = number_format( (float) $locked_ticket->price, 2, '.', '' );
-		$tickets_not_on_sale = (float) $amount <= 0;
-		$reserved_until = $tickets_not_on_sale ? null : gmdate( 'Y-m-d H:i:s', time() + cer_get_registration_hold_seconds() );
-		$inserted = $wpdb->insert(
-			$registrations_table,
-			cer_prepare_registration_row( array(
-				'registration_uuid' => $registration_uuid,
-				'payment_uuid' => $payment_uuid,
-				'event_id' => $event_id ? $event_id : null,
-				'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
-				'full_name' => $full_name,
-				'email' => $email,
-				'phone' => $phone,
-				'ticket_type' => $ticket_type,
-				'payment_method' => $payment_method,
-				'amount' => $amount,
-				'notes' => $notes,
-				'status' => 'pending',
-				'reserved_until' => $reserved_until,
-			) ),
-			array( '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s' )
+		$no_payment_required = (float) $amount <= 0;
+		$existing_contact = null;
+		if ( $no_payment_required ) {
+			if ( '' === $full_name ) {
+				throw new Exception( 'Please check your email, Kenyan phone number and required fields, then try again.' );
+			}
+			$existing_contact = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM {$registrations_table} WHERE event_id = %d AND ticket_type_id = %d AND deleted_at IS NULL AND (status IN ('paid', 'confirmed') OR (status = 'pending' AND amount <= 0 AND reserved_until IS NULL)) AND (email_search_hash = %s OR LOWER(email) = %s) ORDER BY CASE WHEN status IN ('paid', 'confirmed') THEN 0 ELSE 1 END, id ASC LIMIT 1 FOR UPDATE",
+				$event_id, $ticket_type_id, cer_registration_search_hash( $email ), strtolower( $email )
+			) );
+			if ( $wpdb->last_error ) {
+				error_log( 'CER duplicate registration check failed: ' . $wpdb->last_error );
+				throw new Exception( 'The registration could not be saved.' );
+			}
+			if ( $existing_contact && in_array( $existing_contact->status, array( 'paid', 'confirmed' ), true ) ) {
+				throw new Exception( 'You are already registered for this ticket. Please check your email for your ticket or contact the event team for help.' );
+			}
+		} elseif ( 'card' === $payment_method ) {
+			$full_name = '';
+		}
+		if ( ! empty( $locked_event->max_attendees ) ) {
+			if ( $no_payment_required ) {
+				$confirmed_count = (int) $wpdb->get_var( $wpdb->prepare(
+					"SELECT COUNT(*) FROM {$registrations_table} WHERE event_id = %d AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0) OR (status IN ('pending', 'awaiting_payment') AND amount > 0 AND reserved_until > %s))",
+					$event_id,
+					gmdate( 'Y-m-d H:i:s' )
+				) );
+			} else {
+				$confirmed_count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$registrations_table} WHERE event_id = %d AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0))", $event_id ) );
+			}
+			if ( $wpdb->last_error ) {
+				error_log( 'CER admission capacity check failed: ' . $wpdb->last_error );
+				throw new Exception( 'The registration could not be saved.' );
+			}
+			if ( $confirmed_count >= (int) $locked_event->max_attendees ) {
+				throw new Exception( 'This event has reached its attendance capacity.' );
+			}
+		}
+		$reserved_until = $no_payment_required ? null : gmdate( 'Y-m-d H:i:s', time() + cer_get_registration_hold_seconds() );
+		$registration_data = array(
+			'registration_uuid' => $registration_uuid,
+			'payment_uuid' => $payment_uuid,
+			'event_id' => $event_id ? $event_id : null,
+			'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
+			'full_name' => $full_name,
+			'email' => $email,
+			'phone' => $phone,
+			'ticket_type' => $ticket_type,
+			'payment_method' => $no_payment_required ? 'none' : $payment_method,
+			'amount' => $amount,
+			'notes' => $notes,
+			'status' => $no_payment_required ? 'confirmed' : 'pending',
+			'reserved_until' => $reserved_until,
 		);
+		if ( $existing_contact ) {
+			$registration_data['registration_uuid'] = $existing_contact->registration_uuid;
+			$registration_data['payment_uuid'] = $existing_contact->payment_uuid;
+			$registration_data['user_access_key'] = $existing_contact->user_access_key;
+			$inserted = $wpdb->update( $registrations_table, cer_prepare_registration_row( $registration_data ), array( 'id' => (int) $existing_contact->id ) );
+			$registration_id = (int) $existing_contact->id;
+		} else {
+			$inserted = $wpdb->insert(
+				$registrations_table,
+				cer_prepare_registration_row( $registration_data ),
+				array( '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s' )
+			);
+			$registration_id = (int) $wpdb->insert_id;
+		}
 		if ( ! $inserted ) {
 			throw new Exception( 'The registration could not be saved.' );
 		}
 
-		if ( ! $tickets_not_on_sale ) {
-			$ticket_updated = $wpdb->update(
-				$wpdb->prefix . 'evt_ticket_types',
-				array(
-					'quantity_sold' => (int) $locked_ticket->quantity_sold + 1,
-					'updated_at' => current_time( 'mysql' ),
-				),
-				array( 'id' => (int) $locked_ticket->id ),
-				array( '%d', '%s' ),
-				array( '%d' )
-			);
-			if ( false === $ticket_updated ) {
-				throw new Exception( 'The registration could not be saved.' );
-			}
+		$ticket_updated = $wpdb->update(
+			$wpdb->prefix . 'evt_ticket_types',
+			array(
+				'quantity_sold' => (int) $locked_ticket->quantity_sold + 1,
+				'updated_at' => current_time( 'mysql' ),
+			),
+			array( 'id' => (int) $locked_ticket->id ),
+			array( '%d', '%s' ),
+			array( '%d' )
+		);
+		if ( false === $ticket_updated ) {
+			throw new Exception( 'The registration could not be saved.' );
 		}
 		$wpdb->query( 'COMMIT' );
 	} catch ( Exception $e ) {
@@ -2315,13 +2362,17 @@ function cer_process_registration_submission( $payload = array() ) {
 	}
 
 	if ( $inserted ) {
-		if ( $tickets_not_on_sale ) {
+		if ( $no_payment_required ) {
 			delete_transient( 'cer_dashboard_metrics' );
+			$ticket_sent = cer_send_ticket_for_registration( $registration_id );
 			return array(
 				'success' => true,
 				'data' => array(
-					'payment_status' => 'not_on_sale',
-					'message' => 'Tickets for this event are not on sale yet. We have your contact details and will get in touch when tickets become available.',
+					'payment_status' => 'not_required',
+					'ticket_sent' => $ticket_sent,
+					'message' => $ticket_sent
+						? 'Thank you for registering! Your registration is confirmed and your ticket has been emailed to you. Please present it at the entrance.'
+						: 'Thank you for registering! Your registration is confirmed, but we could not email your ticket yet. We will retry automatically. If it does not arrive, contact the event team; please do not register again.',
 				),
 			);
 		}

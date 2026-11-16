@@ -132,6 +132,7 @@
             'This event has reached its attendance capacity.',
             'This ticket type is sold out.',
             'The registration could not be saved.',
+            'You are already registered for this ticket. Please check your email for your ticket or contact the event team for help.',
             'We have saved your registration details, but could not start your payment. Please try again later. If you approved a payment or were charged, do not pay again; contact the event team for help.'
         ];
         if (messages.indexOf(message) >= 0) {
@@ -386,8 +387,8 @@
                 }
 
                 registrationSaved = true;
-                if (result.data && result.data.payment_status === 'not_on_sale') {
-                    setMessage(result.data.message, 'success');
+                if (result.data && (result.data.payment_status === 'not_required' || result.data.payment_status === 'not_on_sale')) {
+                    setMessage(result.data.message, result.data.ticket_sent === false ? 'warning' : 'success');
                     return;
                 }
                 if (!result.data) {

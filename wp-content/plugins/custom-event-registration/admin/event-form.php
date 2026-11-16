@@ -1704,11 +1704,12 @@ if ( ! empty( $errors ) ) {
 					<div class="cer-field">
 						<label for="mail-sender-email"><?php esc_html_e( 'Sender Email', 'custom-event-registration' ); ?></label>
 						<input type="email" id="mail-sender-email" name="mail_sender_email" value="<?php echo esc_attr( $event_data['mail_sender_email'] ); ?>" placeholder="organizer@example.com" />
+						<p class="cer-help-text"><?php esc_html_e( 'Attendee replies to tickets and reminders go to this address.', 'custom-event-registration' ); ?></p>
 					</div>
 					<div class="cer-field">
 						<label for="mail-notification-email"><?php esc_html_e( 'Notification Email', 'custom-event-registration' ); ?></label>
 						<input type="email" id="mail-notification-email" name="mail_notification_email" value="<?php echo esc_attr( $event_data['mail_notification_email'] ?? '' ); ?>" placeholder="organizer@example.com" />
-						<p class="cer-help-text"><?php esc_html_e( 'Receives a plain notification after each paid ticket purchase.', 'custom-event-registration' ); ?></p>
+						<p class="cer-help-text"><?php esc_html_e( 'Vendor address that receives a notification for each confirmed registration.', 'custom-event-registration' ); ?></p>
 					</div>
 				</div>
 			</div>

@@ -40,6 +40,8 @@ function wp_generate_uuid4() { return uniqid( 'test-', true ); }
 function current_time( $type ) { return '2026-11-08 10:00:00'; }
 function cer_get_registration_hold_seconds() { return 600; }
 function cer_prepare_registration_row( $row ) { return $row; }
+function cer_registration_search_hash( $email ) { return hash( 'sha256', strtolower( trim( $email ) ) ); }
+function cer_send_ticket_for_registration( $id ) { return $GLOBALS['ticket_sends_succeed'] ?? true; }
 function delete_transient( $name ) {}
 function wp_schedule_single_event( $time, $hook, $args ) { return true; }
 function wp_strip_all_tags( $value ) { return strip_tags( $value ); }
@@ -70,15 +72,21 @@ class CER_Feedback_DB_Fixture {
 	public $tickets = null;
 	public $max_attendees = null;
 	public $paid = 0;
+	public $paid_counts = array();
+	public $insert_id = 42;
+	public $duplicate = false;
 	public function __construct( $price ) { $this->price = $price; }
 	public function prepare( $query, ...$args ) { return $query; }
 	public function get_row( $query ) {
+		if ( false !== strpos( $query, 'evt_registrations' ) ) {
+			return $this->duplicate ? (object) array( 'id' => $this->duplicate, 'status' => 'confirmed' ) : null;
+		}
 		if ( false !== strpos( $query, 'evt_events' ) ) {
 			return (object) array( 'id' => 1, 'max_attendees' => $this->max_attendees, 'slug' => 'test-event', 'summary_note' => $this->summary_note );
 		}
 		return (object) array( 'id' => 2, 'name' => 'Delegate', 'price' => $this->price, 'quantity_available' => 10, 'quantity_sold' => 0 );
 	}
-	public function get_var( $query ) { return $this->paid; }
+	public function get_var( $query ) { return $this->paid_counts ? array_shift( $this->paid_counts ) : $this->paid; }
 	public function get_results( $query ) { return $this->tickets ?? array( $this->get_row( 'evt_ticket_types' ) ); }
 	public function query( $query ) { $this->queries[] = $query; return 1; }
 	public function insert( $table, $row, $formats ) {
@@ -108,11 +116,23 @@ foreach ( array( null, '', 0, '0.00' ) as $price ) {
 		$wpdb = new CER_Feedback_DB_Fixture( $price );
 		$gateway_calls = 0;
 		$result = cer_process_registration_submission( array_merge( $payload, array( 'payment_method' => $method ) ) );
-		expect_feedback( $result['success'] && 'not_on_sale' === $result['data']['payment_status'], 'Unpriced ticket must report not on sale.' );
+		expect_feedback( $result['success'] && 'not_required' === $result['data']['payment_status'], 'Unpriced tickets must confirm admission without payment.' );
 		expect_feedback( $wpdb->saved['email'] === $payload['email'] && '254712345678' === $wpdb->saved['phone'], 'Contacts must be persisted before acknowledgement.' );
-		expect_feedback( null === $wpdb->saved['reserved_until'] && 0 === $wpdb->ticket_updates, 'Unpriced tickets must not consume inventory.' );
+		expect_feedback( null === $wpdb->saved['reserved_until'] && 1 === $wpdb->ticket_updates && 'confirmed' === $wpdb->saved['status'], 'Unpriced tickets must consume inventory permanently on confirmation.' );
+		expect_feedback( false !== strpos( $result['data']['message'], 'Thank you' ) && false === strpos( $result['data']['message'], 'price' ), 'No-cost confirmation must thank the attendee without discussing prices.' );
 		expect_feedback( 0 === $gateway_calls, 'Unpriced ticket must not call the gateway.' );
 	}
+	$wpdb = new CER_Feedback_DB_Fixture( 0 );
+	$wpdb->duplicate = 42;
+	$result = cer_process_registration_submission( $payload );
+	expect_feedback( ! $result['success'] && false !== strpos( $result['message'], 'already registered' ) && empty( $wpdb->saved ), 'Duplicate no-cost admission must be rejected before insertion.' );
+	expect_feedback( in_array( 'ROLLBACK', $wpdb->queries, true ), 'Duplicate registration must release transactional locks.' );
+	$wpdb = new CER_Feedback_DB_Fixture( 0 );
+	$ticket_sends_succeed = false;
+	$result = cer_process_registration_submission( $payload );
+	expect_feedback( $result['success'] && ! $result['data']['ticket_sent'] && 'confirmed' === $wpdb->saved['status'], 'Email failure must preserve confirmed admission and report pending delivery.' );
+	expect_feedback( false !== strpos( $result['data']['message'], 'retry automatically' ), 'Delivery failure must be explicit, not claim an email was sent.' );
+	$ticket_sends_succeed = true;
 }
 foreach ( array( 'mpesa', 'card' ) as $method ) {
 	$wpdb = new CER_Feedback_DB_Fixture( '100.00' );
@@ -121,6 +141,15 @@ foreach ( array( 'mpesa', 'card' ) as $method ) {
 	expect_feedback( $result['success'] && 'fixture-reference' === $result['data']['reference'], 'Priced tickets must keep their gateway contract.' );
 	expect_feedback( 1 === $gateway_calls && 1 === $wpdb->ticket_updates && null !== $wpdb->saved['reserved_until'], 'Priced ticket reservation must be preserved.' );
 	expect_feedback( '100.00' === $wpdb->saved['amount'], 'Price must come from the ticket, not the submitted amount.' );
+}
+foreach ( array( 0, 100 ) as $price ) {
+	$wpdb = new CER_Feedback_DB_Fixture( $price );
+	$wpdb->max_attendees = 1;
+	$wpdb->paid_counts = array( 0, 1 );
+	$gateway_calls = 0;
+	$result = cer_process_registration_submission( $payload );
+	expect_feedback( ! $result['success'] && 'This event has reached its attendance capacity.' === $result['message'], 'Capacity must be rechecked after the event lock for both free and paid tickets.' );
+	expect_feedback( empty( $wpdb->saved ) && 0 === $gateway_calls && in_array( 'ROLLBACK', $wpdb->queries, true ), 'A newly full event must not save or start checkout.' );
 }
 $gateway_fails = true;
 $wpdb = new CER_Feedback_DB_Fixture( 100 );

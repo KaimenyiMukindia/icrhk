@@ -89,17 +89,39 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
     };
 }
 
-test('unpriced ticket confirms contact capture without checkout or polling', async () => {
+test('no-cost ticket confirms admission without checkout or polling', async () => {
     const ui = render({ tickets: [{ name: 'Delegate', price: '0', id: '1' }], single: true, result: { success: true, data: {
-        payment_status: 'not_on_sale', message: 'Tickets for this event are not on sale yet. We have your contact details and will get in touch.',
+        payment_status: 'not_required', ticket_sent: true, message: 'Thank you for registering! Your ticket has been emailed to you.',
     } } });
     await ui.submit();
-    assert.match(ui.message.textContent, /not on sale yet/);
+    assert.match(ui.message.textContent, /Thank you/);
     assert.match(ui.message.className, /success/);
     assert.equal(ui.message.attributes.get('aria-busy'), 'false');
     assert.deepEqual(ui.calls, ['register']);
     assert.equal(ui.timers.size, 0);
     assert.equal(ui.button.disabled, false);
+});
+
+test('no-cost ticket email failure is a warning without checkout or a second registration', async () => {
+    const ui = render({ single: true, tickets: [{ name: 'Delegate', price: '0', id: '1' }], result: {
+        success: true, data: { payment_status: 'not_required', ticket_sent: false,
+            message: 'Thank you for registering! We will retry automatically; please do not register again.' },
+    } });
+    await ui.submit();
+    assert.match(ui.message.className, /warning/);
+    assert.match(ui.message.textContent, /retry automatically/);
+    assert.deepEqual(ui.calls, ['register']);
+    assert.equal(ui.timers.size, 0);
+});
+
+test('duplicate no-cost registration displays the server guidance', async () => {
+    const message = 'You are already registered for this ticket. Please check your email for your ticket or contact the event team for help.';
+    const ui = render({ single: true, tickets: [{ name: 'Delegate', price: '0', id: '1' }],
+        result: { success: false, data: { message } } });
+    await ui.submit();
+    assert.equal(ui.message.textContent, message);
+    assert.match(ui.message.className, /error/);
+    assert.deepEqual(ui.calls, ['register']);
 });
 
 for (const price of ['', '0', null]) {

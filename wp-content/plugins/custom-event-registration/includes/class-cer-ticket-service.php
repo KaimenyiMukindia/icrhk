@@ -63,7 +63,8 @@ function cer_generate_ticket_pdf( int $registration_id ): string {
 	$access_code_display = trim( chunk_split( $registration['user_access_key'], 8, ' ' ) );
 	$html = '<!doctype html><html><head><meta charset="utf-8"><style>';
 	$html .= 'body{font-family:DejaVu Sans,sans-serif;background:#f5f2fa;color:#241b35;margin:0;padding:34px}.ticket{background:#fff;border:1px solid #e4dcef;border-radius:18px;overflow:hidden}.top{background:#5A2A8C;color:#fff;padding:30px 34px 27px}.brand{font-size:11px;letter-spacing:2px;color:#F0761E;text-transform:uppercase}.eyebrow{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#f5b87a;margin:23px 0 8px}.title{font-size:27px;line-height:1.2;margin:0;color:#fff}.intro{font-size:12px;color:#e6dcf4;margin:12px 0 0}.content{padding:28px 34px 32px}.status{display:inline-block;background:#efe6f9;color:#5A2A8C;border-radius:13px;padding:7px 12px;font-size:10px;font-weight:bold;letter-spacing:1px;text-transform:uppercase}.grid{width:100%;margin-top:23px}.cell{width:50%;vertical-align:top;padding:0 18px 20px 0}.label{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:#8a7fa0;margin-bottom:6px}.value{font-size:14px;font-weight:bold;color:#241b35;line-height:1.35}.subvalue{font-size:11px;color:#6f6583;margin-top:4px}.lower{width:100%;table-layout:fixed;border-top:1px solid #e4dcef;padding-top:24px}.code-label{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:#8a7fa0}.code{font-family:DejaVu Sans Mono,monospace;color:#5A2A8C;font-size:11px;letter-spacing:0.5px;word-break:break-all;margin:8px 0 0}.qr{width:128px;text-align:center;vertical-align:top}.qr img{width:112px;height:112px}.qr-note{font-size:9px;color:#6f6583;line-height:1.35;margin-top:7px}.footer{background:#f3edfa;color:#6f6583;font-size:9px;padding:15px 34px;line-height:1.5}.footer strong{color:#5A2A8C}</style></head><body>';
-	$html .= '<div class="ticket"><div class="top"><div class="brand">ICRHK Events</div><div class="eyebrow">Confirmed admission</div><h1 class="title">' . esc_html( $event_name ) . '</h1><p class="intro">A verified ticket reserved for ' . esc_html( $name ) . '.</p></div><div class="content"><span class="status">Payment confirmed</span><table class="grid"><tr><td class="cell"><div class="label">Attendee</div><div class="value">' . esc_html( $name ) . '</div><div class="subvalue">' . esc_html( $email ) . '</div></td><td class="cell"><div class="label">Ticket type</div><div class="value">' . esc_html( $ticket_name ) . '</div><div class="subvalue">Admit one guest</div></td></tr><tr><td class="cell"><div class="label">Date and time</div><div class="value">' . esc_html( $event_date ) . '</div><div class="subvalue">' . esc_html( $event_time ) . '</div></td><td class="cell"><div class="label">Venue</div><div class="value">' . esc_html( $venue ) . '</div></td></tr></table><table class="lower"><tr><td style="vertical-align:top"><div class="code-label">Ticket access code</div><div class="code">' . esc_html( $access_code_display ) . '</div></td><td class="qr">';
+	$admission_label = (float) $registration['amount'] <= 0 ? 'Registration confirmed' : 'Payment confirmed';
+	$html .= '<div class="ticket"><div class="top"><div class="brand">ICRHK Events</div><div class="eyebrow">Confirmed admission</div><h1 class="title">' . esc_html( $event_name ) . '</h1><p class="intro">A verified ticket reserved for ' . esc_html( $name ) . '.</p></div><div class="content"><span class="status">' . esc_html( $admission_label ) . '</span><table class="grid"><tr><td class="cell"><div class="label">Attendee</div><div class="value">' . esc_html( $name ) . '</div><div class="subvalue">' . esc_html( $email ) . '</div></td><td class="cell"><div class="label">Ticket type</div><div class="value">' . esc_html( $ticket_name ) . '</div><div class="subvalue">Admit one guest</div></td></tr><tr><td class="cell"><div class="label">Date and time</div><div class="value">' . esc_html( $event_date ) . '</div><div class="subvalue">' . esc_html( $event_time ) . '</div></td><td class="cell"><div class="label">Venue</div><div class="value">' . esc_html( $venue ) . '</div></td></tr></table><table class="lower"><tr><td style="vertical-align:top"><div class="code-label">Ticket access code</div><div class="code">' . esc_html( $access_code_display ) . '</div></td><td class="qr">';
 	if ( $qr_data_uri ) {
 		$html .= '<img src="' . esc_attr( $qr_data_uri ) . '" alt="Ticket QR code" width="112" height="112" loading="lazy" decoding="async"><div class="qr-note">Scan at the entrance<br>for validation</div>';
 	}
@@ -87,11 +88,28 @@ function cer_generate_ticket_pdf( int $registration_id ): string {
 
 function cer_send_ticket_for_registration( int $registration_id ): bool {
 	global $wpdb;
+	$lock = 'cer_ticket_' . md5( $wpdb->prefix . $registration_id );
+	if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(SHA2(CONCAT(DATABASE(), %s), 256), 0)', $lock ) ) ) {
+		error_log( 'CER ticket delivery lock unavailable for ' . $registration_id . ': ' . $wpdb->last_error );
+		return false;
+	}
+	try {
+		return cer_deliver_ticket_for_registration( $registration_id );
+	} finally {
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(SHA2(CONCAT(DATABASE(), %s), 256))', $lock ) );
+	}
+}
+
+function cer_deliver_ticket_for_registration( int $registration_id ): bool {
+	global $wpdb;
 	$table = $wpdb->prefix . 'evt_registrations';
 	$registration = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d LIMIT 1", $registration_id ), ARRAY_A );
-	if ( ! $registration || 'paid' !== $registration['status'] || ! empty( $registration['ticket_sent_at'] ) ) {
-		error_log( 'CER ticket send skipped for ' . $registration_id . ': registration missing, unpaid, or already sent.' );
+	if ( ! $registration || ! ( 'paid' === $registration['status'] || ( 'confirmed' === $registration['status'] && (float) $registration['amount'] <= 0 ) ) ) {
+		error_log( 'CER ticket send skipped for ' . $registration_id . ': registration missing or admission not confirmed.' );
 		return false;
+	}
+	if ( ! empty( $registration['ticket_sent_at'] ) ) {
+		return true;
 	}
 
 	$path = cer_generate_ticket_pdf( $registration_id );
@@ -110,10 +128,18 @@ function cer_send_ticket_for_registration( int $registration_id ): bool {
 	$view_url = add_query_arg( 'cer_ticket', rawurlencode( $registration['user_access_key'] ), home_url( '/' ) );
 	$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 	$event_id = (int) ( $registration['event_id'] ?? 0 );
-	$contact_email = cer_get_event_mail_recipient( $registration_id );
-	$body = '<p>Dear ' . esc_html( $name ) . ',</p><p>Your ' . esc_html( $payment_method ) . ' payment is confirmed. Your ticket for <strong>' . esc_html( $event_name ) . '</strong> is attached.</p><p>You can also view your ticket online: <a href="' . esc_url( $view_url ) . '">' . esc_html( $view_url ) . '</a></p><p>We look forward to seeing you.</p><hr><p>This is an automatic system-generated message. Please do not reply. For issues, contact ' . esc_html( $contact_email ?: cer_get_resend_from() ) . '.</p>';
+	$reply_to = cer_get_event_reply_to( $event_id );
+	if ( '' !== $reply_to ) {
+		$headers[] = 'Reply-To: ' . $reply_to;
+	}
+	$contact_email = $reply_to ?: cer_get_event_mail_recipient( $registration_id );
+	$footer = '' !== $reply_to ? 'For questions, reply to this email or contact ' . esc_html( $reply_to ) . '.' : 'This is an automatic system-generated message. Please do not reply. For issues, contact ' . esc_html( $contact_email ?: cer_get_resend_from() ) . '.';
+	$confirmation = (float) $registration['amount'] <= 0 ? 'Thank you for registering! Your registration is confirmed.' : 'Your ' . esc_html( $payment_method ) . ' payment is confirmed.';
+	$admission_note = (float) $registration['amount'] <= 0 ? 'Please present your ticket at the entrance. ' : '';
+	$body = '<p>Dear ' . esc_html( $name ) . ',</p><p>' . $confirmation . ' Your ticket for <strong>' . esc_html( $event_name ) . '</strong> is attached.</p><p>' . $admission_note . 'You can also view your ticket online: <a href="' . esc_url( $view_url ) . '">' . esc_html( $view_url ) . '</a></p><p>We look forward to seeing you.</p><hr><p>' . $footer . '</p>';
 	$context = cer_set_current_mail_config( $event_id, $event_name );
-	if ( ! wp_mail( $email, 'Your Ticket for ' . $event_name . ' - ' . $payment_method, $body, $headers, array( $path ) ) ) {
+	$subject = 'Your Ticket for ' . $event_name . ( (float) $registration['amount'] > 0 ? ' - ' . $payment_method : '' );
+	if ( ! wp_mail( $email, $subject, $body, $headers, array( $path ) ) ) {
 		error_log( 'CER ticket email failed for registration ' . $registration_id . ' to ' . $email . ' event ' . $event_id );
 		cer_clear_current_mail_config();
 		return false;
@@ -121,7 +147,10 @@ function cer_send_ticket_for_registration( int $registration_id ): bool {
 	cer_clear_current_mail_config();
 	cer_send_admin_receipt_for_registration( $registration_id );
 
-	$wpdb->update( $table, array( 'ticket_sent_at' => current_time( 'mysql' ) ), array( 'id' => $registration_id ), array( '%s' ), array( '%d' ) );
+	if ( false === $wpdb->update( $table, array( 'ticket_sent_at' => current_time( 'mysql' ) ), array( 'id' => $registration_id ), array( '%s' ), array( '%d' ) ) ) {
+		error_log( 'CER ticket delivery timestamp could not be saved for ' . $registration_id . ': ' . $wpdb->last_error );
+		return false;
+	}
 	return true;
 }
 
@@ -148,9 +177,12 @@ function cer_handle_ticket_download(): void {
 
 	global $wpdb;
 	$table = $wpdb->prefix . 'evt_registrations';
-	$registration = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE user_access_key = %s AND status = 'paid' LIMIT 1", $key ), ARRAY_A );
+	$registration = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE user_access_key = %s AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0)) AND deleted_at IS NULL LIMIT 1", $key ), ARRAY_A );
 	$path = $registration ? cer_ticket_pdf_path( $registration ) : '';
-	if ( ! $registration || ! file_exists( $path ) ) {
+	if ( $registration && ! file_exists( $path ) ) {
+		$path = cer_generate_ticket_pdf( (int) $registration['id'] );
+	}
+	if ( ! $registration || '' === $path || ! file_exists( $path ) ) {
 		status_header( 404 );
 		exit( 'Ticket not found.' );
 	}

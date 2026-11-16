@@ -218,7 +218,12 @@ final class PaymentController extends Controller
 
             $paidCount = $this->wordpress()->table($this->wordpressTable('evt_registrations'))
                 ->where('event_id', $event->id)
-                ->where('status', 'paid')
+                ->where(function ($query) {
+                    $query->where('status', 'paid')
+                        ->orWhere(function ($query) {
+                            $query->where('status', 'confirmed')->where('amount', '<=', 0);
+                        });
+                })
                 ->count();
             if ($event->max_attendees !== null && $paidCount >= (int) $event->max_attendees) {
                 return ['state' => 'event_full'];

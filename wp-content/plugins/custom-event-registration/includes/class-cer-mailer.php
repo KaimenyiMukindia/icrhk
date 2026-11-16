@@ -26,6 +26,7 @@ function cer_get_mail_config_from_event( ?int $event_id = null, string $default_
 function cer_set_current_mail_config( ?int $event_id = null, string $default_from_name = '' ): array {
 	$config = cer_get_mail_config_from_event( $event_id, $default_from_name );
 	$config['event_id'] = $event_id ?: 0;
+	$config['display_name'] = $default_from_name;
 	$GLOBALS['cer_current_mail_config'] = $config;
 	return $config;
 }
@@ -41,6 +42,27 @@ function cer_get_resend_from(): string {
 	}
 
 	return is_email( $from ) ? $from : '';
+}
+
+// Sends stay on the verified no-reply address; only the visible name changes.
+function cer_get_resend_from_for_current_mail(): string {
+	$from = cer_get_resend_from();
+	$config = $GLOBALS['cer_current_mail_config'] ?? array();
+	$name = trim( preg_replace( '/\s+/', ' ', preg_replace( '/[\x00-\x1F\x7F"\\\\<>]+/', ' ', (string) ( $config['display_name'] ?? '' ) ) ) );
+	$address = cer_get_mail_addresses( $from )[0] ?? '';
+	if ( '' === $name || '' === $address ) {
+		return $from;
+	}
+	return '"' . $name . '" <' . $address . '>';
+}
+
+function cer_get_event_reply_to( int $event_id ): string {
+	global $wpdb;
+	if ( $event_id <= 0 ) {
+		return '';
+	}
+	$sender = trim( (string) $wpdb->get_var( $wpdb->prepare( "SELECT mail_sender_email FROM {$wpdb->prefix}evt_events WHERE id = %d LIMIT 1", $event_id ) ) );
+	return is_email( $sender ) ? $sender : '';
 }
 
 function cer_get_mail_addresses( $value ): array {
@@ -59,7 +81,15 @@ function cer_get_mail_addresses( $value ): array {
 	return array_values( array_unique( $addresses ) );
 }
 
+function cer_resend_mail_failure( WP_Error $error ): bool {
+	do_action( 'wp_mail_failed', $error );
+	return false;
+}
+
 function cer_maybe_send_via_resend( $pre, array $atts ) {
+	if ( null !== $pre ) {
+		return $pre;
+	}
 	$api_key = defined( 'CER_RESEND_API_KEY' ) ? trim( (string) CER_RESEND_API_KEY ) : '';
 	$config = $GLOBALS['cer_current_mail_config'] ?? array();
 	$from = cer_get_resend_from();
@@ -69,11 +99,11 @@ function cer_maybe_send_via_resend( $pre, array $atts ) {
 
 	$to = cer_get_mail_addresses( $atts['to'] ?? '' );
 	if ( empty( $to ) ) {
-		return new WP_Error( 'cer_resend_recipient_missing', 'Resend recipient is missing.' );
+		return cer_resend_mail_failure( new WP_Error( 'cer_resend_recipient_missing', 'Resend recipient is missing.' ) );
 	}
 
 	$payload = array(
-		'from' => $from,
+		'from' => cer_get_resend_from_for_current_mail(),
 		'to' => $to,
 		'subject' => (string) ( $atts['subject'] ?? '' ),
 		'html' => (string) ( $atts['message'] ?? '' ),
@@ -101,7 +131,7 @@ function cer_maybe_send_via_resend( $pre, array $atts ) {
 	foreach ( $attachments as $attachment ) {
 		$attachment = (string) $attachment;
 		if ( ! is_readable( $attachment ) ) {
-			return new WP_Error( 'cer_resend_attachment_missing', 'Resend attachment is not readable.' );
+			return cer_resend_mail_failure( new WP_Error( 'cer_resend_attachment_missing', 'Resend attachment is not readable.' ) );
 		}
 		$payload['attachments'][] = array(
 			'filename' => basename( $attachment ),
@@ -121,16 +151,16 @@ function cer_maybe_send_via_resend( $pre, array $atts ) {
 		)
 	);
 	if ( is_wp_error( $response ) ) {
-		return $response;
+		return cer_resend_mail_failure( $response );
 	}
 
 	$status = (int) wp_remote_retrieve_response_code( $response );
 	if ( $status < 200 || $status >= 300 ) {
-		return new WP_Error(
+		return cer_resend_mail_failure( new WP_Error(
 			'cer_resend_rejected',
 			'Resend rejected the message.',
 			array( 'status' => $status, 'body' => wp_remote_retrieve_body( $response ) )
-		);
+		) );
 	}
 
 	error_log( 'CER Resend accepted message for ' . count( $to ) . ' recipient(s).' );
@@ -235,9 +265,12 @@ function cer_send_admin_receipt_for_registration( int $registration_id ): bool {
 	$registrant_email = function_exists( 'cer_decrypt_pii' ) ? cer_decrypt_pii( $registration['email'] ?? '' ) : (string) ( $registration['email'] ?? '' );
 	$event_name = ! empty( $registration['event_name'] ) ? (string) $registration['event_name'] : 'ICRHK Event';
 	$ticket_name = $wpdb->get_var( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d LIMIT 1", (int) ( $registration['ticket_type_id'] ?? 0 ) ) );
-	$body = "New ticket purchase for {$event_name}\n\nBuyer name: {$registrant_name}\nBuyer email: {$registrant_email}\nTicket type: " . ( $ticket_name ?: (string) ( $registration['ticket_type'] ?? 'General admission' ) );
+	$body = ( (float) $registration['amount'] <= 0 ? "New registration for {$event_name}\n\nAttendee name: {$registrant_name}\nAttendee email: {$registrant_email}\nTicket type: " : "New ticket purchase for {$event_name}\n\nBuyer name: {$registrant_name}\nBuyer email: {$registrant_email}\nTicket type: " ) . ( $ticket_name ?: (string) ( $registration['ticket_type'] ?? 'General admission' ) );
 	$context = cer_set_current_mail_config( $event_id, $event_name );
 	$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+	if ( is_email( $registrant_email ) ) {
+		$headers[] = 'Reply-To: ' . $registrant_email;
+	}
 	$sent = wp_mail( $recipient, 'New registration for ' . $event_name, $body, $headers );
 	cer_clear_current_mail_config();
 	if ( ! $sent ) {

@@ -98,7 +98,41 @@ https://YOUR-DOMAIN/laravel-engine/public/api/paystack-webhook
 
 The webhook is a POST route in `routes/api.php`, outside the web CSRF middleware. It verifies Paystack's `X-Paystack-Signature` header before updating the WordPress registration and delivering the ticket. Payment fulfillment runs synchronously, so no queue worker or cron job is required.
 
-Ticket delivery is completed by WordPress after Laravel calls the root site URL with the signed `cer_process_ticket` request. The live WordPress `wp-config.php` and Laravel `.env` must contain identical `CER_TICKET_CALLBACK_SECRET` and `CER_ENCRYPTION_KEY` values. The deployment script adds either missing WordPress constant without overwriting an existing one; copy those resulting values into `.env` before the second deployment. WordPress writes the PDF under `wp-content/uploads/tickets/` and sends it through Resend when `CER_RESEND_API_KEY` and `CER_RESEND_FROM` are defined; otherwise it falls back to the event's configured SMTP settings.
+Ticket delivery is completed by WordPress after Laravel calls the root site URL with the signed `cer_process_ticket` request. The live WordPress `wp-config.php` and Laravel `.env` must contain identical `CER_TICKET_CALLBACK_SECRET` and `CER_ENCRYPTION_KEY` values. The deployment script adds either missing WordPress constant without overwriting an existing one; copy those resulting values into `.env` before the second deployment. WordPress writes the PDF under `wp-content/uploads/tickets/` and sends it through Resend when a key and valid `CER_RESEND_FROM` are configured; otherwise it uses the normal WordPress mail transport.
+
+### No-cost admission and event reminders
+
+Tickets with no amount (including zero) now confirm admission without starting a payment. They use the existing `confirmed` status, consume ticket inventory and event capacity, and receive the same unique access code, QR/PDF ticket, and online ticket link. Confirmation thanks the attendee without discussing ticket prices or claiming a payment. Priced tickets retain their gateway flow; capacity checks also count confirmed no-cost admissions.
+
+For no-cost admission, an email address can register once per event/ticket type (case-insensitive). Another ticket type remains available to that email. Event/ticket row locks serialize submissions so simultaneous requests cannot issue duplicate admissions or oversell no-cost inventory. Free admissions also respect active paid holds against event capacity, and paid submissions recheck capacity while holding the event lock. Existing unconfirmed contact-only records are not bulk-promoted to admission; when that attendee submits again, their pending no-cost contact record is reused and confirmed instead of inserting another registration.
+
+If ticket generation or mail fails, admission stays confirmed, the response explicitly reports pending delivery, and the notification worker retries. Resend failures return `false` through WordPress's mail contract and emit `wp_mail_failed`; they must never be treated as successful delivery.
+
+For Resend messages, the verified sender address remains unchanged and the event name is used as the display name. Attendee tickets and reminders use the event's Sender Email as Reply-To when valid. After the ticket email is accepted, a vendor notification is attempted at the event's Notification Email, with the attendee's email as Reply-To; no copies are sent to the Sender Email. Vendor notification failures are logged but not retried.
+
+The `cer_event_notifications` WordPress cron hook runs every five minutes. It processes up to 25 unsent no-cost tickets and 25 individual reminder emails per run through the existing mail transport. Recipients are never exposed to each other. Each eligible attendee (`paid`, or `confirmed` with no amount) receives one reminder for the current event date, starting five calendar days before the event's start time in the WordPress timezone. Late registrations and delayed cron runs catch up until the event starts. Rescheduling permits a reminder for the new date; past, unpublished, trashed events and trashed registrations are excluded. Failed sends retry after 15 minutes without blocking unattempted recipients. Successful-send markers prevent normal repeat sends; mail-provider acceptance is not a guarantee of inbox delivery.
+
+On the next WordPress initialization, the plugin installs three nullable notification tracking columns in its registration table and schedules the hook automatically. No Laravel migration or queue worker is required. Deactivating the plugin removes this hook.
+
+**Reliable timing requires server cron**, because WP-Cron otherwise only runs when the site receives traffic. In cPanel, add a once-per-minute task using the account's PHP 8.2/8.3 CLI and the actual live WordPress path, for example:
+
+```cron
+* * * * * /usr/local/bin/php -q /home/ACCOUNT/public_html/wp-cron.php
+```
+
+Replace the account and PHP binary as appropriate. Do not disable traffic-triggered WP-Cron until the server task is verified. For large audiences, allow time for the bounded batches to drain (up to 300 reminder recipients per hour at the five-minute cadence).
+
+Focused local checks (from the repository root):
+
+```powershell
+php wp-content\plugins\custom-event-registration\tests\registration-feedback-test.php
+node --test wp-content\plugins\custom-event-registration\tests\registration-feedback.test.cjs
+php wp-content\plugins\custom-event-registration\tests\event-notifications-integration-test.php
+php wp-content\plugins\custom-event-registration\tests\resend-mail-contract-test.php
+php laravel-engine\tests\payment-capacity-contract-test.php
+```
+
+The WordPress integration test requires a loopback MySQL/MariaDB database and permission to create/drop a uniquely named test database. It copies table structure only, intercepts all outbound mail/HTTP, generates real PDFs in a temporary directory, and removes its fixtures afterward. The Laravel capacity test uses isolated in-memory SQLite databases and intercepts HTTP.
 
 After deployment, run the health check and an invalid-signature webhook check:
 

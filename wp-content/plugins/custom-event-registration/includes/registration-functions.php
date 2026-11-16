@@ -31,7 +31,7 @@ function cer_get_registration_form_markup( $event_id = null ) {
 	// Mirrors the submission handler's capacity and inventory checks so the form shows availability up front.
 	$event_full = false;
 	if ( ! empty( $event->max_attendees ) ) {
-		$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d AND status = %s", $event_id, 'paid' ) );
+		$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0))", $event_id ) );
 		$event_full = $paid_registrations >= (int) $event->max_attendees;
 	}
 	$available_tickets = array();
