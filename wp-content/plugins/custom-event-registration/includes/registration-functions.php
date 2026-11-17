@@ -3,10 +3,111 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-function cer_get_registration_form_markup( $event_id = null ) {
+function cer_get_ticket_availability( int $event_id ) {
+	global $wpdb;
+	$event = $wpdb->get_row( $wpdb->prepare(
+		"SELECT max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = 'published' AND deleted_at IS NULL",
+		$event_id
+	) );
+	if ( $wpdb->last_error ) {
+		error_log( 'CER availability event query failed: ' . $wpdb->last_error );
+		return new WP_Error( 'cer_availability_failed', 'Availability could not be refreshed.' );
+	}
+	if ( ! $event ) {
+		return new WP_Error( 'cer_event_unavailable', 'This event is no longer available.' );
+	}
+	$tickets = $wpdb->get_results( $wpdb->prepare(
+		"SELECT id, name, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE event_id = %d AND deleted_at IS NULL ORDER BY order_index, id",
+		$event_id
+	) );
+	if ( $wpdb->last_error ) {
+		error_log( 'CER availability ticket query failed: ' . $wpdb->last_error );
+		return new WP_Error( 'cer_availability_failed', 'Availability could not be refreshed.' );
+	}
+	$occupancy = $wpdb->get_results( $wpdb->prepare(
+		"SELECT ticket_type_id, COUNT(*) AS occupied FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d
+		AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0)
+		OR (status IN ('pending', 'awaiting_payment') AND amount > 0 AND reserved_until > %s))
+		GROUP BY ticket_type_id",
+		$event_id, gmdate( 'Y-m-d H:i:s' )
+	), ARRAY_A );
+	if ( $wpdb->last_error ) {
+		error_log( 'CER availability capacity query failed: ' . $wpdb->last_error );
+		return new WP_Error( 'cer_availability_failed', 'Availability could not be refreshed.' );
+	}
+	$occupied = 0;
+	$ticket_occupied = array();
+	foreach ( $occupancy as $row ) {
+		$occupied += (int) $row['occupied'];
+		if ( null !== $row['ticket_type_id'] ) {
+			$ticket_occupied[ (int) $row['ticket_type_id'] ] = (int) $row['occupied'];
+		}
+	}
+	$event_capacity = ! empty( $event->max_attendees ) ? (int) $event->max_attendees : null;
+	$event_remaining = null !== $event_capacity ? max( 0, $event_capacity - (int) $occupied ) : null;
+	$inventory_capacity = 0;
+	$inventory_remaining = 0;
+	$unlimited = false;
+	$items = array();
+	foreach ( $tickets as $ticket ) {
+		$total = null !== $ticket->quantity_available ? (int) $ticket->quantity_available : null;
+		$used = max( (int) $ticket->quantity_sold, $ticket_occupied[ $ticket->id ] ?? 0 );
+		$remaining = null !== $total ? max( 0, $total - $used ) : null;
+		$unlimited = $unlimited || null === $total;
+		$inventory_capacity += $total ?? 0;
+		$inventory_remaining += $remaining ?? 0;
+		$ticket_capacity = null === $total ? $event_capacity : ( null === $event_capacity ? $total : min( $total, $event_capacity ) );
+		if ( null !== $event_remaining ) {
+			$remaining = null === $remaining ? $event_remaining : min( $remaining, $event_remaining );
+		}
+		$items[] = array( 'id' => (int) $ticket->id, 'name' => $ticket->name, 'capacity' => $ticket_capacity, 'remaining' => $remaining );
+	}
+	$capacity = $event_capacity;
+	if ( ! $unlimited ) {
+		$capacity = null === $capacity ? $inventory_capacity : min( $capacity, $inventory_capacity );
+		$event_remaining = null === $event_remaining ? $inventory_remaining : min( $event_remaining, $inventory_remaining );
+	}
+	return array( 'capacity' => $capacity, 'remaining' => $event_remaining, 'tickets' => $items );
+}
+
+function cer_ajax_ticket_availability(): void {
+	nocache_headers();
+	$availability = cer_get_ticket_availability( absint( $_GET['event_id'] ?? 0 ) );
+	if ( is_wp_error( $availability ) ) {
+		wp_send_json_error( array( 'message' => $availability->get_error_message() ), 503 );
+	}
+	wp_send_json_success( $availability );
+}
+
+function cer_ticket_availability_markup( array $availability ): string {
+	$remaining = $availability['remaining'];
+	$capacity = $availability['capacity'];
+	return '<strong class="cer-availability-count">' . esc_html( null === $remaining ? 'Available' : ( 0 === $remaining ? 'Sold out' : number_format_i18n( $remaining, 0 ) . ' left' ) ) . '</strong>'
+		. '<small>' . esc_html( null === $capacity ? 'Capacity not specified' : 'out of ' . number_format_i18n( $capacity, 0 ) . ' capacity' ) . '</small>';
+}
+
+function cer_ticket_option_availability_suffix( ?array $ticket, bool $sold_out ): string {
+	if ( null === $ticket || null === $ticket['remaining'] ) {
+		return $sold_out ? ' - Sold out' : '';
+	}
+	if ( $sold_out && 0 === $ticket['remaining'] ) {
+		return ' - Sold out';
+	}
+	return ' - ' . number_format_i18n( $ticket['remaining'], 0 ) . ' left' . ( $sold_out ? ' (refresh to select)' : '' );
+}
+
+function cer_get_registration_form_markup( $event_id = null, $availability = null ) {
 	global $wpdb;
 	ob_start();
 
+	$availability_enabled = null !== $availability;
+	$availability_data = is_array( $availability ) ? $availability : null;
+	$ticket_availability = array();
+	if ( $availability_data ) {
+		foreach ( $availability_data['tickets'] as $available_ticket ) {
+			$ticket_availability[ $available_ticket['id'] ] = $available_ticket;
+		}
+	}
 	$ticket_types = array();
 	$event = null;
 	$amount = '0';
@@ -56,14 +157,14 @@ function cer_get_registration_form_markup( $event_id = null ) {
 	}
 	$contact_note = 'Your contact details will be saved securely. No payment is required to submit this form.';
 	?>
-	<form id="cer-registration-form" class="cer-registration-form<?php echo $single_ticket ? ' cer-single-ticket' : ''; ?><?php echo $sold_out ? ' cer-sold-out' : ''; ?>" method="post" data-payment-method="mpesa" data-payment-required="<?php echo $payment_required ? 'true' : 'false'; ?>" data-payment-note="<?php echo esc_attr( wp_kses_post( $summary_note ) ); ?>" data-contact-note="<?php echo esc_attr( $contact_note ); ?>" data-sold-out-note="Tickets for this event are sold out. Please contact the event team about future availability." novalidate>
+	<form id="cer-registration-form" class="cer-registration-form<?php echo $single_ticket ? ' cer-single-ticket' : ''; ?><?php echo $sold_out ? ' cer-sold-out' : ''; ?>" method="post" data-payment-method="mpesa" data-payment-required="<?php echo $payment_required ? 'true' : 'false'; ?>" data-ticket-count="<?php echo esc_attr( count( $ticket_types ) ); ?>"<?php if ( $availability_enabled ) : ?> data-availability="<?php echo $availability_data ? esc_attr( wp_json_encode( $availability_data ) ) : ''; ?>" data-availability-ready="<?php echo $availability_data ? 'true' : 'false'; ?>"<?php endif; ?> data-payment-note="<?php echo esc_attr( wp_kses_post( $summary_note ) ); ?>" data-contact-note="<?php echo esc_attr( $contact_note ); ?>" data-sold-out-note="Tickets for this event are sold out. Please contact the event team about future availability." novalidate>
 		<div class="cer-payment-toggle" role="tablist" aria-label="Select payment method">
 			<button class="cer-payment-toggle-btn is-active" id="btn-mpesa" type="button">M-Pesa</button>
 			<button class="cer-payment-toggle-btn" id="btn-card" type="button"><span class="cer-toggle-label-full">Credit/Debit Card</span><span class="cer-toggle-label-short">Card</span></button>
 		</div>
 		<input id="payment_method_hidden" name="payment_method" type="hidden" value="mpesa">
 		<?php if ( $single_ticket ) : ?>
-			<p class="cer-ticket-selection">Ticket: <strong><?php echo esc_html( $single_ticket->name ); ?></strong></p>
+			<p class="cer-ticket-selection">Ticket: <strong><?php echo esc_html( $single_ticket->name ); ?></strong><?php if ( $availability_enabled && count( $ticket_types ) > 1 ) : ?> <small id="cer-inline-ticket-availability" aria-live="polite"><?php echo esc_html( cer_ticket_option_availability_suffix( $ticket_availability[ $single_ticket->id ] ?? null, false ) ); ?></small><?php endif; ?></p>
 			<input id="cer-ticket-type" name="ticket_type" type="hidden" value="<?php echo esc_attr( $single_ticket->name ); ?>" data-id="<?php echo esc_attr( $single_ticket->id ); ?>" data-price="<?php echo esc_attr( $single_ticket->price ); ?>">
 		<?php endif; ?>
 		<div class="cer-form-grid">
@@ -89,7 +190,8 @@ function cer_get_registration_form_markup( $event_id = null ) {
 						<option value="">Select a ticket</option>
 						<?php if ( ! empty( $ticket_types ) ) : ?>
 							<?php foreach ( $ticket_types as $type ) : ?>
-								<option value="<?php echo esc_attr( $type->name ); ?>" data-id="<?php echo esc_attr( $type->id ); ?>" data-price="<?php echo esc_attr( $type->price ); ?>"<?php echo $type->sold_out ? ' disabled data-sold-out="true"' : ''; ?>><?php echo esc_html( $type->name . ( (float) $type->price > 0 ? ' (KES ' . number_format_i18n( (float) $type->price, 2 ) . ')' : '' ) . ( $type->sold_out ? ' - Sold out' : '' ) ); ?></option>
+								<?php $option_label = $type->name . ( (float) $type->price > 0 ? ' (KES ' . number_format_i18n( (float) $type->price, 2 ) . ')' : '' ); ?>
+								<option value="<?php echo esc_attr( $type->name ); ?>" data-id="<?php echo esc_attr( $type->id ); ?>" data-price="<?php echo esc_attr( $type->price ); ?>"<?php if ( $availability_enabled ) : ?> data-base-label="<?php echo esc_attr( $option_label ); ?>"<?php endif; ?><?php echo $type->sold_out ? ' disabled data-sold-out="true"' : ''; ?>><?php echo esc_html( $option_label . cer_ticket_option_availability_suffix( $ticket_availability[ $type->id ] ?? null, $type->sold_out ) ); ?></option>
 							<?php endforeach; ?>
 						<?php else : ?>
 							<option value="" disabled>No ticket types available</option>
@@ -98,6 +200,7 @@ function cer_get_registration_form_markup( $event_id = null ) {
 				</div>
 			<?php endif; ?>
 		</div>
+		<?php if ( $availability_enabled ) : ?><small id="cer-availability-error" role="status"><?php echo $availability_data ? '' : 'Live availability unavailable. Counts may be out of date; retrying automatically.'; ?></small><?php endif; ?>
 		<button type="submit" class="cer-primary-button"<?php echo $sold_out ? ' disabled' : ''; ?>><?php echo $sold_out ? 'Sold Out' : ( $payment_required ? 'Register &amp; Pay' : 'Register' ); ?></button>
 		<input type="hidden" id="cer-amount" name="amount" value="<?php echo esc_attr( $amount ); ?>" />
 		<input type="hidden" id="cer-event-id" name="event_id" value="<?php echo esc_attr( $event_id ); ?>" />

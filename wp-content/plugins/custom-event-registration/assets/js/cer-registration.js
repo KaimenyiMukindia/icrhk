@@ -94,6 +94,12 @@
             submitButton.textContent = 'Sold Out';
             submitButton.disabled = true;
         }
+        var availability = form.dataset.ticketCount === '1' ? document.getElementById('cer-ticket-availability') : null;
+        var count = availability ? availability.querySelector('.cer-availability-count') : null;
+        if (count) {
+            count.textContent = 'Sold out';
+            delete availability.dataset.availabilityState;
+        }
         setMessage(text, 'warning');
     }
 
@@ -109,7 +115,7 @@
         if (selected && selected.value) {
             selected.disabled = true;
             selected.dataset.soldOut = 'true';
-            selected.textContent += ' - Sold out';
+            selected.textContent = (selected.dataset.baseLabel || selected.textContent) + ' - Sold out';
         }
         ticketType.value = '';
         var remaining = Array.prototype.filter.call(ticketType.options, function (option) {
@@ -216,7 +222,7 @@
         if (amountInput) {
             amountInput.value = amountValue;
         }
-        if (summaryTicket) {
+        if (summaryTicket && (ticket || !isSoldOut() || form.dataset.ticketCount !== '1')) {
             summaryTicket.textContent = ticket || 'Select a ticket';
         }
         if (summaryAmount) {
@@ -1029,4 +1035,141 @@
     place();
     window.addEventListener('load', place);
     window.addEventListener('resize', schedule, { passive: true });
+})(document, window);
+
+(function (document, window) {
+    var form = document.getElementById('cer-registration-form');
+    if (!form || typeof form.dataset.availability === 'undefined') {
+        return;
+    }
+    var ticket = document.getElementById('cer-ticket-type');
+    var count = document.getElementById('cer-ticket-availability');
+    var inlineCount = document.getElementById('cer-inline-ticket-availability');
+    var error = document.getElementById('cer-availability-error');
+    var eventId = document.getElementById('cer-event-id');
+    var availability = null;
+    var refreshing = false;
+
+    function validCount(value) {
+        return value === null || (Number.isSafeInteger(value) && value >= 0);
+    }
+
+    function validAvailability(value) {
+        return value && validCount(value.capacity) && validCount(value.remaining) &&
+            Array.isArray(value.tickets) && value.tickets.every(function (item) {
+                return Number.isSafeInteger(item.id) && item.id > 0 && typeof item.name === 'string' &&
+                    validCount(item.capacity) && validCount(item.remaining);
+            });
+    }
+
+    try {
+        availability = form.dataset.availability ? JSON.parse(form.dataset.availability) : null;
+        if (availability && !validAvailability(availability)) {
+            throw new Error('Invalid initial availability.');
+        }
+    } catch (failure) {
+        availability = null;
+        error.textContent = 'Live availability unavailable. Counts may be out of date; retrying automatically.';
+        window.console.error('CER availability data invalid:', failure);
+    }
+
+    function showCount(target, value) {
+        var state = JSON.stringify([value.remaining, value.capacity]);
+        if (target.dataset.availabilityState === state) {
+            return;
+        }
+        var remaining = document.createElement('strong');
+        remaining.className = 'cer-availability-count';
+        remaining.textContent = value.remaining === null ? 'Available' : (
+            value.remaining === 0 ? 'Sold out' : value.remaining.toLocaleString('en-KE') + ' left'
+        );
+        var total = document.createElement('small');
+        total.textContent = value.capacity === null ? 'Capacity not specified' : 'out of ' + value.capacity.toLocaleString('en-KE') + ' capacity';
+        target.replaceChildren(remaining, total);
+        target.dataset.availabilityState = state;
+    }
+
+    function optionSuffix(item, disabled) {
+        if (!item || item.remaining === null) {
+            return disabled ? ' - Sold out' : '';
+        }
+        if (disabled && item.remaining === 0) {
+            return ' - Sold out';
+        }
+        return ' - ' + item.remaining.toLocaleString('en-KE') + ' left' + (disabled ? ' (refresh to select)' : '');
+    }
+
+    function render() {
+        if (!availability) {
+            return;
+        }
+        var configuredCount = Number(form.dataset.ticketCount);
+        var optionsChanged = availability.tickets.length !== configuredCount;
+        if (configuredCount === 1 && availability.tickets.length === 1 && count) {
+            showCount(count, availability);
+        }
+        if (ticket && ticket.options) {
+            Array.prototype.forEach.call(ticket.options, function (option) {
+                if (!option.dataset.id || !option.dataset.baseLabel) {
+                    return;
+                }
+                var item = availability.tickets.find(function (entry) { return entry.id === Number(option.dataset.id); });
+                if (!item) {
+                    optionsChanged = true;
+                    return;
+                }
+                var label = option.dataset.baseLabel + optionSuffix(item, option.disabled);
+                if (option.textContent !== label) {
+                    option.textContent = label;
+                }
+            });
+        } else if (ticket) {
+            var selected = availability.tickets.find(function (item) { return item.id === Number(ticket.dataset.id); });
+            if (!selected) {
+                optionsChanged = true;
+            } else if (inlineCount) {
+                inlineCount.textContent = optionSuffix(selected, false);
+            }
+        }
+        form.dataset.availabilityReady = optionsChanged ? 'false' : 'true';
+        error.textContent = optionsChanged || (form.classList.contains('cer-sold-out') && availability.remaining !== null && availability.remaining > 0)
+            ? 'Ticket availability has changed. Refresh this page to update the registration form.' : '';
+    }
+
+    async function refresh() {
+        if (refreshing || document.hidden) {
+            return;
+        }
+        refreshing = true;
+        try {
+            var settings = window.cerRegistrationSettings;
+            var url = new URL(settings.ajax_url, window.location.href);
+            url.searchParams.set('action', 'cer_ticket_availability');
+            url.searchParams.set('event_id', eventId.value);
+            var response = await fetch(url.toString(), { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error('Availability request failed: ' + response.status);
+            }
+            var result = await response.json();
+            if (!result.success || !validAvailability(result.data)) {
+                throw new Error('Invalid availability response.');
+            }
+            availability = result.data;
+            render();
+        } catch (failure) {
+            error.textContent = 'Live availability unavailable. Counts may be out of date; retrying automatically.';
+            window.console.error('CER availability refresh failed:', failure);
+        } finally {
+            refreshing = false;
+        }
+    }
+
+    render();
+    refresh();
+    window.setInterval(refresh, 30000);
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) {
+            refresh();
+        }
+    });
 })(document, window);

@@ -8,7 +8,8 @@ const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'cer-r
     .split('})(document, window);')[0] + '})(document, window);';
 
 function render({ result, method = 'mpesa', requestError, verification, verificationError, popup = true,
-    tickets = [{ name: 'Delegate', price: '100', id: '1' }], single = false, selectedIndex = 0 } = {}) {
+    tickets = [{ name: 'Delegate', price: '100', id: '1' }], single = false, selectedIndex = 0,
+    initialSoldOut = false, initialSummaryTicket = '', initialAvailability = '' } = {}) {
     const elements = new Map();
     function element(id, value = '') {
         const handlers = new Map();
@@ -33,7 +34,9 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
         paymentNote: 'Your registration is secure. Payment is processed through our secure gateway.',
         contactNote: 'Your contact details will be saved securely. No payment is required to submit this form.',
         soldOutNote: 'Tickets for this event are sold out. Please contact the event team about future availability.',
+        ticketCount: String(tickets.length),
     };
+    if (initialSoldOut) form.classes.add('cer-sold-out');
     form.querySelector = () => button;
     form.querySelectorAll = () => [];
     const message = element('cer-form-message');
@@ -42,10 +45,14 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
         ticket.dataset = { price: tickets[0].price, id: tickets[0].id };
     } else {
         ticket.selectedIndex = selectedIndex;
-        ticket.options = tickets.map(option => ({ value: option.name, textContent: option.name, disabled: !!option.soldOut, dataset: { price: option.price, id: option.id } }));
+        ticket.options = tickets.map(option => ({ value: option.name, textContent: option.display || option.name, disabled: !!option.soldOut, dataset: { price: option.price, id: option.id, baseLabel: option.baseLabel } }));
     }
     const ticketId = element('cer-ticket-type-id');
     const amount = element('cer-amount');
+    const summaryTicket = initialSummaryTicket ? element('cer-summary-ticket') : null;
+    if (summaryTicket) summaryTicket.textContent = initialSummaryTicket;
+    const availabilityLabel = initialAvailability ? { textContent: initialAvailability } : null;
+    if (availabilityLabel) element('cer-ticket-availability').querySelector = () => availabilityLabel;
     element('payment_method_hidden', method);
     element('cer-full-name', 'Test Visitor');
     element('cer-email', 'test@example.com');
@@ -78,7 +85,7 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
     });
     const settle = () => new Promise((resolve) => setImmediate(resolve));
     return {
-        message, button, calls, timers, errors, form, ticketId, amount, elements, ticket,
+        message, button, calls, timers, errors, form, ticketId, amount, elements, ticket, summaryTicket, availabilityLabel,
         select: (index) => {
             ticket.selectedIndex = index;
             ticket.value = tickets[index].name;
@@ -88,6 +95,14 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
         tick: async () => { timers.get(1)(); await settle(); },
     };
 }
+
+test('a sold-out single ticket keeps its name in the ticket information summary', () => {
+    const ui = render({
+        tickets: [{ name: 'Delegate', price: '0', id: '1', soldOut: true }],
+        selectedIndex: -1, initialSoldOut: true, initialSummaryTicket: 'Delegate',
+    });
+    assert.equal(ui.summaryTicket.textContent, 'Delegate');
+});
 
 test('no-cost ticket confirms admission without checkout or polling', async () => {
     const ui = render({ tickets: [{ name: 'Delegate', price: '0', id: '1' }], single: true, result: { success: true, data: {
@@ -287,6 +302,27 @@ test('a ticket selling out mid-checkout is disabled while other tickets stay ava
     assert.equal(ui.button.disabled, true);
     ui.select(1);
     assert.equal(ui.button.disabled, false);
+});
+
+test('a ticket selling out replaces its stale remaining count', async () => {
+    const ui = render({
+        tickets: [
+            { name: 'Early', price: '100', id: '1', baseLabel: 'Early (KES 100.00)', display: 'Early (KES 100.00) - 1 left' },
+            { name: 'Regular', price: '200', id: '2' },
+        ],
+        result: { success: false, data: { message: 'This ticket type is sold out.' } },
+    });
+    await ui.submit();
+    assert.equal(ui.ticket.options[0].textContent, 'Early (KES 100.00) - Sold out');
+});
+
+test('a single ticket selling out immediately updates its availability summary', async () => {
+    const ui = render({
+        single: true, initialAvailability: '1 left',
+        result: { success: false, data: { message: 'This ticket type is sold out.' } },
+    });
+    await ui.submit();
+    assert.equal(ui.availabilityLabel.textContent, 'Sold out');
 });
 
 for (const [label, options] of [

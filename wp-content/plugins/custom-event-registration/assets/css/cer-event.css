@@ -2755,15 +2755,15 @@ body:has(.cer-event-page) .elementor-location-header > .e-con {
 }
 
 .cer-registration-form[data-payment-required="false"] .cer-payment-toggle,
-.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]) .cer-kamgc-summary-box {
+.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]:not([data-ticket-count="1"])) .cer-kamgc-summary-box {
     display: none;
 }
 
-.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]) {
+.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]:not([data-ticket-count="1"])) {
     grid-template-columns: minmax(0, 1fr);
 }
 
-.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]) .cer-kamgc-sidebar-column:not(:has(.cer-kamgc-sponsor-box)) {
+.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]:not([data-ticket-count="1"])) .cer-kamgc-sidebar-column:not(:has(.cer-kamgc-sponsor-box)) {
     display: none;
 }
 
@@ -7440,4 +7440,42 @@ body .cer-kamgc-page .cer-kamgc-organiser img[alt="Council of Governors"] {
     body .cer-kamgc-page .cer-kamgc-organiser img[alt="Council of Governors"] {
         max-height: 56px;
     }
+}
+
+.cer-summary-free-heading,
+.cer-summary-single-availability {
+    display: none;
+}
+
+.cer-kamgc-two-col:has(.cer-registration-form[data-ticket-count="1"]) .cer-summary-single-availability {
+    display: flex;
+}
+
+.cer-kamgc-two-col:has(.cer-registration-form[data-ticket-count="1"][data-payment-required="false"]) .cer-summary-free-heading {
+    display: block;
+}
+
+.cer-kamgc-two-col:has(.cer-registration-form[data-ticket-count="1"][data-payment-required="false"]) .cer-summary-payment-only,
+.cer-registration-form[data-ticket-count="1"][data-payment-required="false"][data-availability-ready="true"] .cer-ticket-selection {
+    display: none;
+}
+
+.cer-availability-value {
+    text-align: right;
+}
+
+.cer-availability-value strong,
+.cer-availability-value small {
+    display: block;
+}
+
+.cer-availability-value small {
+    color: var(--cer-text-muted, #526175);
+    font-size: 0.8rem;
+}
+
+#cer-availability-error:not(:empty) {
+    display: block;
+    margin-top: 0.75rem;
+    color: #a33a20;
 }

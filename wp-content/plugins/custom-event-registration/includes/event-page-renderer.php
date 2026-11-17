@@ -109,6 +109,8 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 					</section>
 				<?php else : ?>
 					<?php
+					$ticket_availability = cer_get_ticket_availability( $event_id );
+					$initial_availability = is_array( $ticket_availability ) ? $ticket_availability : null;
 					$event_title = trim( (string) $current_event->name );
 					$event_title_prefix = $event_title;
 					$event_title_highlight = '';
@@ -122,6 +124,9 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 					// no explicit venue string exists, so the hero never goes blank.
 					$event_venue = $current_event->venue ? $current_event->venue : ( $location_address ? $location_address : 'To be confirmed' );
 					$event_attendees = number_format_i18n( max( 0, (int) $current_event->max_attendees ) ?: 500 ) . ' delegates';
+					if ( $initial_availability && 1 === count( $initial_availability['tickets'] ) ) {
+						$event_attendees = null === $initial_availability['capacity'] ? '' : number_format_i18n( $initial_availability['capacity'], 0 ) . ' delegates';
+					}
 					$hero_features = cer_event_page_split_lines( cer_event_page_copy_value( $current_event, 'hero_features', '' ) );
 					$hero_badge_text = cer_event_page_copy_value( $current_event, 'hero_badge_text', 'Event Registration' );
 					$hero_convened_by = cer_event_page_copy_value( $current_event, 'hero_convened_by', '' );
@@ -241,7 +246,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">calendar_month</span><span><small>Starts</small><strong><?php echo esc_html( cer_event_page_format_datetime( $current_event->event_date ) ); ?></strong></span></div>
 											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">event</span><span><small>Ends</small><strong><?php echo esc_html( cer_event_page_format_datetime( $current_event->event_end_date ) ); ?></strong></span></div>
 											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">location_on</span><span><small>Location</small><strong><?php if ( $location_link ) : ?><a href="<?php echo esc_url( $location_link ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $event_venue ); ?></a><?php else : ?><?php echo esc_html( $event_venue ); ?><?php endif; ?></strong></span></div>
-											<div><span class="cer-kamgc-metadata-icon material-symbols-outlined">groups</span><span><small>Capacity</small><strong><?php echo esc_html( $event_attendees ); ?></strong></span></div>
+											<?php if ( '' !== $event_attendees ) : ?><div><span class="cer-kamgc-metadata-icon material-symbols-outlined">groups</span><span><small>Capacity</small><strong><?php echo esc_html( $event_attendees ); ?></strong></span></div><?php endif; ?>
 										</div>
 									</div>
 									<?php if ( ! empty( $hero_features ) ) : ?>
@@ -367,7 +372,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 										<div class="cer-kamgc-card">
 											<h2><?php echo esc_html( $registration_heading ); ?></h2>
 											<p class="cer-kamgc-form-intro"><?php echo wp_kses_post( $registration_intro ); ?></p>
-											<?php echo cer_get_registration_form_markup( $event_id ); ?>
+											<?php echo cer_get_registration_form_markup( $event_id, $ticket_availability ); ?>
 										</div>
 									</div>
 									<div class="cer-kamgc-sidebar-column">
@@ -389,11 +394,13 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 											</div>
 										<?php endif; ?>
 										<div class="cer-kamgc-summary-box">
-											<h3><?php echo esc_html( $summary_heading ); ?></h3>
-											<div class="cer-kamgc-summary-row"><span>Selected Ticket</span><strong id="cer-summary-ticket">Select a ticket</strong></div>
-											<div class="cer-kamgc-summary-row"><span>Payment Method</span><strong id="cer-summary-method">M-Pesa</strong></div>
-											<div class="cer-kamgc-summary-total"><span>Total</span><strong id="cer-summary-amount">KES 0.00</strong></div>
-											<div class="cer-kamgc-security"><span class="material-symbols-outlined">lock</span><span>Secure Payment</span></div>
+											<h3 class="cer-summary-payment-only"><?php echo esc_html( $summary_heading ); ?></h3>
+											<h3 class="cer-summary-free-heading">Ticket Information</h3>
+											<div class="cer-kamgc-summary-row"><span>Selected Ticket</span><strong id="cer-summary-ticket"><?php echo $initial_availability && 1 === count( $initial_availability['tickets'] ) ? esc_html( $initial_availability['tickets'][0]['name'] ) : 'Select a ticket'; ?></strong></div>
+											<div class="cer-kamgc-summary-row cer-summary-single-availability"><span>Availability</span><div id="cer-ticket-availability" class="cer-availability-value" role="status" aria-live="polite"><?php echo $initial_availability && 1 === count( $initial_availability['tickets'] ) ? cer_ticket_availability_markup( $initial_availability ) : ''; ?></div></div>
+											<div class="cer-kamgc-summary-row cer-summary-payment-only"><span>Payment Method</span><strong id="cer-summary-method">M-Pesa</strong></div>
+											<div class="cer-kamgc-summary-total cer-summary-payment-only"><span>Total</span><strong id="cer-summary-amount">KES 0.00</strong></div>
+											<div class="cer-kamgc-security cer-summary-payment-only"><span class="material-symbols-outlined">lock</span><span>Secure Payment</span></div>
 										</div>
 									</div>
 								</div>

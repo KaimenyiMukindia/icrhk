@@ -41,6 +41,8 @@ if ( did_action( 'plugins_loaded' ) ) {
 add_action( 'cer_purge_expired_event_trash', 'cer_purge_expired_event_trash' );
 add_action( 'wp_ajax_cer_submit_registration', 'cer_handle_ajax_submission' );
 add_action( 'wp_ajax_nopriv_cer_submit_registration', 'cer_handle_ajax_submission' );
+add_action( 'wp_ajax_cer_ticket_availability', 'cer_ajax_ticket_availability' );
+add_action( 'wp_ajax_nopriv_cer_ticket_availability', 'cer_ajax_ticket_availability' );
 add_action( 'wp_ajax_cer_dashboard_event_metrics', 'cer_ajax_dashboard_event_metrics' );
 add_action( 'rest_api_init', 'cer_register_rest_routes' );
 add_action( 'cer_sync_registration', 'cer_sync_registration_async' );

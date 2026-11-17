@@ -19,7 +19,7 @@ $GLOBALS['wp_filter']['pre_option_template'][10][] = array( 'function' => static
 $GLOBALS['wp_filter']['pre_option_stylesheet'][10][] = array( 'function' => static function () { return 'cer-test-disabled-theme'; }, 'accepted_args' => 0 );
 require $root . '/wp-load.php';
 
-if ( '--submit' === ( $argv[1] ?? '' ) ) {
+if ( in_array( $argv[1] ?? '', array( '--submit', '--availability' ), true ) ) {
 	$child_database = $argv[2] ?? '';
 	if ( ! preg_match( '/^cer_notifications_test_[a-f0-9]{12}$/', $child_database ) ) {
 		throw new RuntimeException( 'Invalid concurrent test database.' );
@@ -27,6 +27,11 @@ if ( '--submit' === ( $argv[1] ?? '' ) ) {
 	$wpdb->select( $child_database );
 	wp_cache_flush();
 	require dirname( __DIR__ ) . '/custom-event-registration.php';
+	if ( '--availability' === $argv[1] ) {
+		$_GET['event_id'] = $argv[3] ?? 0;
+		cer_ajax_ticket_availability();
+		exit;
+	}
 	remove_filter( 'pre_wp_mail', 'cer_maybe_send_via_resend', 10 );
 	add_filter( 'pre_wp_mail', '__return_true' );
 	add_filter( 'pre_http_request', static function () { throw new RuntimeException( 'Concurrent tests must not use HTTP.' ); } );
@@ -57,6 +62,22 @@ function cer_notify_insert( string $table, array $row ): int {
 	global $wpdb;
 	cer_notify_assert( false !== $wpdb->insert( $wpdb->prefix . $table, $row ), 'Fixture insert failed: ' . $wpdb->last_error );
 	return (int) $wpdb->insert_id;
+}
+function cer_notify_availability_ajax( string $database, int $event_id ): array {
+	$pipes = array();
+	$process = proc_open(
+		array( PHP_BINARY, __FILE__, '--availability', $database, (string) $event_id ),
+		array( 0 => array( 'pipe', 'r' ), 1 => array( 'pipe', 'w' ), 2 => array( 'pipe', 'w' ) ),
+		$pipes
+	);
+	cer_notify_assert( is_resource( $process ), 'Availability AJAX fixture failed to start.' );
+	fclose( $pipes[0] );
+	$output = stream_get_contents( $pipes[1] );
+	$errors = stream_get_contents( $pipes[2] );
+	fclose( $pipes[1] );
+	fclose( $pipes[2] );
+	cer_notify_assert( 0 === proc_close( $process ), 'Availability AJAX fixture failed: ' . $errors );
+	return json_decode( $output, true, 512, JSON_THROW_ON_ERROR );
 }
 
 $database = 'cer_notifications_test_' . bin2hex( random_bytes( 6 ) );
@@ -120,6 +141,37 @@ try {
 		}
 	};
 	$event_html = $render_event();
+	cer_notify_assert( false === strpos( $event_html, 'cer-registration-availability' ), 'Availability must not create another sidebar card.' );
+	cer_notify_assert( 1 === substr_count( $event_html, 'Secure Your Place' ) && 1 === substr_count( $event_html, 'Ticket: <strong>Delegate</strong>' ), 'The original form heading and single-ticket label must remain in the form markup.' );
+	cer_notify_assert( false !== strpos( $event_html, 'data-payment-required="false" data-ticket-count="1"' ) && false !== strpos( $event_html, '>Ticket Information</h3>' ), 'A single free ticket must use the existing summary area for ticket information.' );
+	cer_notify_assert( false !== strpos( $event_html, 'id="cer-summary-ticket">Delegate</strong>' ) && false !== strpos( $event_html, '>100 left</strong><small>out of 100 capacity</small>' ), 'A single ticket must show its name, remaining places and total in the summary.' );
+	cer_notify_assert( false !== strpos( $event_html, '<small>Capacity</small><strong>100 delegates</strong>' ), 'The existing hero capacity must agree with the single-ticket total.' );
+	cer_notify_assert( false !== strpos( $event_html, '<h2>Secure Your Place</h2>' ) && strpos( $event_html, '<h2>Secure Your Place</h2>' ) < strpos( $event_html, 'id="cer-registration-form"' ), 'The registration heading must stay above the form.' );
+	$initial_availability = cer_get_ticket_availability( $event );
+	cer_notify_assert( 100 === $initial_availability['capacity'] && 100 === $initial_availability['remaining'] && 1 === count( $initial_availability['tickets'] ), 'Event availability must use configured ticket capacity when no event cap exists.' );
+	$ajax_availability = cer_notify_availability_ajax( $database, $event );
+	cer_notify_assert( true === $ajax_availability['success'] && 100 === $ajax_availability['data']['remaining'] && 100 === $ajax_availability['data']['capacity'], 'The public AJAX response must expose the expected live availability shape.' );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => null ), array( 'id' => $ticket ) );
+	$unlimited_html = $render_event();
+	cer_notify_assert( false === strpos( $unlimited_html, '<small>Capacity</small>' ) && false !== strpos( $unlimited_html, '>Available</strong><small>Capacity not specified</small>' ), 'An unlimited single ticket must not show a fabricated capacity.' );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => 0 ), array( 'id' => $ticket ) );
+	$sold_out_html = $render_event();
+	cer_notify_assert( false !== strpos( $sold_out_html, 'cer-sold-out' ) && false !== strpos( $sold_out_html, 'id="cer-summary-ticket">Delegate</strong>' ) && false !== strpos( $sold_out_html, '>Sold out</strong><small>out of 0 capacity</small>' ), 'A sold-out single ticket must retain its name and availability in the summary.' );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => 100 ), array( 'id' => $ticket ) );
+	$wpdb->update( $prefix . 'evt_events', array( 'max_attendees' => 50 ), array( 'id' => $event ) );
+	$capped = cer_get_ticket_availability( $event );
+	cer_notify_assert( 50 === $capped['capacity'] && 50 === $capped['remaining'] && 50 === $capped['tickets'][0]['capacity'], 'The total must reflect a tighter event capacity.' );
+	$wpdb->update( $prefix . 'evt_events', array( 'max_attendees' => 200 ), array( 'id' => $event ) );
+	$capped = cer_get_ticket_availability( $event );
+	cer_notify_assert( 100 === $capped['capacity'] && 100 === $capped['remaining'], 'The total must reflect a tighter ticket capacity.' );
+	$wpdb->update( $prefix . 'evt_events', array( 'max_attendees' => null ), array( 'id' => $event ) );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'price' => 150 ), array( 'id' => $ticket ) );
+	$paid_html = $render_event();
+	cer_notify_assert( false !== strpos( $paid_html, 'data-payment-required="true" data-ticket-count="1"' ) && false !== strpos( $paid_html, 'id="cer-summary-method">M-Pesa' ) && false !== strpos( $paid_html, 'id="cer-summary-amount"' ), 'A single paid ticket must retain the payment summary and methods.' );
+	cer_notify_assert( false !== strpos( $paid_html, '>100 left</strong><small>out of 100 capacity</small>' ), 'A single paid ticket must show the count in its existing summary.' );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'price' => 0 ), array( 'id' => $ticket ) );
+	$failed_availability_form = cer_get_registration_form_markup( $event, new WP_Error( 'fixture', 'Unavailable' ) );
+	cer_notify_assert( false !== strpos( $failed_availability_form, 'data-availability-ready="false"' ) && false !== strpos( $failed_availability_form, 'Live availability unavailable' ) && false !== strpos( $failed_availability_form, 'Ticket: <strong>Delegate</strong>' ), 'A failed availability query must warn and retain the original ticket label.' );
 	cer_notify_assert( false !== strpos( $event_html, 'id="cer-registration-form"' ), 'The event page must retain its registration form.' );
 	foreach ( array( 'Editable information fixture', 'Editable paragraph fixture', 'Another editable paragraph', 'Editable audience fixture' ) as $editable_copy ) {
 		cer_notify_assert( false !== strpos( $event_html, $editable_copy ), 'Editable event information must remain visible.' );
@@ -145,12 +197,25 @@ try {
 	cer_notify_assert( '%PDF-' === file_get_contents( cer_ticket_pdf_path( $row ), false, null, 0, 5 ), 'The ticket must be a real PDF.' );
 	cer_notify_assert( 1 === count( $mail ) && false !== strpos( $mail[0]['message'], 'Thank you' ) && false === strpos( $mail[0]['message'], 'payment' ), 'Free ticket mail must thank the attendee without payment wording.' );
 	cer_notify_assert( 1 === count( $mail[0]['attachments'] ), 'Ticket mail must attach the PDF.' );
+	$after_registration = cer_get_ticket_availability( $event );
+	cer_notify_assert( 99 === $after_registration['remaining'] && 99 === $after_registration['tickets'][0]['remaining'], 'Free admissions must reduce both event and ticket availability.' );
+	$ajax_after_registration = cer_notify_availability_ajax( $database, $event );
+	cer_notify_assert( 99 === $ajax_after_registration['data']['remaining'] && 99 === $ajax_after_registration['data']['tickets'][0]['remaining'], 'The next AJAX request must reflect a new registration.' );
 	cer_notify_assert( in_array( 'Reply-To: organizer@example.test', $mail[0]['headers'], true ) && false === strpos( $mail[0]['message'], 'Please do not reply' ), 'Ticket replies must go to the event Sender Email.' );
 	cer_notify_assert( cer_send_ticket_for_registration( $first_id ) && 1 === count( $mail ), 'Repeated delivery must be idempotent.' );
 	$duplicate = cer_process_registration_submission( array_merge( $payload, array( 'email' => 'ATTENDEE@example.test' ) ) );
 	cer_notify_assert( ! $duplicate['success'] && false !== strpos( $duplicate['message'], 'already registered' ), 'Case-insensitive duplicate email/ticket must be rejected.' );
 	cer_notify_assert( 1 === (int) $wpdb->get_var( "SELECT quantity_sold FROM {$prefix}evt_ticket_types WHERE id = {$ticket}" ), 'Duplicate must not consume inventory.' );
 	$second_ticket = cer_notify_insert( 'evt_ticket_types', array( 'event_id' => $event, 'name' => 'Workshop', 'price' => 0 ) );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'price' => 200, 'quantity_available' => 10 ), array( 'id' => $second_ticket ) );
+	$multiple_html = $render_event();
+	cer_notify_assert( false !== strpos( $multiple_html, 'data-payment-required="true" data-ticket-count="2"' ) && false !== strpos( $multiple_html, '<select id="cer-ticket-type"' ), 'Multiple ticket types must keep the original form and payment summary.' );
+	cer_notify_assert( false !== strpos( $multiple_html, '>Delegate - 99 left</option>' ) && false !== strpos( $multiple_html, '>Workshop (KES 200.00) - 10 left</option>' ), 'Each dropdown option must show its own live remaining count without losing its price.' );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => 1 ), array( 'id' => $ticket ) );
+	$partial_form = cer_get_registration_form_markup( $event, cer_get_ticket_availability( $event ) );
+	cer_notify_assert( false === strpos( $partial_form, '<select' ) && false !== strpos( $partial_form, 'id="cer-inline-ticket-availability" aria-live="polite"> - 10 left</small>' ), 'The existing auto-selected last ticket must show its count next to its label.' );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => 100 ), array( 'id' => $ticket ) );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'price' => 0, 'quantity_available' => null ), array( 'id' => $second_ticket ) );
 	$other_type = cer_process_registration_submission( array_merge( $payload, array( 'ticket_type_id' => $second_ticket ) ) );
 	cer_notify_assert( $other_type['success'], 'The same email may register once for another ticket type.' );
 
@@ -311,12 +376,39 @@ try {
 	) );
 	foreach ( array( 'pending', 'awaiting_payment' ) as $hold_status ) {
 		$wpdb->update( $prefix . 'evt_registrations', array( 'status' => $hold_status ), array( 'id' => $hold_id ) );
+		$wpdb->update( $prefix . 'evt_events', array( 'max_attendees' => null ), array( 'id' => $capacity_event ) );
+		$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => 2, 'quantity_sold' => 0 ), array( 'id' => $capacity_paid_ticket ) );
+		$ticket_hold = cer_get_ticket_availability( $capacity_event );
+		cer_notify_assert( 2 === $ticket_hold['tickets'][0]['capacity'] && 1 === $ticket_hold['tickets'][0]['remaining'], 'Selected-ticket availability must subtract active reservations.' );
+		$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_sold' => 1 ), array( 'id' => $capacity_paid_ticket ) );
+		cer_notify_assert( 1 === cer_get_ticket_availability( $capacity_event )['tickets'][0]['remaining'], 'A hold already reflected in inventory must not be counted twice.' );
+		$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => null, 'quantity_sold' => 0 ), array( 'id' => $capacity_paid_ticket ) );
+		$wpdb->update( $prefix . 'evt_events', array( 'max_attendees' => 1 ), array( 'id' => $capacity_event ) );
+		$held_availability = cer_get_ticket_availability( $capacity_event );
+		cer_notify_assert( 1 === $held_availability['capacity'] && 0 === $held_availability['remaining'] && 0 === $held_availability['tickets'][1]['remaining'], 'Live availability must account for active paid holds against shared capacity.' );
 		$blocked = cer_process_registration_submission( $free_payload );
 		cer_notify_assert( ! $blocked['success'] && 'This event has reached its attendance capacity.' === $blocked['message'], 'A free admission must not displace an active paid hold.' );
 	}
 	$wpdb->update( $prefix . 'evt_registrations', array( 'reserved_until' => gmdate( 'Y-m-d H:i:s', time() - 60 ) ), array( 'id' => $hold_id ) );
+	cer_notify_assert( 1 === cer_get_ticket_availability( $capacity_event )['remaining'], 'Expired holds must stop consuming shared availability.' );
+	$wpdb->update( $prefix . 'evt_events', array( 'max_attendees' => null ), array( 'id' => $capacity_event ) );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => 2 ), array( 'id' => $capacity_paid_ticket ) );
+	cer_notify_assert( 2 === cer_get_ticket_availability( $capacity_event )['tickets'][0]['remaining'], 'Expired holds must stop consuming selected-ticket availability when no longer held in inventory.' );
+	$wpdb->update( $prefix . 'evt_events', array( 'max_attendees' => 1 ), array( 'id' => $capacity_event ) );
+	$wpdb->update( $prefix . 'evt_ticket_types', array( 'quantity_available' => null ), array( 'id' => $capacity_paid_ticket ) );
+	$wpdb->update( $prefix . 'evt_events', array( 'status' => 'draft' ), array( 'id' => $capacity_event ) );
+	cer_notify_assert( is_wp_error( cer_get_ticket_availability( $capacity_event ) ), 'Public availability must not expose unpublished events.' );
+	$unpublished_ajax = cer_notify_availability_ajax( $database, $capacity_event );
+	cer_notify_assert( false === $unpublished_ajax['success'] && ! empty( $unpublished_ajax['data']['message'] ), 'The public AJAX action must reject unpublished events.' );
+	$wpdb->update( $prefix . 'evt_events', array( 'status' => 'published' ), array( 'id' => $capacity_event ) );
 	$after_expiry = cer_process_registration_submission( $free_payload );
 	cer_notify_assert( $after_expiry['success'], 'An expired paid hold must not block a free admission.' );
+	$wpdb->update( $prefix . 'evt_events', array( 'max_attendees' => 2 ), array( 'id' => $capacity_event ) );
+	cer_notify_insert( 'evt_registrations', cer_prepare_registration_row( array_merge( $base, array(
+		'registration_uuid' => wp_generate_uuid4(), 'payment_uuid' => wp_generate_uuid4(),
+		'event_id' => $capacity_event, 'ticket_type_id' => null, 'email' => 'legacy-capacity@example.test', 'status' => 'paid',
+	) ) ) );
+	cer_notify_assert( 0 === cer_get_ticket_availability( $capacity_event )['remaining'], 'Confirmed admissions without a ticket type must still consume event capacity.' );
 
 	$wpdb->update( $prefix . 'evt_events', array( 'max_attendees' => $before ), array( 'id' => $event ) );
 	$full = cer_process_registration_submission( array_merge( $payload, array( 'email' => 'full@example.test' ) ) );
