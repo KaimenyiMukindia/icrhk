@@ -17,7 +17,7 @@ function cer_get_ticket_availability( int $event_id ) {
 		return new WP_Error( 'cer_event_unavailable', 'This event is no longer available.' );
 	}
 	$tickets = $wpdb->get_results( $wpdb->prepare(
-		"SELECT id, name, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE event_id = %d AND deleted_at IS NULL ORDER BY order_index, id",
+		"SELECT id, name, quantity_available, quantity_sold, is_maintenance FROM {$wpdb->prefix}evt_ticket_types WHERE event_id = %d AND deleted_at IS NULL ORDER BY order_index, id",
 		$event_id
 	) );
 	if ( $wpdb->last_error ) {
@@ -60,7 +60,7 @@ function cer_get_ticket_availability( int $event_id ) {
 		if ( null !== $event_remaining ) {
 			$remaining = null === $remaining ? $event_remaining : min( $remaining, $event_remaining );
 		}
-		$items[] = array( 'id' => (int) $ticket->id, 'name' => $ticket->name, 'capacity' => $ticket_capacity, 'remaining' => $remaining );
+		$items[] = array( 'id' => (int) $ticket->id, 'name' => $ticket->name, 'capacity' => $ticket_capacity, 'remaining' => $remaining, 'maintenance' => ! empty( $ticket->is_maintenance ) );
 	}
 	$capacity = $event_capacity;
 	if ( ! $unlimited ) {
@@ -80,6 +80,9 @@ function cer_ajax_ticket_availability(): void {
 }
 
 function cer_ticket_availability_markup( array $availability ): string {
+	if ( ! empty( $availability['tickets'] ) && count( array_filter( $availability['tickets'], static function ( $ticket ) { return ! empty( $ticket['maintenance'] ); } ) ) === count( $availability['tickets'] ) ) {
+		return '<strong class="cer-availability-count">Scheduled for maintenance</strong><small>Registration will reopen when maintenance is complete.</small>';
+	}
 	$remaining = $availability['remaining'];
 	$capacity = $availability['capacity'];
 	return '<strong class="cer-availability-count">' . esc_html( null === $remaining ? 'Available' : ( 0 === $remaining ? 'Sold out' : number_format_i18n( $remaining, 0 ) . ' left' ) ) . '</strong>'
@@ -87,6 +90,9 @@ function cer_ticket_availability_markup( array $availability ): string {
 }
 
 function cer_ticket_option_availability_suffix( ?array $ticket, bool $sold_out ): string {
+	if ( ! empty( $ticket['maintenance'] ) ) {
+		return ' - Scheduled for maintenance';
+	}
 	if ( null === $ticket || null === $ticket['remaining'] ) {
 		return $sold_out ? ' - Sold out' : '';
 	}
@@ -114,7 +120,7 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 	if ( $event_id ) {
 		$event = $wpdb->get_row( $wpdb->prepare( "SELECT slug, summary_note, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d LIMIT 1", $event_id ) );
 		$table = $wpdb->prefix . 'evt_ticket_types';
-		$ticket_types = $wpdb->get_results( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold FROM $table WHERE event_id = %d AND deleted_at IS NULL ORDER BY order_index ASC, id ASC", $event_id ) );
+		$ticket_types = $wpdb->get_results( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold, is_maintenance FROM $table WHERE event_id = %d AND deleted_at IS NULL ORDER BY order_index ASC, id ASC", $event_id ) );
 		if ( ! empty( $ticket_types ) ) {
 			$amount = (string) $ticket_types[0]->price;
 		}
@@ -136,14 +142,18 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 		$event_full = $paid_registrations >= (int) $event->max_attendees;
 	}
 	$available_tickets = array();
+	$has_maintenance_ticket = false;
 	foreach ( $ticket_types as $type ) {
+		$type->maintenance = ! empty( $type->is_maintenance );
+		$has_maintenance_ticket = $has_maintenance_ticket || $type->maintenance;
 		$type->sold_out = $event_full || ( null !== $type->quantity_available && (int) $type->quantity_sold >= (int) $type->quantity_available );
-		if ( ! $type->sold_out ) {
+		if ( ! $type->sold_out && ! $type->maintenance ) {
 			$available_tickets[] = $type;
 		}
 	}
 	$sold_out = ! empty( $ticket_types ) && empty( $available_tickets );
-	$sold_out_note = $event_full ? 'This event is fully booked. Please contact the event team about future availability.' : 'Tickets for this event are sold out. Please contact the event team about future availability.';
+	$maintenance_unavailable = $sold_out && ! $event_full && $has_maintenance_ticket;
+	$sold_out_note = $event_full ? 'This event is fully booked. Please contact the event team about future availability.' : ( $maintenance_unavailable ? 'Registration for this ticket is temporarily unavailable while maintenance is in progress. Please check back soon.' : 'Tickets for this event are sold out. Please contact the event team about future availability.' );
 	$single_ticket = 1 === count( $available_tickets ) ? $available_tickets[0] : null;
 	if ( $single_ticket ) {
 		$amount = (string) $single_ticket->price;
@@ -191,7 +201,7 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 						<?php if ( ! empty( $ticket_types ) ) : ?>
 							<?php foreach ( $ticket_types as $type ) : ?>
 								<?php $option_label = $type->name . ( (float) $type->price > 0 ? ' (KES ' . number_format_i18n( (float) $type->price, 2 ) . ')' : '' ); ?>
-								<option value="<?php echo esc_attr( $type->name ); ?>" data-id="<?php echo esc_attr( $type->id ); ?>" data-price="<?php echo esc_attr( $type->price ); ?>"<?php if ( $availability_enabled ) : ?> data-base-label="<?php echo esc_attr( $option_label ); ?>"<?php endif; ?><?php echo $type->sold_out ? ' disabled data-sold-out="true"' : ''; ?>><?php echo esc_html( $option_label . cer_ticket_option_availability_suffix( $ticket_availability[ $type->id ] ?? null, $type->sold_out ) ); ?></option>
+								<option value="<?php echo esc_attr( $type->name ); ?>" data-id="<?php echo esc_attr( $type->id ); ?>" data-price="<?php echo esc_attr( $type->price ); ?>"<?php if ( $availability_enabled ) : ?> data-base-label="<?php echo esc_attr( $option_label ); ?>"<?php endif; ?><?php echo ( $type->sold_out || $type->maintenance ) ? ' disabled' : ''; ?><?php echo $type->sold_out ? ' data-sold-out="true"' : ''; ?><?php echo $type->maintenance ? ' data-maintenance="true"' : ''; ?>><?php echo esc_html( $option_label . cer_ticket_option_availability_suffix( $ticket_availability[ $type->id ] ?? array( 'maintenance' => $type->maintenance, 'remaining' => null ), $type->sold_out ) ); ?></option>
 							<?php endforeach; ?>
 						<?php else : ?>
 							<option value="" disabled>No ticket types available</option>
@@ -201,7 +211,7 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 			<?php endif; ?>
 		</div>
 		<?php if ( $availability_enabled ) : ?><small id="cer-availability-error" role="status"><?php echo $availability_data ? '' : 'Live availability unavailable. Counts may be out of date; retrying automatically.'; ?></small><?php endif; ?>
-		<button type="submit" class="cer-primary-button"<?php echo $sold_out ? ' disabled' : ''; ?>><?php echo $sold_out ? 'Sold Out' : ( $payment_required ? 'Register &amp; Pay' : 'Register' ); ?></button>
+		<button type="submit" class="cer-primary-button"<?php echo $sold_out ? ' disabled' : ''; ?>><?php echo $sold_out ? ( $maintenance_unavailable ? 'Temporarily Unavailable' : 'Sold Out' ) : ( $payment_required ? 'Register &amp; Pay' : 'Register' ); ?></button>
 		<input type="hidden" id="cer-amount" name="amount" value="<?php echo esc_attr( $amount ); ?>" />
 		<input type="hidden" id="cer-event-id" name="event_id" value="<?php echo esc_attr( $event_id ); ?>" />
 		<input type="hidden" id="cer-ticket-type-id" name="ticket_type_id" value="<?php echo $single_ticket ? esc_attr( $single_ticket->id ) : '0'; ?>" />

@@ -605,11 +605,12 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 					'price' => $ticket_price,
 					'currency' => 'KES',
 					'quantity_available' => $ticket_quantity,
+					'is_maintenance' => empty( $ticket['is_maintenance'] ) ? 0 : 1,
 					'description' => $ticket_description,
 					'order_index' => $index,
 					'updated_at' => current_time( 'mysql' ),
 				);
-				$database_changed = cer_save_event_repeater_item( $item_repeater_configs['tickets']['table'], $ticket_id, $event_id, $ticket_data, array( '%d', '%s', '%f', '%s', '%d', '%s', '%d', '%s' ), $loaded_item_rows['tickets'] ?? array() ) || $database_changed;
+				$database_changed = cer_save_event_repeater_item( $item_repeater_configs['tickets']['table'], $ticket_id, $event_id, $ticket_data, array( '%d', '%s', '%f', '%s', '%d', '%d', '%s', '%d', '%s' ), $loaded_item_rows['tickets'] ?? array() ) || $database_changed;
 			}
 
 			foreach ( $speaker_rows as $index => $speaker ) {
@@ -1286,6 +1287,9 @@ if ( ! empty( $errors ) ) {
 							<div class="cer-field cer-full">
 								<label><?php esc_html_e( 'Description', 'custom-event-registration' ); ?></label>
 								<textarea name="tickets[<?php echo esc_attr( $index ); ?>][description]" placeholder="Describe what is included in this ticket type."><?php echo esc_textarea( $ticket['description'] ?? '' ); ?></textarea>
+							</div>
+							<div class="cer-field cer-full">
+								<label><input type="checkbox" name="tickets[<?php echo esc_attr( $index ); ?>][is_maintenance]" value="1" <?php checked( ! empty( $ticket['is_maintenance'] ) ); ?> /> <?php esc_html_e( 'Scheduled for maintenance (temporarily disable registration)', 'custom-event-registration' ); ?></label>
 							</div>
 							<div class="cer-repeater-actions">
 								<span class="cer-row-handle"><?php esc_html_e( 'Ticket', 'custom-event-registration' ); ?> #<?php echo esc_html( $index + 1 ); ?></span>

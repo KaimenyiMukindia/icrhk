@@ -34,9 +34,11 @@ add_action( 'admin_init', 'cer_handle_admin_actions' );
 if ( did_action( 'plugins_loaded' ) ) {
 	cer_maybe_install_dashboard_trash_schema();
 	cer_maybe_install_event_item_trash_schema();
+	cer_maybe_install_ticket_maintenance_schema();
 } else {
 	add_action( 'plugins_loaded', 'cer_maybe_install_dashboard_trash_schema' );
 	add_action( 'plugins_loaded', 'cer_maybe_install_event_item_trash_schema' );
+	add_action( 'plugins_loaded', 'cer_maybe_install_ticket_maintenance_schema' );
 }
 add_action( 'cer_purge_expired_event_trash', 'cer_purge_expired_event_trash' );
 add_action( 'wp_ajax_cer_submit_registration', 'cer_handle_ajax_submission' );
@@ -734,6 +736,21 @@ function cer_maybe_install_event_item_trash_schema(): void {
 	update_option( 'cer_schema_version', '10', false );
 }
 
+function cer_maybe_install_ticket_maintenance_schema(): void {
+	if ( '1' === get_option( 'cer_ticket_maintenance_schema_version', '' ) ) {
+		return;
+	}
+
+	global $wpdb;
+	$table = $wpdb->prefix . 'evt_ticket_types';
+	cer_add_column_if_missing( $table, 'is_maintenance', 'TINYINT(1) NOT NULL DEFAULT 0', 'quantity_sold' );
+	if ( ! cer_column_exists( $table, 'is_maintenance' ) ) {
+		error_log( 'CER ticket maintenance schema migration is incomplete; maintenance status remains unavailable.' );
+		return;
+	}
+	update_option( 'cer_ticket_maintenance_schema_version', '1', false );
+}
+
 function cer_install_event_schema() {
 	global $wpdb;
 
@@ -782,6 +799,7 @@ function cer_install_event_schema() {
 		currency VARCHAR(3) NOT NULL DEFAULT 'KES',
 		quantity_available INT UNSIGNED,
 		quantity_sold INT UNSIGNED DEFAULT 0,
+		is_maintenance TINYINT(1) NOT NULL DEFAULT 0,
 		description TEXT,
 		order_index INT UNSIGNED DEFAULT 0,
 		deleted_at DATETIME NULL,
@@ -1738,6 +1756,7 @@ function cer_activate_plugin() {
 		currency VARCHAR(3) NOT NULL DEFAULT 'KES',
 		quantity_available INT UNSIGNED,
 		quantity_sold INT UNSIGNED DEFAULT 0,
+		is_maintenance TINYINT(1) NOT NULL DEFAULT 0,
 		description TEXT,
 		order_index INT UNSIGNED DEFAULT 0,
 		deleted_at DATETIME NULL,
@@ -2234,9 +2253,12 @@ function cer_process_registration_submission( $payload = array() ) {
 		return array( 'success' => false, 'message' => 'Please check your email, Kenyan phone number and required fields, then try again.' );
 	}
 	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = %s AND deleted_at IS NULL LIMIT 1", $event_id, 'published' ) );
-	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL LIMIT 1", $ticket_type_id, $event_id ) );
+	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold, is_maintenance FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL LIMIT 1", $ticket_type_id, $event_id ) );
 	if ( ! $event || ! $ticket ) {
 		return array( 'success' => false, 'message' => 'The selected event or ticket is no longer available.' );
+	}
+	if ( ! empty( $ticket->is_maintenance ) ) {
+		return array( 'success' => false, 'message' => 'This ticket is temporarily unavailable while maintenance is in progress. Please check back soon.' );
 	}
 
 	$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0))", $event_id ) );
@@ -2259,9 +2281,12 @@ function cer_process_registration_submission( $payload = array() ) {
 		if ( ! $locked_event ) {
 			throw new Exception( 'The selected event or ticket is no longer available.' );
 		}
-		$locked_ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, price, quantity_available, quantity_sold FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL FOR UPDATE", $ticket_type_id, $event_id ) );
+		$locked_ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, price, quantity_available, quantity_sold, is_maintenance FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL FOR UPDATE", $ticket_type_id, $event_id ) );
 		if ( ! $locked_ticket ) {
 			throw new Exception( 'The selected ticket is no longer available.' );
+		}
+		if ( ! empty( $locked_ticket->is_maintenance ) ) {
+			throw new Exception( 'This ticket is temporarily unavailable while maintenance is in progress. Please check back soon.' );
 		}
 		if ( null !== $locked_ticket->quantity_available && (int) $locked_ticket->quantity_sold >= (int) $locked_ticket->quantity_available ) {
 			throw new Exception( 'This ticket type is sold out.' );

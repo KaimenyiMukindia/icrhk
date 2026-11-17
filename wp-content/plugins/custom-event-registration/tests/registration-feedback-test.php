@@ -75,6 +75,7 @@ class CER_Feedback_DB_Fixture {
 	public $paid_counts = array();
 	public $insert_id = 42;
 	public $duplicate = false;
+	public $maintenance = false;
 	public function __construct( $price ) { $this->price = $price; }
 	public function prepare( $query, ...$args ) { return $query; }
 	public function get_row( $query ) {
@@ -84,7 +85,7 @@ class CER_Feedback_DB_Fixture {
 		if ( false !== strpos( $query, 'evt_events' ) ) {
 			return (object) array( 'id' => 1, 'max_attendees' => $this->max_attendees, 'slug' => 'test-event', 'summary_note' => $this->summary_note );
 		}
-		return (object) array( 'id' => 2, 'name' => 'Delegate', 'price' => $this->price, 'quantity_available' => 10, 'quantity_sold' => 0 );
+		return (object) array( 'id' => 2, 'name' => 'Delegate', 'price' => $this->price, 'quantity_available' => 10, 'quantity_sold' => 0, 'is_maintenance' => $this->maintenance );
 	}
 	public function get_var( $query ) { return $this->paid_counts ? array_shift( $this->paid_counts ) : $this->paid; }
 	public function get_results( $query ) { return $this->tickets ?? array( $this->get_row( 'evt_ticket_types' ) ); }
@@ -111,6 +112,10 @@ $payload = array(
 	'amount' => 999,
 );
 $gateway_fails = false;
+$wpdb = new CER_Feedback_DB_Fixture( 100 );
+$wpdb->maintenance = true;
+$result = cer_process_registration_submission( $payload );
+expect_feedback( ! $result['success'] && false !== strpos( $result['message'], 'maintenance is in progress' ) && empty( $wpdb->saved ), 'Maintenance tickets must reject new registrations before a reservation is created.' );
 foreach ( array( null, '', 0, '0.00' ) as $price ) {
 	foreach ( array( 'mpesa', 'card' ) as $method ) {
 		$wpdb = new CER_Feedback_DB_Fixture( $price );
@@ -210,7 +215,7 @@ $wpdb->tickets = array();
 $markup = cer_get_registration_form_markup( 1 );
 expect_feedback( false !== strpos( $markup, 'No ticket types available' ), 'No-ticket events must not auto-select a fictitious ticket.' );
 function cer_test_ticket( $id, $name, $price, $available, $sold ) {
-	return (object) array( 'id' => $id, 'name' => $name, 'price' => $price, 'quantity_available' => $available, 'quantity_sold' => $sold );
+	return (object) array( 'id' => $id, 'name' => $name, 'price' => $price, 'quantity_available' => $available, 'quantity_sold' => $sold, 'is_maintenance' => false );
 }
 $wpdb = new CER_Feedback_DB_Fixture( 100 );
 $wpdb->tickets = array( cer_test_ticket( 2, 'Early bird', '100.00', 5, 5 ), cer_test_ticket( 3, 'Regular', '200.00', 5, 1 ), cer_test_ticket( 4, 'VIP', '500.00', null, 9 ) );
@@ -218,6 +223,11 @@ $markup = cer_get_registration_form_markup( 1 );
 expect_feedback( false !== strpos( $markup, 'data-price="100.00" disabled data-sold-out="true">Early bird (KES 100.00) - Sold out</option>' ), 'Sold-out options must be disabled and labelled.' );
 expect_feedback( false !== strpos( $markup, '>Regular (KES 200.00)</option>' ) && false !== strpos( $markup, '>VIP (KES 500.00)</option>' ), 'Available options must remain selectable.' );
 expect_feedback( false === strpos( $markup, 'cer-sold-out' ), 'Partial sell-out must not lock the form.' );
+$wpdb->tickets = array( cer_test_ticket( 2, 'Scheduled', '100.00', 10, 0 ) );
+$wpdb->tickets[0]->is_maintenance = true;
+$markup = cer_get_registration_form_markup( 1 );
+expect_feedback( false !== strpos( $markup, 'data-maintenance="true"' ) && false !== strpos( $markup, 'Scheduled for maintenance' ), 'Maintenance tickets must be disabled and clearly labelled in the ticket selector.' );
+expect_feedback( false !== strpos( $markup, 'disabled>Temporarily Unavailable</button>' ) && false !== strpos( $markup, 'maintenance is in progress' ), 'A ticket under maintenance must disable registration and explain why.' );
 $wpdb->tickets = array( cer_test_ticket( 2, 'Early bird', '100.00', 5, 5 ), cer_test_ticket( 3, 'Regular', '0', 5, 1 ) );
 $markup = cer_get_registration_form_markup( 1 );
 expect_feedback( false === strpos( $markup, '<select' ) && false !== strpos( $markup, 'Ticket: <strong>Regular</strong>' ), 'One remaining ticket must display without a dropdown.' );

@@ -49,6 +49,9 @@
                     '<label>Description</label>' +
                     '<textarea name="tickets[' + index + '][description]" placeholder="Describe what is included in this ticket type."></textarea>' +
                 '</div>' +
+                '<div class="cer-field cer-full">' +
+                    '<label><input type="checkbox" name="tickets[' + index + '][is_maintenance]" value="1" /> Scheduled for maintenance (temporarily disable registration)</label>' +
+                '</div>' +
                 '<div class="cer-repeater-actions">' +
                     '<span class="cer-row-handle">Ticket #'+ (index + 1) +'</span>' +
                     '<button type="button" class="button cer-remove-row">Remove</button>' +

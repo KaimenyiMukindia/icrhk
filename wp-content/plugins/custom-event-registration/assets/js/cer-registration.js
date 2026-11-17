@@ -1046,6 +1046,10 @@
     var count = document.getElementById('cer-ticket-availability');
     var inlineCount = document.getElementById('cer-inline-ticket-availability');
     var error = document.getElementById('cer-availability-error');
+    var message = document.getElementById('cer-form-message');
+    var originalMessage = message ? message.innerHTML : '';
+    var submitButton = form.querySelector('button[type="submit"]');
+    var initiallyUnavailable = form.classList.contains('cer-sold-out');
     var eventId = document.getElementById('cer-event-id');
     var availability = null;
     var refreshing = false;
@@ -1058,7 +1062,7 @@
         return value && validCount(value.capacity) && validCount(value.remaining) &&
             Array.isArray(value.tickets) && value.tickets.every(function (item) {
                 return Number.isSafeInteger(item.id) && item.id > 0 && typeof item.name === 'string' &&
-                    validCount(item.capacity) && validCount(item.remaining);
+                    validCount(item.capacity) && validCount(item.remaining) && typeof item.maintenance === 'boolean';
             });
     }
 
@@ -1074,22 +1078,27 @@
     }
 
     function showCount(target, value) {
-        var state = JSON.stringify([value.remaining, value.capacity]);
+        var allMaintenance = value.tickets.length > 0 && value.tickets.every(function (item) { return item.maintenance; });
+        var state = JSON.stringify([value.remaining, value.capacity, allMaintenance]);
         if (target.dataset.availabilityState === state) {
             return;
         }
         var remaining = document.createElement('strong');
         remaining.className = 'cer-availability-count';
-        remaining.textContent = value.remaining === null ? 'Available' : (
-            value.remaining === 0 ? 'Sold out' : value.remaining.toLocaleString('en-KE') + ' left'
+        remaining.textContent = allMaintenance ? 'Scheduled for maintenance' : (
+            value.remaining === null ? 'Available' : ( value.remaining === 0 ? 'Sold out' : value.remaining.toLocaleString('en-KE') + ' left' )
         );
         var total = document.createElement('small');
-        total.textContent = value.capacity === null ? 'Capacity not specified' : 'out of ' + value.capacity.toLocaleString('en-KE') + ' capacity';
+        total.textContent = allMaintenance ? 'Registration will reopen when maintenance is complete.' :
+            ( value.capacity === null ? 'Capacity not specified' : 'out of ' + value.capacity.toLocaleString('en-KE') + ' capacity' );
         target.replaceChildren(remaining, total);
         target.dataset.availabilityState = state;
     }
 
     function optionSuffix(item, disabled) {
+        if (item && item.maintenance) {
+            return ' - Scheduled for maintenance';
+        }
         if (!item || item.remaining === null) {
             return disabled ? ' - Sold out' : '';
         }
@@ -1108,6 +1117,8 @@
         if (configuredCount === 1 && availability.tickets.length === 1 && count) {
             showCount(count, availability);
         }
+        var selectedUnavailable = false;
+        var selectedMaintenance = false;
         if (ticket && ticket.options) {
             Array.prototype.forEach.call(ticket.options, function (option) {
                 if (!option.dataset.id || !option.dataset.baseLabel) {
@@ -1118,22 +1129,65 @@
                     optionsChanged = true;
                     return;
                 }
+                option.disabled = item.maintenance || item.remaining === 0;
                 var label = option.dataset.baseLabel + optionSuffix(item, option.disabled);
                 if (option.textContent !== label) {
                     option.textContent = label;
                 }
             });
+            var selectedOption = ticket.options[ticket.selectedIndex];
+            if (selectedOption && selectedOption.dataset.id) {
+                var selectedItem = availability.tickets.find(function (item) { return item.id === Number(selectedOption.dataset.id); });
+                selectedUnavailable = !selectedItem || selectedItem.maintenance || selectedItem.remaining === 0;
+                selectedMaintenance = !!(selectedItem && selectedItem.maintenance);
+            }
         } else if (ticket) {
             var selected = availability.tickets.find(function (item) { return item.id === Number(ticket.dataset.id); });
             if (!selected) {
                 optionsChanged = true;
-            } else if (inlineCount) {
-                inlineCount.textContent = optionSuffix(selected, false);
+            } else {
+                selectedUnavailable = selected.maintenance || selected.remaining === 0;
+                selectedMaintenance = selected.maintenance;
+                if (inlineCount) {
+                    inlineCount.textContent = optionSuffix(selected, selectedUnavailable);
+                }
+            }
+        }
+        var allUnavailable = availability.tickets.length > 0 && availability.tickets.every(function (item) {
+            return item.maintenance || item.remaining === 0;
+        });
+        var maintenanceUnavailable = allUnavailable && availability.tickets.some(function (item) { return item.maintenance; });
+        var availabilityChangedToAvailable = initiallyUnavailable && !allUnavailable;
+        var registrationUnavailable = allUnavailable || selectedUnavailable || availabilityChangedToAvailable;
+        if (submitButton) {
+            submitButton.disabled = registrationUnavailable;
+            if (availabilityChangedToAvailable) {
+                submitButton.textContent = 'Refresh to Register';
+            } else if (registrationUnavailable) {
+                submitButton.textContent = maintenanceUnavailable || selectedMaintenance ? 'Temporarily Unavailable' : 'Sold Out';
+            } else {
+                submitButton.textContent = form.dataset.paymentRequired === 'true' ? 'Register & Pay' : 'Register';
+            }
+        }
+        form.classList.toggle('cer-sold-out', registrationUnavailable);
+        if (message) {
+            if (availabilityChangedToAvailable) {
+                message.textContent = 'Ticket availability has changed. Refresh this page to update the registration form.';
+            } else if (registrationUnavailable) {
+                message.textContent = maintenanceUnavailable || selectedMaintenance
+                    ? 'Registration for this ticket is temporarily unavailable while maintenance is in progress. Please check back soon.'
+                    : selectedUnavailable ? 'This ticket is not currently available. Please select another ticket.' : form.dataset.soldOutNote;
+            } else {
+                message.innerHTML = originalMessage;
             }
         }
         form.dataset.availabilityReady = optionsChanged ? 'false' : 'true';
-        error.textContent = optionsChanged || (form.classList.contains('cer-sold-out') && availability.remaining !== null && availability.remaining > 0)
+        error.textContent = optionsChanged || availabilityChangedToAvailable || (registrationUnavailable && !maintenanceUnavailable && !selectedMaintenance && availability.remaining !== null && availability.remaining > 0)
             ? 'Ticket availability has changed. Refresh this page to update the registration form.' : '';
+    }
+
+    if (ticket && ticket.options) {
+        ticket.addEventListener('change', render);
     }
 
     async function refresh() {
