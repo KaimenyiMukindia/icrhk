@@ -74,7 +74,7 @@ function cer_registration_search_hash( $value ): string {
 }
 
 function cer_prepare_registration_row( array $row ): array {
-	foreach ( array( 'full_name', 'email', 'phone', 'notes' ) as $field ) {
+	foreach ( array( 'full_name', 'attendee_title', 'organization', 'attendee_role', 'email', 'phone', 'county', 'age_group', 'gender', 'accessibility_support', 'accessibility_details', 'notes' ) as $field ) {
 		if ( isset( $row[ $field ] ) && '' !== (string) $row[ $field ] ) {
 			if ( in_array( $field, array( 'full_name', 'email', 'phone' ), true ) ) {
 				$row[ $field . '_search_hash' ] = cer_registration_search_hash( $row[ $field ] );
@@ -92,13 +92,13 @@ function cer_prepare_registration_row( array $row ): array {
 
 function cer_decrypt_registration_row( $row ) {
 	if ( is_object( $row ) ) {
-		foreach ( array( 'full_name', 'email', 'phone', 'notes' ) as $field ) {
+		foreach ( array( 'full_name', 'attendee_title', 'organization', 'attendee_role', 'email', 'phone', 'county', 'age_group', 'gender', 'accessibility_support', 'accessibility_details', 'notes' ) as $field ) {
 			if ( isset( $row->$field ) ) {
 				$row->$field = cer_decrypt_pii( $row->$field );
 			}
 		}
 	} elseif ( is_array( $row ) ) {
-		foreach ( array( 'full_name', 'email', 'phone', 'notes' ) as $field ) {
+		foreach ( array( 'full_name', 'attendee_title', 'organization', 'attendee_role', 'email', 'phone', 'county', 'age_group', 'gender', 'accessibility_support', 'accessibility_details', 'notes' ) as $field ) {
 			if ( isset( $row[ $field ] ) ) {
 				$row[ $field ] = cer_decrypt_pii( $row[ $field ] );
 			}

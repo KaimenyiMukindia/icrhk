@@ -10,6 +10,13 @@
     var paymentMethodHidden = document.getElementById('payment_method_hidden');
     var fullNameField = document.getElementById('cer-full-name');
     var nameFieldContainer = fullNameField ? fullNameField.closest('.cer-field-group') : null;
+    var formSteps = form ? Array.prototype.slice.call(form.querySelectorAll('[data-cer-step]')) : [];
+    var progressSteps = form ? Array.prototype.slice.call(form.querySelectorAll('.cer-progress-step')) : [];
+    var nextStepButton = form ? form.querySelector('[data-cer-next]') : null;
+    var backStepButton = form ? form.querySelector('[data-cer-back]') : null;
+    var accommodationDetails = document.getElementById('cer-accessibility-details');
+    var accommodationDetailsWrap = accommodationDetails ? accommodationDetails.closest('.cer-accessibility-details') : null;
+    var accommodationField = accommodationDetails ? accommodationDetails.closest('.cer-accommodation-field') : null;
     var btnMpesa = document.getElementById('btn-mpesa');
     var btnCard = document.getElementById('btn-card');
     var submitButton = form ? form.querySelector('button[type="submit"]') : null;
@@ -133,6 +140,7 @@
         var messages = [
             'Your session has expired. Please refresh this page and submit again.',
             'Please check your email, Kenyan phone number and required fields, then try again.',
+            'Please complete your contact and conference details, including any requested accessibility support.',
             'The selected event or ticket is no longer available.',
             'The selected ticket is no longer available.',
             'This event has reached its attendance capacity.',
@@ -180,13 +188,11 @@
             btnCard.classList.toggle('is-active', method === 'card');
         }
 
-        // Card never collects a name: Paystack supplies it (if any) from the charge itself.
-        if (fullNameField && nameFieldContainer) {
-            fullNameField.required = !isCard;
-            nameFieldContainer.style.display = isCard ? 'none' : '';
-            if (isCard) {
-                fullNameField.value = '';
-            }
+        if (fullNameField) {
+            fullNameField.required = true;
+        }
+        if (nameFieldContainer) {
+            nameFieldContainer.style.display = '';
         }
 
         if (submitButton && !isSoldOut()) {
@@ -246,12 +252,13 @@
         if (!submitButton) {
             return;
         }
-        var method = paymentMethodHidden && paymentMethodHidden.value === 'card' ? 'card' : 'mpesa';
-        var emailField = document.getElementById('cer-email');
-        var phoneField = document.getElementById('cer-phone');
-        var valid = !!ticketType && !!ticketType.value && !!emailField && emailField.checkValidity();
-        valid = valid && !!phoneField && phoneField.value.trim() !== '';
-        valid = valid && (method === 'card' || (!!fullNameField && fullNameField.checkValidity()));
+        var requiredFields = form ? Array.prototype.slice.call(form.querySelectorAll('[required]')) : [];
+        var valid = !!ticketType && !!ticketType.value && requiredFields.every(function (field) {
+            if (field.type === 'radio') {
+                return !!form.querySelector('[name="' + field.name + '"]:checked');
+            }
+            return field.checkValidity();
+        });
         submitButton.disabled = !valid || requestInFlight || isSoldOut();
     }
 
@@ -326,10 +333,91 @@
         btnCard.addEventListener('click', function () { setPaymentMethod('card'); });
     }
 
-    Array.prototype.forEach.call(form ? form.querySelectorAll('input') : [], function (field) {
+    function showStep(index) {
+        formSteps.forEach(function (step, stepIndex) {
+            var active = stepIndex === index;
+            step.hidden = !active;
+            step.classList.toggle('is-active', active);
+            if (progressSteps[stepIndex]) {
+                progressSteps[stepIndex].classList.toggle('is-active', active || stepIndex < index);
+            }
+        });
+        if (formSteps[index]) {
+            var headingField = formSteps[index].querySelector('input, select, textarea');
+            if (headingField) {
+                window.setTimeout(function () { headingField.focus(); }, 50);
+            }
+        }
+        updateSubmitState();
+    }
+
+    function updateAccommodationDetails() {
+        var answer = form ? form.querySelector('[name="accessibility_support"]:checked') : null;
+        var needsDetails = !!answer && answer.value === 'yes';
+        if (accommodationField) {
+            accommodationField.classList.toggle('has-details', needsDetails);
+        }
+        if (accommodationDetailsWrap) {
+            accommodationDetailsWrap.hidden = false;
+            accommodationDetailsWrap.classList.toggle('is-visible', needsDetails);
+        }
+        if (accommodationDetails) {
+            accommodationDetails.disabled = !needsDetails;
+            accommodationDetails.required = needsDetails;
+            accommodationDetails.setAttribute('aria-disabled', needsDetails ? 'false' : 'true');
+            if (!needsDetails) {
+                accommodationDetails.value = '';
+            }
+        }
+        updateSubmitState();
+    }
+
+    if (nextStepButton) {
+        nextStepButton.addEventListener('click', function () {
+            var firstStepFields = formSteps[0] ? Array.prototype.slice.call(formSteps[0].querySelectorAll('input, select, textarea')) : [];
+            var invalid = firstStepFields.find(function (field) { return !field.checkValidity(); });
+            if (invalid) {
+                invalid.reportValidity();
+                return;
+            }
+            showStep(1);
+        });
+    }
+    if (backStepButton) {
+        backStepButton.addEventListener('click', function () { showStep(0); });
+    }
+
+    Array.prototype.forEach.call(form ? form.querySelectorAll('[name="accessibility_support"]') : [], function (field) {
+        field.addEventListener('change', updateAccommodationDetails);
+    });
+    Array.prototype.forEach.call(form ? form.querySelectorAll('input, select, textarea') : [], function (field) {
         field.addEventListener('input', updateSubmitState);
+        field.addEventListener('change', updateSubmitState);
     });
 
+    Array.prototype.forEach.call(form ? form.querySelectorAll('[data-cer-field-row]') : [], function (row) {
+        var groups = Array.prototype.slice.call(row.querySelectorAll(':scope > .cer-field-group'));
+        groups.forEach(function (group) {
+            var activate = function () {
+                row.classList.add('has-active-field');
+                groups.forEach(function (item) { item.classList.toggle('is-active-field', item === group); });
+            };
+            var deactivate = function () {
+                if (!row.querySelector(':focus-within')) {
+                    row.classList.remove('has-active-field');
+                    groups.forEach(function (item) { item.classList.remove('is-active-field'); });
+                }
+            };
+            group.addEventListener('mouseenter', activate);
+            group.addEventListener('mouseleave', deactivate);
+            group.addEventListener('focusin', activate);
+            group.addEventListener('focusout', function () {
+                window.setTimeout(deactivate, 0);
+            });
+        });
+    });
+
+    updateAccommodationDetails();
     setPaymentMethod(paymentMethodHidden && paymentMethodHidden.value === 'card' ? 'card' : 'mpesa');
 
     updateSummary();
@@ -350,6 +438,16 @@
                 return;
             }
             setMessage('Please select a ticket type.', 'error');
+            showStep(0);
+            return;
+        }
+        if (!form.checkValidity()) {
+            var invalidField = form.querySelector(':invalid');
+            if (invalidField) {
+                var invalidStep = invalidField.closest('[data-cer-step]');
+                showStep(invalidStep === formSteps[1] ? 1 : 0);
+                window.setTimeout(function () { invalidField.reportValidity(); }, 75);
+            }
             return;
         }
 

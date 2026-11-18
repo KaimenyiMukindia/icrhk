@@ -107,12 +107,17 @@ function expect_feedback( $condition, $message ) {
 	if ( ! $condition ) { throw new RuntimeException( $message ); }
 }
 $payload = array(
-	'security' => 'valid', 'full_name' => 'Test Visitor', 'email' => 'test@example.com',
-	'phone' => '0712345678', 'ticket_type_id' => 2, 'event_id' => 1, 'payment_method' => 'mpesa',
-	'amount' => 999,
+	'security' => 'valid', 'full_name' => 'Test Visitor', 'organization' => 'Test Organization',
+	'attendee_role' => 'Delegate', 'email' => 'test@example.com', 'phone' => '0712345678',
+	'county' => 'Nairobi', 'age_group' => '25-34', 'gender' => 'Prefer not to say',
+	'accessibility_support' => 'no', 'accessibility_details' => '', 'ticket_type_id' => 2,
+	'event_id' => 1, 'payment_method' => 'mpesa', 'amount' => 999,
 );
 $gateway_fails = false;
 $wpdb = new CER_Feedback_DB_Fixture( 100 );
+$result = cer_process_registration_submission( array_merge( $payload, array( 'accessibility_support' => 'yes', 'accessibility_details' => '' ) ) );
+expect_feedback( ! $result['success'] && false !== strpos( $result['message'], 'accessibility support' ), 'Requested accommodations must include a description.' );
+
 $wpdb->maintenance = true;
 $result = cer_process_registration_submission( $payload );
 expect_feedback( ! $result['success'] && false !== strpos( $result['message'], 'maintenance is in progress' ) && empty( $wpdb->saved ), 'Maintenance tickets must reject new registrations before a reservation is created.' );
@@ -123,6 +128,7 @@ foreach ( array( null, '', 0, '0.00' ) as $price ) {
 		$result = cer_process_registration_submission( array_merge( $payload, array( 'payment_method' => $method ) ) );
 		expect_feedback( $result['success'] && 'not_required' === $result['data']['payment_status'], 'Unpriced tickets must confirm admission without payment.' );
 		expect_feedback( $wpdb->saved['email'] === $payload['email'] && '254712345678' === $wpdb->saved['phone'], 'Contacts must be persisted before acknowledgement.' );
+		expect_feedback( $wpdb->saved['organization'] === $payload['organization'] && $wpdb->saved['county'] === $payload['county'] && $wpdb->saved['accessibility_support'] === $payload['accessibility_support'], 'Conference profile and accessibility answers must be persisted.' );
 		expect_feedback( null === $wpdb->saved['reserved_until'] && 1 === $wpdb->ticket_updates && 'confirmed' === $wpdb->saved['status'], 'Unpriced tickets must consume inventory permanently on confirmation.' );
 		expect_feedback( false !== strpos( $result['data']['message'], 'Thank you' ) && false === strpos( $result['data']['message'], 'price' ), 'No-cost confirmation must thank the attendee without discussing prices.' );
 		expect_feedback( 0 === $gateway_calls, 'Unpriced ticket must not call the gateway.' );
@@ -189,7 +195,7 @@ expect_feedback( false !== strpos( cer_get_registration_form_markup( 1 ), $wpdb-
 foreach ( array( null, '', '0', '100.00' ) as $price ) {
 	$wpdb = new CER_Feedback_DB_Fixture( $price );
 	$markup = cer_get_registration_form_markup( 1 );
-	expect_feedback( false === strpos( $markup, '<select' ), 'A single ticket must not render a dropdown.' );
+	expect_feedback( false === strpos( $markup, '<select id="cer-ticket-type"' ), 'A single ticket must not render a ticket dropdown.' );
 	expect_feedback( false !== strpos( $markup, 'id="cer-ticket-type" name="ticket_type" type="hidden" value="Delegate"' ), 'A single ticket name must still be submitted.' );
 	expect_feedback( false !== strpos( $markup, 'name="ticket_type_id" value="2"' ), 'A single ticket id must be selected without JavaScript.' );
 	expect_feedback( false !== strpos( $markup, 'Ticket: <strong>Delegate</strong>' ), 'A single ticket must have a visible label.' );
@@ -208,7 +214,7 @@ $wpdb->tickets = array(
 	(object) array( 'id' => 3, 'name' => 'Paid ticket', 'price' => '100.00', 'quantity_available' => null, 'quantity_sold' => 0 ),
 );
 $markup = cer_get_registration_form_markup( 1 );
-expect_feedback( 1 === substr_count( $markup, '<select' ), 'Multiple tickets must retain the selector.' );
+expect_feedback( 1 === substr_count( $markup, '<select id="cer-ticket-type"' ), 'Multiple tickets must retain the ticket selector.' );
 expect_feedback( false !== strpos( $markup, '>Contact registration</option>' ), 'Unpriced options must not display a misleading zero-price charge.' );
 expect_feedback( false !== strpos( $markup, '>Paid ticket (KES 100.00)</option>' ), 'Paid option labels must retain their prices.' );
 $wpdb->tickets = array();
@@ -230,7 +236,7 @@ expect_feedback( false !== strpos( $markup, 'data-maintenance="true"' ) && false
 expect_feedback( false !== strpos( $markup, 'disabled>Temporarily Unavailable</button>' ) && false !== strpos( $markup, 'maintenance is in progress' ), 'A ticket under maintenance must disable registration and explain why.' );
 $wpdb->tickets = array( cer_test_ticket( 2, 'Early bird', '100.00', 5, 5 ), cer_test_ticket( 3, 'Regular', '0', 5, 1 ) );
 $markup = cer_get_registration_form_markup( 1 );
-expect_feedback( false === strpos( $markup, '<select' ) && false !== strpos( $markup, 'Ticket: <strong>Regular</strong>' ), 'One remaining ticket must display without a dropdown.' );
+expect_feedback( false === strpos( $markup, '<select id="cer-ticket-type"' ) && false !== strpos( $markup, 'Ticket: <strong>Regular</strong>' ), 'One remaining ticket must display without a ticket dropdown.' );
 expect_feedback( false !== strpos( $markup, 'data-payment-required="false"' ), 'Payment must follow the remaining ticket, not the sold-out one.' );
 foreach ( array(
 	array( array( cer_test_ticket( 2, 'Delegate', '100.00', 3, 3 ) ), null, 0, 'Tickets for this event are sold out.' ),

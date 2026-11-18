@@ -11,7 +11,7 @@ class EvtRegistration extends WordPressModel
     protected $primaryKey = 'id';
     public $timestamps = false;
 
-    protected $fillable = ['registration_uuid', 'payment_uuid', 'gateway_reference', 'event_id', 'ticket_type_id', 'user_id', 'user_access_key', 'full_name', 'email', 'phone', 'ticket_type', 'payment_method', 'amount', 'notes', 'status', 'created_at', 'updated_at'];
+    protected $fillable = ['registration_uuid', 'payment_uuid', 'gateway_reference', 'event_id', 'ticket_type_id', 'user_id', 'user_access_key', 'full_name', 'attendee_title', 'organization', 'attendee_role', 'email', 'phone', 'county', 'age_group', 'gender', 'accessibility_support', 'accessibility_details', 'ticket_type', 'payment_method', 'amount', 'notes', 'status', 'created_at', 'updated_at'];
 
     protected static function booted(): void
     {
@@ -27,7 +27,7 @@ class EvtRegistration extends WordPressModel
 
     public function decryptPii(): self
     {
-        foreach (['full_name', 'email', 'phone', 'notes'] as $field) {
+        foreach (['full_name', 'attendee_title', 'organization', 'attendee_role', 'email', 'phone', 'county', 'age_group', 'gender', 'accessibility_support', 'accessibility_details', 'notes'] as $field) {
             if (isset($this->{$field})) {
                 $this->{$field} = RegistrationCrypto::decrypt((string) $this->{$field});
             }
@@ -38,7 +38,7 @@ class EvtRegistration extends WordPressModel
 
     private function encryptPii(): void
     {
-        foreach (['full_name', 'email', 'phone', 'notes'] as $field) {
+        foreach (['full_name', 'attendee_title', 'organization', 'attendee_role', 'email', 'phone', 'county', 'age_group', 'gender', 'accessibility_support', 'accessibility_details', 'notes'] as $field) {
             if (isset($this->{$field})) {
                 $this->{$field} = RegistrationCrypto::encrypt((string) $this->{$field});
             }

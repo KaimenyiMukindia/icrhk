@@ -57,13 +57,22 @@ if ( isset( $_GET['cer_export'] ) && $_GET['cer_export'] === '1' && wp_verify_no
     header( 'Content-Type: text/csv; charset=utf-8' );
     header( 'Content-Disposition: attachment; filename=event-registrations.csv' );
     $output = fopen( 'php://output', 'w' );
-    fputcsv( $output, array( 'ID', 'Name', 'Email', 'Phone', 'Ticket Type', 'Payment Method', 'Amount', 'Notes', 'Status', 'Created At', 'Updated At' ) );
+    fputcsv( $output, array( 'ID', 'Name', 'Title', 'Organization', 'Role', 'Email', 'Phone', 'County', 'Age Group', 'Gender', 'Accessibility Support', 'Accessibility Details', 'Ticket Type', 'Payment Method', 'Amount', 'Notes', 'Status', 'Created At', 'Updated At' ) );
     foreach ( $rows as $row ) {
+        $row = cer_decrypt_registration_row( $row );
         fputcsv( $output, array(
             $row['id'],
             $row['full_name'],
+            $row['attendee_title'] ?? '',
+            $row['organization'] ?? '',
+            $row['attendee_role'] ?? '',
             $row['email'],
             $row['phone'],
+            $row['county'] ?? '',
+            $row['age_group'] ?? '',
+            $row['gender'] ?? '',
+            $row['accessibility_support'] ?? '',
+            $row['accessibility_details'] ?? '',
             $row['ticket_type'],
             $row['payment_method'],
             $row['amount'],

@@ -3,6 +3,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+function cer_kenyan_counties(): array {
+	return array(
+		'Baringo', 'Bomet', 'Bungoma', 'Busia', 'Elgeyo-Marakwet', 'Embu', 'Garissa',
+		'Homa Bay', 'Isiolo', 'Kajiado', 'Kakamega', 'Kericho', 'Kiambu', 'Kilifi',
+		'Kirinyaga', 'Kisii', 'Kisumu', 'Kitui', 'Kwale', 'Laikipia', 'Lamu', 'Machakos',
+		'Makueni', 'Mandera', 'Marsabit', 'Meru', 'Migori', 'Mombasa', 'Murang\'a',
+		'Nairobi', 'Nakuru', 'Nandi', 'Narok', 'Nyamira', 'Nyandarua', 'Nyeri', 'Samburu',
+		'Siaya', 'Taita-Taveta', 'Tana River', 'Tharaka-Nithi', 'Trans Nzoia', 'Turkana',
+		'Uasin Gishu', 'Vihiga', 'Wajir', 'West Pokot',
+	);
+}
+
 function cer_get_ticket_availability( int $event_id ) {
 	global $wpdb;
 	$event = $wpdb->get_row( $wpdb->prepare(
@@ -177,41 +189,121 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 			<p class="cer-ticket-selection">Ticket: <strong><?php echo esc_html( $single_ticket->name ); ?></strong><?php if ( $availability_enabled && count( $ticket_types ) > 1 ) : ?> <small id="cer-inline-ticket-availability" aria-live="polite"><?php echo esc_html( cer_ticket_option_availability_suffix( $ticket_availability[ $single_ticket->id ] ?? null, false ) ); ?></small><?php endif; ?></p>
 			<input id="cer-ticket-type" name="ticket_type" type="hidden" value="<?php echo esc_attr( $single_ticket->name ); ?>" data-id="<?php echo esc_attr( $single_ticket->id ); ?>" data-price="<?php echo esc_attr( $single_ticket->price ); ?>">
 		<?php endif; ?>
-		<div class="cer-form-grid">
-			<div class="cer-field-group cer-full-name-group">
-				<label for="cer-full-name">Full Name</label>
-				<input id="cer-full-name" name="full_name" placeholder="Jane Doe" required type="text" />
-			</div>
-			<div class="cer-field-group cer-email-group">
-				<label for="cer-email">Email Address</label>
-				<input id="cer-email" name="email" placeholder="jane@example.com" required type="email" />
-			</div>
-			<div class="cer-field-group payment-field">
-				<label for="cer-phone">Phone Number</label>
-				<div class="cer-phone-field">
-					<span class="cer-phone-prefix">+254</span>
-					<input id="cer-phone" name="phone" placeholder="712 345 678" required type="tel" />
+		<div class="cer-registration-progress" aria-label="Registration progress">
+			<span class="cer-progress-step is-active"><b>1</b> Contact</span>
+			<span class="cer-progress-line" aria-hidden="true"></span>
+			<span class="cer-progress-step"><b>2</b> Conference details</span>
+		</div>
+		<div class="cer-form-step is-active" data-cer-step="1">
+			<div class="cer-form-grid cer-contact-layout">
+				<div class="cer-field-row cer-identity-row" data-cer-field-row>
+					<div class="cer-field-group cer-title-group">
+						<label for="cer-title">Title <span class="cer-optional-label">Optional</span></label>
+						<input id="cer-title" name="attendee_title" placeholder="Dr / Eng / Ms" autocomplete="honorific-prefix" type="text" />
+					</div>
+					<div class="cer-field-group cer-full-name-group">
+						<label for="cer-full-name">Full Name <span aria-hidden="true">*</span></label>
+						<input id="cer-full-name" name="full_name" placeholder="Jane Doe" autocomplete="name" required type="text" />
+					</div>
+				</div>
+				<div class="cer-field-row" data-cer-field-row>
+					<div class="cer-field-group cer-email-group">
+						<label for="cer-email">Email Address <span aria-hidden="true">*</span></label>
+						<input id="cer-email" name="email" placeholder="jane@example.com" autocomplete="email" required type="email" />
+					</div>
+					<div class="cer-field-group payment-field">
+						<label for="cer-phone">Mobile / Telephone <span aria-hidden="true">*</span></label>
+						<div class="cer-phone-field">
+							<span class="cer-phone-prefix">+254</span>
+							<input id="cer-phone" name="phone" placeholder="712 345 678" autocomplete="tel-national" required type="tel" />
+						</div>
+					</div>
+				</div>
+				<div class="cer-field-row cer-profile-row" data-cer-field-row>
+					<div class="cer-field-group">
+						<label for="cer-organization">Organization <span aria-hidden="true">*</span></label>
+						<input id="cer-organization" name="organization" placeholder="Organization name" autocomplete="organization" required type="text" />
+					</div>
+					<div class="cer-field-group">
+						<label for="cer-role">Role <span aria-hidden="true">*</span></label>
+						<input id="cer-role" name="attendee_role" placeholder="e.g. Programme Manager" autocomplete="organization-title" required type="text" />
+					</div>
+					<?php if ( ! $single_ticket ) : ?>
+						<div class="cer-field-group cer-ticket-field">
+							<label for="cer-ticket-type">Ticket / Event Type <span aria-hidden="true">*</span></label>
+							<select id="cer-ticket-type" name="ticket_type" required>
+								<option value="">Select a ticket</option>
+								<?php if ( ! empty( $ticket_types ) ) : ?>
+									<?php foreach ( $ticket_types as $type ) : ?>
+										<?php $option_label = $type->name . ( (float) $type->price > 0 ? ' (KES ' . number_format_i18n( (float) $type->price, 2 ) . ')' : '' ); ?>
+										<option value="<?php echo esc_attr( $type->name ); ?>" data-id="<?php echo esc_attr( $type->id ); ?>" data-price="<?php echo esc_attr( $type->price ); ?>"<?php if ( $availability_enabled ) : ?> data-base-label="<?php echo esc_attr( $option_label ); ?>"<?php endif; ?><?php echo ( $type->sold_out || $type->maintenance ) ? ' disabled' : ''; ?><?php echo $type->sold_out ? ' data-sold-out="true"' : ''; ?><?php echo $type->maintenance ? ' data-maintenance="true"' : ''; ?>><?php echo esc_html( $option_label . cer_ticket_option_availability_suffix( $ticket_availability[ $type->id ] ?? array( 'maintenance' => $type->maintenance, 'remaining' => null ), $type->sold_out ) ); ?></option>
+									<?php endforeach; ?>
+								<?php else : ?>
+									<option value="" disabled>No ticket types available</option>
+								<?php endif; ?>
+							</select>
+						</div>
+					<?php endif; ?>
 				</div>
 			</div>
-			<?php if ( ! $single_ticket ) : ?>
-				<div class="cer-field-group">
-					<label for="cer-ticket-type">Ticket / Event Type</label>
-					<select id="cer-ticket-type" name="ticket_type" required>
-						<option value="">Select a ticket</option>
-						<?php if ( ! empty( $ticket_types ) ) : ?>
-							<?php foreach ( $ticket_types as $type ) : ?>
-								<?php $option_label = $type->name . ( (float) $type->price > 0 ? ' (KES ' . number_format_i18n( (float) $type->price, 2 ) . ')' : '' ); ?>
-								<option value="<?php echo esc_attr( $type->name ); ?>" data-id="<?php echo esc_attr( $type->id ); ?>" data-price="<?php echo esc_attr( $type->price ); ?>"<?php if ( $availability_enabled ) : ?> data-base-label="<?php echo esc_attr( $option_label ); ?>"<?php endif; ?><?php echo ( $type->sold_out || $type->maintenance ) ? ' disabled' : ''; ?><?php echo $type->sold_out ? ' data-sold-out="true"' : ''; ?><?php echo $type->maintenance ? ' data-maintenance="true"' : ''; ?>><?php echo esc_html( $option_label . cer_ticket_option_availability_suffix( $ticket_availability[ $type->id ] ?? array( 'maintenance' => $type->maintenance, 'remaining' => null ), $type->sold_out ) ); ?></option>
-							<?php endforeach; ?>
-						<?php else : ?>
-							<option value="" disabled>No ticket types available</option>
-						<?php endif; ?>
-					</select>
+			<div class="cer-step-actions cer-step-actions-first">
+				<span class="cer-step-required-note">Fields marked * are required.</span>
+				<button type="button" class="cer-secondary-button" data-cer-next>Continue</button>
+			</div>
+		</div>
+		<div class="cer-form-step" data-cer-step="2" hidden>
+			<div class="cer-form-grid cer-details-layout">
+				<div class="cer-field-row cer-demographic-row" data-cer-field-row>
+					<div class="cer-field-group cer-county-group">
+						<label for="cer-county">County <span aria-hidden="true">*</span></label>
+						<input id="cer-county" name="county" list="cer-kenyan-counties" placeholder="Type or choose" autocomplete="address-level1" required type="text" />
+						<datalist id="cer-kenyan-counties">
+							<?php foreach ( cer_kenyan_counties() as $county_name ) : ?><option value="<?php echo esc_attr( $county_name ); ?>"></option><?php endforeach; ?>
+						</datalist>
+					</div>
+					<div class="cer-field-group cer-age-group">
+						<label for="cer-age-group">Age <span aria-hidden="true">*</span></label>
+						<select id="cer-age-group" name="age_group" required>
+							<option value="">Select</option>
+							<option value="18-24">18–24</option>
+							<option value="25-34">25–34</option>
+							<option value="35-and-above">35 and above</option>
+						</select>
+					</div>
+					<div class="cer-field-group cer-gender-group">
+						<label for="cer-gender">Gender <span aria-hidden="true">*</span></label>
+						<select id="cer-gender" name="gender" required>
+							<option value="">Select</option>
+							<option value="M">M</option>
+							<option value="F">F</option>
+							<option value="Other">Other</option>
+							<option value="Prefer not to say">Prefer not to say</option>
+						</select>
+					</div>
 				</div>
-			<?php endif; ?>
+				<fieldset class="cer-field-group cer-accommodation-field">
+					<legend class="cer-visually-hidden">Do you require accessibility accommodations or support to participate in this conference? *</legend>
+					<div class="cer-accessibility-options">
+						<div class="cer-accessibility-prompt">
+							<p class="cer-accessibility-question">Do you require accessibility accommodations or support to participate in this conference? <span aria-hidden="true">*</span></p>
+							<div class="cer-radio-stack">
+								<label class="cer-radio-option"><input type="radio" name="accessibility_support" value="no" required> <span>No</span></label>
+								<label class="cer-radio-option"><input type="radio" name="accessibility_support" value="yes" required> <span>Yes</span></label>
+							</div>
+						</div>
+						<div class="cer-accessibility-details">
+							<label for="cer-accessibility-details">Please specify</label>
+							<textarea id="cer-accessibility-details" name="accessibility_details" rows="2" maxlength="1000" placeholder="Describe the support you need"></textarea>
+						</div>
+					</div>
+				</fieldset>
+			</div>
+			<div class="cer-step-actions">
+				<button type="button" class="cer-secondary-button cer-back-button" data-cer-back>Back</button>
+				<button type="submit" class="cer-primary-button"<?php echo $sold_out ? ' disabled' : ''; ?>><?php echo $sold_out ? ( $maintenance_unavailable ? 'Temporarily Unavailable' : 'Sold Out' ) : ( $payment_required ? 'Register &amp; Pay' : 'Register' ); ?></button>
+			</div>
 		</div>
 		<?php if ( $availability_enabled ) : ?><small id="cer-availability-error" role="status"><?php echo $availability_data ? '' : 'Live availability unavailable. Counts may be out of date; retrying automatically.'; ?></small><?php endif; ?>
-		<button type="submit" class="cer-primary-button"<?php echo $sold_out ? ' disabled' : ''; ?>><?php echo $sold_out ? ( $maintenance_unavailable ? 'Temporarily Unavailable' : 'Sold Out' ) : ( $payment_required ? 'Register &amp; Pay' : 'Register' ); ?></button>
 		<input type="hidden" id="cer-amount" name="amount" value="<?php echo esc_attr( $amount ); ?>" />
 		<input type="hidden" id="cer-event-id" name="event_id" value="<?php echo esc_attr( $event_id ); ?>" />
 		<input type="hidden" id="cer-ticket-type-id" name="ticket_type_id" value="<?php echo $single_ticket ? esc_attr( $single_ticket->id ) : '0'; ?>" />

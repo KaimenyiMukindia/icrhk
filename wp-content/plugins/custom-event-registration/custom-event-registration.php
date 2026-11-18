@@ -251,7 +251,25 @@ function cer_maybe_ensure_event_schema() {
 		}
 	}
 
+	$registration_profile_columns = array(
+		'attendee_title' => array( 'VARCHAR(512) NULL', 'full_name' ),
+		'organization' => array( 'VARCHAR(1024) NULL', 'attendee_title' ),
+		'attendee_role' => array( 'VARCHAR(1024) NULL', 'organization' ),
+		'county' => array( 'VARCHAR(512) NULL', 'phone' ),
+		'age_group' => array( 'VARCHAR(128) NULL', 'county' ),
+		'gender' => array( 'VARCHAR(128) NULL', 'age_group' ),
+		'accessibility_support' => array( 'VARCHAR(512) NULL', 'gender' ),
+		'accessibility_details' => array( 'LONGTEXT NULL', 'accessibility_support' ),
+	);
+	foreach ( $registration_profile_columns as $column => $definition ) {
+		cer_add_column_if_missing( $registrations_table, $column, $definition[0], $definition[1] );
+	}
+
+	if ( '11' === $schema_version ) {
+		return;
+	}
 	if ( in_array( $schema_version, array( '9', '10' ), true ) ) {
+		update_option( 'cer_schema_version', '11', false );
 		return;
 	}
 
@@ -934,12 +952,20 @@ function cer_install_event_schema() {
 		user_id BIGINT(20) UNSIGNED,
 		user_access_key VARCHAR(64) NOT NULL,
 		full_name VARCHAR(255) NOT NULL,
+		attendee_title VARCHAR(512) NULL,
+		organization VARCHAR(1024) NULL,
+		attendee_role VARCHAR(1024) NULL,
 		full_name_search_hash CHAR(64) NULL,
 		payer_name VARCHAR(512) NULL,
 		email VARCHAR(255) NOT NULL,
 		email_search_hash CHAR(64) NULL,
 		phone VARCHAR(50) NOT NULL,
 		phone_search_hash CHAR(64) NULL,
+		county VARCHAR(512) NULL,
+		age_group VARCHAR(128) NULL,
+		gender VARCHAR(128) NULL,
+		accessibility_support VARCHAR(512) NULL,
+		accessibility_details LONGTEXT NULL,
 		ticket_type VARCHAR(100),
 		payment_method VARCHAR(50) NOT NULL,
 		amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -1816,8 +1842,16 @@ function cer_activate_plugin() {
 		event_id BIGINT(20) UNSIGNED,
 		ticket_type_id BIGINT(20) UNSIGNED,
 		full_name VARCHAR(255) NOT NULL,
+		attendee_title VARCHAR(512) NULL,
+		organization VARCHAR(1024) NULL,
+		attendee_role VARCHAR(1024) NULL,
 		email VARCHAR(255) NOT NULL,
 		phone VARCHAR(50) NOT NULL,
+		county VARCHAR(512) NULL,
+		age_group VARCHAR(128) NULL,
+		gender VARCHAR(128) NULL,
+		accessibility_support VARCHAR(512) NULL,
+		accessibility_details LONGTEXT NULL,
 		ticket_type VARCHAR(100),
 		payment_method VARCHAR(50) NOT NULL,
 		amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -2229,8 +2263,16 @@ function cer_process_registration_submission( $payload = array() ) {
 	global $wpdb;
 
 	$full_name = sanitize_text_field( wp_unslash( $payload['full_name'] ?? '' ) );
+	$attendee_title = sanitize_text_field( wp_unslash( $payload['attendee_title'] ?? '' ) );
+	$organization = sanitize_text_field( wp_unslash( $payload['organization'] ?? '' ) );
+	$attendee_role = sanitize_text_field( wp_unslash( $payload['attendee_role'] ?? '' ) );
 	$email = sanitize_email( wp_unslash( $payload['email'] ?? '' ) );
 	$phone = sanitize_text_field( wp_unslash( $payload['phone'] ?? '' ) );
+	$county = sanitize_text_field( wp_unslash( $payload['county'] ?? '' ) );
+	$age_group = sanitize_text_field( wp_unslash( $payload['age_group'] ?? '' ) );
+	$gender = sanitize_text_field( wp_unslash( $payload['gender'] ?? '' ) );
+	$accessibility_support = sanitize_text_field( wp_unslash( $payload['accessibility_support'] ?? '' ) );
+	$accessibility_details = sanitize_textarea_field( wp_unslash( $payload['accessibility_details'] ?? '' ) );
 	$ticket_type_id = absint( wp_unslash( $payload['ticket_type_id'] ?? 0 ) );
 	$ticket_type = sanitize_text_field( wp_unslash( $payload['ticket_type'] ?? '' ) );
 	$payment_method = sanitize_text_field( wp_unslash( $payload['payment_method'] ?? '' ) );
@@ -2249,9 +2291,19 @@ function cer_process_registration_submission( $payload = array() ) {
 			$phone = '';
 		}
 
-		if ( empty( $email ) || empty( $payment_method ) || empty( $phone ) || ( 'mpesa' === $payment_method && empty( $full_name ) ) ) {
-		return array( 'success' => false, 'message' => 'Please check your email, Kenyan phone number and required fields, then try again.' );
-	}
+		$valid_age_groups = array( '18-24', '25-34', '35-and-above' );
+		$valid_genders = array( 'M', 'F', 'Other', 'Prefer not to say' );
+		$valid_counties = function_exists( 'cer_kenyan_counties' ) ? cer_kenyan_counties() : array();
+		$valid_accessibility_answers = array( 'no', 'yes' );
+		$profile_complete = '' !== $full_name && '' !== $organization && '' !== $attendee_role
+			&& ( empty( $valid_counties ) || in_array( $county, $valid_counties, true ) )
+			&& in_array( $age_group, $valid_age_groups, true )
+			&& in_array( $gender, $valid_genders, true )
+			&& in_array( $accessibility_support, $valid_accessibility_answers, true )
+			&& ( 'no' === $accessibility_support || '' !== $accessibility_details );
+		if ( empty( $email ) || empty( $payment_method ) || empty( $phone ) || ! $profile_complete ) {
+			return array( 'success' => false, 'message' => 'Please complete your contact and conference details, including any requested accessibility support.' );
+		}
 	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = %s AND deleted_at IS NULL LIMIT 1", $event_id, 'published' ) );
 	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold, is_maintenance FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL LIMIT 1", $ticket_type_id, $event_id ) );
 	if ( ! $event || ! $ticket ) {
@@ -2310,8 +2362,6 @@ function cer_process_registration_submission( $payload = array() ) {
 			if ( $existing_contact && in_array( $existing_contact->status, array( 'paid', 'confirmed' ), true ) ) {
 				throw new Exception( 'You are already registered for this ticket. Please check your email for your ticket or contact the event team for help.' );
 			}
-		} elseif ( 'card' === $payment_method ) {
-			$full_name = '';
 		}
 		if ( ! empty( $locked_event->max_attendees ) ) {
 			if ( $no_payment_required ) {
@@ -2338,8 +2388,16 @@ function cer_process_registration_submission( $payload = array() ) {
 			'event_id' => $event_id ? $event_id : null,
 			'ticket_type_id' => $ticket_type_id ? $ticket_type_id : null,
 			'full_name' => $full_name,
+			'attendee_title' => $attendee_title,
+			'organization' => $organization,
+			'attendee_role' => $attendee_role,
 			'email' => $email,
 			'phone' => $phone,
+			'county' => $county,
+			'age_group' => $age_group,
+			'gender' => $gender,
+			'accessibility_support' => $accessibility_support,
+			'accessibility_details' => 'yes' === $accessibility_support ? $accessibility_details : '',
 			'ticket_type' => $ticket_type,
 			'payment_method' => $no_payment_required ? 'none' : $payment_method,
 			'amount' => $amount,
@@ -2357,7 +2415,7 @@ function cer_process_registration_submission( $payload = array() ) {
 			$inserted = $wpdb->insert(
 				$registrations_table,
 				cer_prepare_registration_row( $registration_data ),
-				array( '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s' )
+				array( '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s' )
 			);
 			$registration_id = (int) $wpdb->insert_id;
 		}
@@ -2407,8 +2465,16 @@ function cer_process_registration_submission( $payload = array() ) {
 			'registration_uuid' => $registration_uuid,
 			'payment_uuid' => $payment_uuid,
 			'full_name' => $full_name,
+			'attendee_title' => $attendee_title,
+			'organization' => $organization,
+			'attendee_role' => $attendee_role,
 			'email' => $email,
 			'phone' => $phone,
+			'county' => $county,
+			'age_group' => $age_group,
+			'gender' => $gender,
+			'accessibility_support' => $accessibility_support,
+			'accessibility_details' => 'yes' === $accessibility_support ? $accessibility_details : '',
 			'ticket_type' => $ticket_type,
 			'payment_method' => $payment_method,
 			'amount' => $amount,

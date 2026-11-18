@@ -7479,3 +7479,841 @@ body .cer-kamgc-page .cer-kamgc-organiser img[alt="Council of Governors"] {
     margin-top: 0.75rem;
     color: #a33a20;
 }
+
+/* Compact, progressive attendee details built onto the existing registration form. */
+body .cer-registration-form.cer-card-selected .cer-full-name-group {
+    display: flex !important;
+}
+
+.cer-registration-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: -4px 0 2px;
+}
+
+.cer-progress-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(42, 32, 58, .52);
+    font-size: .74rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.cer-progress-step b {
+    display: inline-grid;
+    width: 23px;
+    height: 23px;
+    place-items: center;
+    border: 1px solid rgba(90, 42, 140, .22);
+    border-radius: 50%;
+}
+
+.cer-progress-step.is-active {
+    color: var(--k-purple);
+}
+
+.cer-progress-step.is-active b {
+    border-color: var(--k-purple);
+    background: var(--k-purple);
+    color: #fff;
+}
+
+.cer-progress-line {
+    width: 100%;
+    height: 2px;
+    min-width: 24px;
+    background: rgba(90, 42, 140, .16);
+}
+
+.cer-form-step[hidden],
+.cer-accessibility-details[hidden] {
+    display: none !important;
+}
+
+.cer-form-step .cer-form-grid {
+    gap: 12px 14px;
+}
+
+.cer-form-step .cer-field-group label,
+.cer-form-step .cer-field-group legend {
+    margin-bottom: 5px;
+}
+
+.cer-form-step .cer-field-group {
+    min-width: 0;
+}
+
+.cer-optional-label {
+    margin-left: 4px;
+    color: rgba(42, 32, 58, .52);
+    font-size: .68rem;
+    font-weight: 500;
+}
+
+.cer-step-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.cer-step-actions .cer-primary-button {
+    width: auto;
+    min-width: 190px;
+    margin: 0;
+}
+
+.cer-step-actions-first {
+    justify-content: flex-end;
+}
+
+.cer-step-required-note {
+    margin-right: auto;
+    color: rgba(42, 32, 58, .58);
+    font-size: .72rem;
+}
+
+.cer-secondary-button {
+    min-height: 42px;
+    padding: 10px 20px;
+    border: 1px solid rgba(90, 42, 140, .28);
+    border-radius: 999px;
+    background: rgba(90, 42, 140, .06);
+    color: var(--k-purple);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.cer-secondary-button:hover,
+.cer-secondary-button:focus-visible {
+    background: rgba(90, 42, 140, .12);
+    outline: 3px solid rgba(90, 42, 140, .12);
+}
+
+.cer-accommodation-field {
+    display: grid;
+    margin: 0;
+    padding: 14px;
+    border: 1px solid rgba(90, 42, 140, .16);
+    border-radius: 12px;
+    background: rgba(90, 42, 140, .035);
+}
+
+.cer-radio-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 34px;
+    margin: 0 !important;
+    cursor: pointer;
+}
+
+.cer-registration-form .cer-radio-option input {
+    width: 17px;
+    min-width: 17px;
+    height: 17px;
+    min-height: 17px;
+    accent-color: var(--k-purple);
+}
+
+.cer-accessibility-details {
+    margin-top: 8px;
+}
+
+.cer-accessibility-details textarea {
+    width: 100%;
+    min-height: 82px;
+    resize: vertical;
+}
+
+@media (max-width: 600px) {
+    .cer-progress-step {
+        font-size: .69rem;
+    }
+
+    .cer-step-actions {
+        align-items: stretch;
+    }
+
+    .cer-step-actions-first {
+        flex-wrap: wrap;
+    }
+
+    .cer-step-actions .cer-primary-button,
+    .cer-step-actions .cer-secondary-button {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+/* Compact row composition and contextual field emphasis. */
+.cer-contact-layout,
+.cer-details-layout {
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px !important;
+}
+
+.cer-field-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+}
+
+.cer-field-row > .cer-field-group {
+    flex: 1 1 0;
+    min-width: 0;
+    transition: flex-grow 280ms var(--cer-ease-out, cubic-bezier(.2,.8,.2,1));
+}
+
+.cer-identity-row > .cer-title-group {
+    flex: .32 1 0;
+    min-width: 105px;
+}
+
+.cer-identity-row > .cer-full-name-group {
+    flex: 1 1 0;
+}
+
+.cer-demographic-row > .cer-county-group {
+    flex: 1.25 1 0;
+}
+
+.cer-demographic-row > .cer-age-group {
+    flex: .75 1 0;
+}
+
+.cer-demographic-row > .cer-gender-group {
+    flex: 1 1 0;
+}
+
+.cer-profile-row > .cer-field-group {
+    min-width: 0;
+}
+
+@media (min-width: 641px) {
+    .cer-field-row.has-active-field > .cer-field-group.is-active-field {
+        flex-grow: 1.45;
+    }
+
+    .cer-field-row.has-active-field > .cer-field-group:not(.is-active-field) {
+        flex-grow: .72;
+    }
+
+    .cer-identity-row.has-active-field > .cer-title-group.is-active-field {
+        flex-grow: .48;
+    }
+}
+
+/* A restrained cue for empty required controls; it disappears during use. */
+.cer-registration-form .cer-field-group input:required:placeholder-shown,
+.cer-registration-form .cer-field-group select:required:invalid,
+.cer-registration-form .cer-phone-field:has(input:required:placeholder-shown) {
+    animation: cer-required-field-pulse 2.7s ease-in-out infinite;
+}
+
+.cer-registration-form .cer-field-group input:focus,
+.cer-registration-form .cer-field-group select:focus,
+.cer-registration-form .cer-phone-field:focus-within {
+    animation: none;
+}
+
+@keyframes cer-required-field-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(240, 118, 30, 0); }
+    50% { box-shadow: 0 0 0 3px rgba(240, 118, 30, .09); }
+}
+
+/* Accessibility question and compact answers share a single horizontal card. */
+.cer-registration-form .cer-accommodation-field {
+    display: grid;
+    grid-template-columns: minmax(180px, .78fr) minmax(260px, 1.35fr);
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px 15px;
+    transition: grid-template-columns 300ms var(--cer-ease-out, ease), padding 300ms ease;
+}
+
+.cer-registration-form .cer-accessibility-question {
+    grid-column: 1;
+    margin: 0 !important;
+    padding: 0;
+    color: var(--k-ink);
+    font-size: .76rem !important;
+    font-weight: 650 !important;
+    line-height: 1.42;
+}
+
+.cer-accessibility-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-column: 2;
+    gap: 10px;
+    min-width: 0;
+    transition: grid-template-columns 300ms var(--cer-ease-out, ease);
+}
+
+.cer-radio-stack {
+    display: grid;
+    gap: 3px;
+}
+
+.cer-registration-form .cer-radio-option {
+    min-height: 25px;
+    font-size: .76rem;
+    line-height: 1.28;
+}
+
+.cer-accessibility-details {
+    min-width: 0;
+    margin: 0;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.cer-accessibility-details.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.cer-registration-form .cer-accessibility-details textarea {
+    min-height: 68px !important;
+    max-height: 120px;
+    padding-top: 9px;
+}
+
+.cer-registration-form .cer-accommodation-field.has-details {
+    grid-template-columns: minmax(155px, .65fr) minmax(320px, 1.7fr);
+    align-items: start;
+}
+
+.cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-options {
+    grid-template-columns: minmax(150px, .72fr) minmax(180px, 1.28fr);
+}
+
+@media (max-width: 640px) {
+    .cer-field-row,
+    .cer-registration-form .cer-accommodation-field,
+    .cer-accessibility-options,
+    .cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-options {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+
+    .cer-field-row > .cer-field-group,
+    .cer-identity-row > .cer-title-group,
+    .cer-identity-row > .cer-full-name-group,
+    .cer-demographic-row > .cer-field-group {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .cer-registration-form .cer-accommodation-field {
+        display: flex;
+        gap: 8px;
+    }
+
+    .cer-accessibility-options {
+        display: flex;
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cer-registration-form .cer-field-group input:required:placeholder-shown,
+    .cer-registration-form .cer-field-group select:required:invalid,
+    .cer-registration-form .cer-phone-field:has(input:required:placeholder-shown) {
+        animation: none;
+    }
+
+    .cer-field-row > .cer-field-group,
+    .cer-accessibility-options,
+    .cer-accessibility-details {
+        transition: none;
+    }
+}
+
+/* Final compact header, payment selection, and accommodation alignment. */
+.cer-kamgc-main > .cer-kamgc-two-col > .cer-kamgc-main-column > .cer-kamgc-card h2:has(+ .cer-kamgc-form-intro) {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+.cer-kamgc-main > .cer-kamgc-two-col > .cer-kamgc-main-column > .cer-kamgc-card h2:has(+ .cer-kamgc-form-intro)::before {
+    content: 'Registration portal';
+    display: inline;
+    margin: 0 auto 0 0;
+    white-space: nowrap;
+}
+
+.cer-registration-form .cer-payment-toggle {
+    width: 100%;
+    max-width: none;
+}
+
+.cer-registration-form .cer-payment-toggle-btn {
+    min-width: 0;
+    flex: 2 1 40%;
+    width: 40%;
+    white-space: nowrap;
+    transition: padding-inline 240ms var(--cer-ease-out, ease),
+                color 220ms ease,
+                background-color 220ms ease;
+    transform: none !important;
+}
+
+.cer-registration-form .cer-payment-toggle-btn.is-active {
+    flex: 3 1 60%;
+    width: 60%;
+}
+
+.cer-registration-form .cer-payment-toggle:has(.cer-payment-toggle-btn:not(.is-active):hover) .cer-payment-toggle-btn.is-active,
+.cer-registration-form .cer-payment-toggle:has(.cer-payment-toggle-btn:not(.is-active):focus-visible) .cer-payment-toggle-btn.is-active {
+    flex: 2 1 40%;
+    width: 40%;
+}
+
+.cer-registration-form .cer-payment-toggle-btn:not(.is-active):hover,
+.cer-registration-form .cer-payment-toggle-btn:not(.is-active):focus-visible {
+    flex: 3 1 60%;
+    width: 60%;
+}
+
+@media (max-width: 640px) {
+    .cer-registration-form .cer-payment-toggle-btn {
+        font-size: clamp(1.55vh, 2.9vw, 1.8vh) !important;
+        line-height: 1.1;
+        padding-inline: clamp(7px, 2.2vw, 14px);
+    }
+
+    .cer-registration-form .cer-toggle-label-short,
+    .cer-registration-form .cer-toggle-label-full {
+        white-space: nowrap;
+    }
+}
+
+.cer-registration-form .cer-primary-button,
+.cer-registration-form .cer-secondary-button,
+.cer-registration-form .cer-payment-toggle-btn {
+    transform: none !important;
+}
+
+.cer-registration-form .cer-primary-button,
+.cer-registration-form .cer-secondary-button {
+    transition: padding-inline 240ms var(--cer-ease-out, ease),
+                flex-basis 240ms var(--cer-ease-out, ease),
+                background-color 180ms ease;
+}
+
+.cer-registration-form .cer-primary-button:hover,
+.cer-registration-form .cer-primary-button:focus-visible,
+.cer-registration-form .cer-secondary-button:hover,
+.cer-registration-form .cer-secondary-button:focus-visible {
+    min-width: 190px;
+    padding-inline: 25px;
+    transform: none;
+}
+
+.cer-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.cer-registration-form .cer-accommodation-field {
+    display: block;
+    min-height: 68px;
+    padding: 12px 14px;
+}
+
+.cer-registration-form .cer-accessibility-options {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    transition: grid-template-columns 300ms var(--cer-ease-out, ease);
+}
+
+.cer-registration-form .cer-accessibility-prompt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.cer-registration-form .cer-accessibility-question {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0 !important;
+    max-width: none;
+    font-size: .73rem !important;
+    line-height: 1.35;
+}
+
+.cer-registration-form .cer-radio-stack {
+    display: flex;
+    flex: 0 0 42px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+}
+
+.cer-registration-form .cer-radio-option {
+    min-height: 24px;
+    white-space: nowrap;
+}
+
+.cer-registration-form .cer-accommodation-field .cer-accessibility-details {
+    display: block !important;
+    grid-column: 2;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    opacity: .3;
+    pointer-events: none;
+    filter: grayscale(.4);
+    transition: opacity 240ms ease, filter 240ms ease;
+}
+
+.cer-registration-form .cer-accommodation-field:not(.has-details) .cer-accessibility-details textarea {
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, .42) !important;
+}
+
+.cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-options {
+    grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr);
+}
+
+.cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-details {
+    opacity: 1;
+    pointer-events: auto;
+    filter: none;
+}
+
+.cer-registration-form .cer-accommodation-field .cer-accessibility-details textarea,
+.cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-details textarea {
+    width: 100%;
+    min-height: 48px !important;
+    height: 48px;
+    padding: 8px 10px;
+}
+
+.cer-registration-form .cer-accessibility-details label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+    .cer-kamgc-main > .cer-kamgc-two-col > .cer-kamgc-main-column > .cer-kamgc-card h2:has(+ .cer-kamgc-form-intro) {
+        align-items: flex-start;
+        flex-direction: column-reverse;
+        gap: 5px;
+    }
+
+    .cer-kamgc-main > .cer-kamgc-two-col > .cer-kamgc-main-column > .cer-kamgc-card h2:has(+ .cer-kamgc-form-intro)::before {
+        margin: 0;
+    }
+
+    .cer-registration-form .cer-accommodation-field {
+        min-height: 0;
+    }
+
+    .cer-registration-form .cer-accessibility-options,
+    .cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-options {
+        grid-template-columns: minmax(0, 1fr) minmax(110px, .55fr);
+    }
+
+    .cer-registration-form .cer-accommodation-field .cer-accessibility-details {
+        grid-column: 2;
+    }
+
+    .cer-registration-form .cer-accommodation-field:not(.has-details) .cer-accessibility-details {
+        display: block !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .cer-registration-form .cer-primary-button,
+    .cer-registration-form .cer-secondary-button {
+        min-width: 0;
+        white-space: nowrap;
+    }
+
+    .cer-registration-form .cer-primary-button:hover,
+    .cer-registration-form .cer-primary-button:focus-visible,
+    .cer-registration-form .cer-secondary-button:hover,
+    .cer-registration-form .cer-secondary-button:focus-visible {
+        min-width: 0;
+        padding-inline: 22px;
+        transform: none;
+    }
+
+    .cer-registration-form .cer-accessibility-options,
+    .cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-options {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cer-registration-form .cer-accessibility-prompt {
+        align-items: flex-start;
+    }
+
+    .cer-registration-form .cer-radio-stack {
+        justify-content: flex-start;
+    }
+}
+
+body .cer-registration-form button,
+body .cer-registration-form button:hover,
+body .cer-registration-form button:focus-visible,
+body .cer-registration-form button:active {
+    transform: none !important;
+}
+
+body .cer-registration-form #btn-mpesa,
+body .cer-registration-form .cer-back-button {
+    justify-content: flex-start;
+    text-align: left;
+}
+
+body .cer-registration-form #btn-card,
+body .cer-registration-form [data-cer-next],
+body .cer-registration-form .cer-primary-button {
+    justify-content: flex-end;
+    text-align: right;
+}
+
+body .cer-registration-form button:not(.cer-payment-toggle-btn):hover,
+body .cer-registration-form button:not(.cer-payment-toggle-btn):focus-visible {
+    padding-inline: 25px;
+}
+
+body .cer-registration-form .cer-primary-button:hover,
+body .cer-registration-form .cer-primary-button:focus-visible {
+    min-width: 190px;
+    padding-inline: 25px;
+}
+
+/* Width-only motion, with fixed edge anchors and no legacy flex/transform conflict. */
+.cer-registration-form .cer-payment-toggle {
+    display: flex;
+    gap: 0 !important;
+    overflow: hidden;
+    justify-content: stretch;
+}
+
+.cer-registration-form .cer-payment-toggle-btn {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: 40%;
+    min-width: 0;
+    max-width: 40%;
+    padding-inline: 16px;
+    transition: width 300ms var(--cer-ease-out, cubic-bezier(.2,.8,.2,1)),
+                max-width 300ms var(--cer-ease-out, cubic-bezier(.2,.8,.2,1)),
+                color 180ms ease,
+                background-color 180ms ease;
+    will-change: width;
+    transform: none !important;
+}
+
+.cer-registration-form .cer-payment-toggle-btn.is-active {
+    width: 60%;
+    max-width: 60%;
+}
+
+.cer-registration-form .cer-payment-toggle:has(.cer-payment-toggle-btn:not(.is-active):hover) .cer-payment-toggle-btn.is-active,
+.cer-registration-form .cer-payment-toggle:has(.cer-payment-toggle-btn:not(.is-active):focus-visible) .cer-payment-toggle-btn.is-active {
+    width: 40%;
+    max-width: 40%;
+}
+
+.cer-registration-form .cer-payment-toggle-btn:not(.is-active):hover,
+.cer-registration-form .cer-payment-toggle-btn:not(.is-active):focus-visible {
+    width: 60%;
+    max-width: 60%;
+}
+
+.cer-registration-form .cer-primary-button {
+    width: 190px;
+    max-width: 225px;
+    transition: width 260ms var(--cer-ease-out, cubic-bezier(.2,.8,.2,1)),
+                background-color 180ms ease,
+                box-shadow 180ms ease;
+}
+
+body .cer-registration-form .cer-primary-button:hover,
+body .cer-registration-form .cer-primary-button:focus-visible,
+body .cer-registration-form .cer-primary-button:active {
+    width: 210px;
+    min-width: 0;
+    padding-inline: 20px;
+    transform: none !important;
+}
+
+.cer-registration-form .cer-accessibility-options,
+.cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-options {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, .55fr);
+}
+
+.cer-registration-form .cer-accessibility-prompt {
+    grid-column: 1;
+}
+
+.cer-registration-form .cer-accommodation-field .cer-accessibility-details {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-options {
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+}
+
+@media (max-width: 640px) {
+    .cer-registration-form .cer-payment-toggle-btn {
+        padding-inline: clamp(8px, 2.4vw, 13px);
+        font-size: clamp(1.45vh, 2.65vw, 1.65vh) !important;
+        white-space: nowrap;
+    }
+
+    .cer-registration-form .cer-primary-button {
+        width: 48%;
+        max-width: 210px;
+    }
+
+    .cer-registration-form .cer-primary-button:hover,
+    .cer-registration-form .cer-primary-button:focus-visible,
+    .cer-registration-form .cer-primary-button:active {
+        width: 58%;
+    }
+}
+
+/* Keep action labels fixed while only their opposite edge moves. */
+body .cer-registration-form .cer-step-actions .cer-secondary-button,
+body .cer-registration-form .cer-step-actions .cer-primary-button {
+    box-sizing: border-box;
+    height: 48px;
+    min-height: 48px;
+    max-height: 48px;
+    padding: 10px 20px;
+    line-height: 28px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+body .cer-registration-form .cer-secondary-button {
+    width: 114px;
+    max-width: 134px;
+    transition: width 260ms var(--cer-ease-out, cubic-bezier(.2,.8,.2,1)),
+                background-color 180ms ease;
+}
+
+body .cer-registration-form .cer-back-button {
+    width: 86px;
+    max-width: 104px;
+}
+
+body .cer-registration-form .cer-secondary-button:hover,
+body .cer-registration-form .cer-secondary-button:focus-visible,
+body .cer-registration-form .cer-secondary-button:active {
+    width: 134px;
+    min-width: 0;
+    padding: 10px 20px;
+    transform: none !important;
+}
+
+body .cer-registration-form .cer-back-button:hover,
+body .cer-registration-form .cer-back-button:focus-visible,
+body .cer-registration-form .cer-back-button:active {
+    width: 104px;
+}
+
+body .cer-registration-form .cer-primary-button {
+    width: 190px;
+    max-width: 210px;
+    font-size: clamp(.78rem, 1vw, .92rem) !important;
+    padding: 10px 20px;
+}
+
+body .cer-registration-form .cer-primary-button:hover,
+body .cer-registration-form .cer-primary-button:focus-visible,
+body .cer-registration-form .cer-primary-button:active {
+    width: 210px;
+    min-width: 0;
+    padding: 10px 20px;
+    transform: none !important;
+}
+
+/* Prompt/radios form the left block; the specification field remains on the right. */
+.cer-registration-form .cer-accessibility-options,
+.cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-options {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, .55fr);
+}
+
+.cer-registration-form .cer-accessibility-prompt {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.cer-registration-form .cer-accommodation-field .cer-accessibility-details {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.cer-registration-form .cer-accommodation-field.has-details .cer-accessibility-options {
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+}
+
+@media (max-width: 640px) {
+    body .cer-registration-form .cer-step-actions .cer-secondary-button,
+    body .cer-registration-form .cer-step-actions .cer-primary-button {
+        height: 46px;
+        min-height: 46px;
+        max-height: 46px;
+        line-height: 26px;
+        padding-inline: 14px;
+        font-size: clamp(1.4vh, 2.65vw, 1.7vh) !important;
+    }
+
+    body .cer-registration-form .cer-primary-button {
+        width: 56%;
+    }
+
+    body .cer-registration-form .cer-primary-button:hover,
+    body .cer-registration-form .cer-primary-button:focus-visible,
+    body .cer-registration-form .cer-primary-button:active {
+        width: 66%;
+        padding-inline: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cer-registration-form .cer-payment-toggle-btn,
+    .cer-registration-form .cer-primary-button,
+    .cer-registration-form .cer-secondary-button,
+    .cer-registration-form .cer-accessibility-options {
+        transition: none;
+    }
+}

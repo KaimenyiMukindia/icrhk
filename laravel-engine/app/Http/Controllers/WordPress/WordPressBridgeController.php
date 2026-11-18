@@ -22,8 +22,16 @@ final class WordPressBridgeController
         $data = $request->validate([
             'registration_uuid' => 'nullable|string',
             'full_name' => 'required|string',
+            'attendee_title' => 'nullable|string',
+            'organization' => 'nullable|string',
+            'attendee_role' => 'nullable|string',
             'email' => 'required|email',
             'phone' => 'nullable|string',
+            'county' => 'nullable|string',
+            'age_group' => 'nullable|string',
+            'gender' => 'nullable|string',
+            'accessibility_support' => 'nullable|string',
+            'accessibility_details' => 'nullable|string',
             'status' => 'nullable|string',
             'created_at' => 'nullable|string',
         ]);
