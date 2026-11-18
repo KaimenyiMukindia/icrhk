@@ -274,8 +274,8 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 						<label for="cer-gender">Gender <span aria-hidden="true">*</span></label>
 						<select id="cer-gender" name="gender" required>
 							<option value="">Select</option>
-							<option value="M">M</option>
-							<option value="F">F</option>
+							<option value="M">Male</option>
+							<option value="F">Female</option>
 							<option value="Other">Other</option>
 							<option value="Prefer not to say">Prefer not to say</option>
 						</select>
