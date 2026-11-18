@@ -54,8 +54,6 @@ final class PaymentController extends Controller
             if (empty($payload['full_name']) || empty($payload['phone'])) {
                 return response()->json(['status' => 'failed', 'message' => 'Full name and phone number are required for M-Pesa.'], 422);
             }
-        } elseif (empty($payload['phone'])) {
-            return response()->json(['status' => 'failed', 'message' => 'Phone number is required.'], 422);
         }
 
         $fullName = trim((string) ($payload['full_name'] ?? ''));

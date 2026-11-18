@@ -109,7 +109,7 @@ function expect_feedback( $condition, $message ) {
 $payload = array(
 	'security' => 'valid', 'full_name' => 'Test Visitor', 'organization' => 'Test Organization',
 	'attendee_role' => 'Delegate', 'email' => 'test@example.com', 'phone' => '0712345678',
-	'county' => 'Nairobi', 'age_group' => '25-34', 'gender' => 'Prefer not to say',
+	'identification_number' => 'ID-12345', 'county' => 'Nairobi', 'age_group' => '25-34', 'gender' => 'Prefer not to say',
 	'accessibility_support' => 'no', 'accessibility_details' => '', 'ticket_type_id' => 2,
 	'event_id' => 1, 'payment_method' => 'mpesa', 'amount' => 999,
 );
@@ -153,6 +153,20 @@ foreach ( array( 'mpesa', 'card' ) as $method ) {
 	expect_feedback( 1 === $gateway_calls && 1 === $wpdb->ticket_updates && null !== $wpdb->saved['reserved_until'], 'Priced ticket reservation must be preserved.' );
 	expect_feedback( '100.00' === $wpdb->saved['amount'], 'Price must come from the ticket, not the submitted amount.' );
 }
+$optional_payload = array_merge( $payload, array(
+	'payment_method' => 'card', 'phone' => '', 'organization' => '', 'attendee_role' => '',
+	'county' => '', 'age_group' => '', 'gender' => '', 'accessibility_support' => '',
+	'accessibility_details' => '', 'attendee_title' => '', 'identification_number' => '',
+) );
+$wpdb = new CER_Feedback_DB_Fixture( '100.00' );
+$gateway_calls = 0;
+$result = cer_process_registration_submission( $optional_payload );
+expect_feedback( $result['success'] && 'fixture-reference' === $result['data']['reference'], 'Card registration must require only name, email and ticket details.' );
+expect_feedback( 'ID-12345' !== ( $wpdb->saved['identification_number'] ?? 'ID-12345' ), 'An omitted identification number must remain optional.' );
+$wpdb = new CER_Feedback_DB_Fixture( '100.00' );
+$result = cer_process_registration_submission( array_merge( $optional_payload, array( 'payment_method' => 'mpesa' ) ) );
+expect_feedback( ! $result['success'] && false !== strpos( $result['message'], 'M-Pesa' ), 'Paid M-Pesa must retain its phone-number checkout requirement.' );
+
 foreach ( array( 0, 100 ) as $price ) {
 	$wpdb = new CER_Feedback_DB_Fixture( $price );
 	$wpdb->max_attendees = 1;

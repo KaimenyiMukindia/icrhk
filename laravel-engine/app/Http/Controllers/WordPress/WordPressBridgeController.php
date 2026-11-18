@@ -27,6 +27,7 @@ final class WordPressBridgeController
             'attendee_role' => 'nullable|string',
             'email' => 'required|email',
             'phone' => 'nullable|string',
+            'identification_number' => 'nullable|string',
             'county' => 'nullable|string',
             'age_group' => 'nullable|string',
             'gender' => 'nullable|string',

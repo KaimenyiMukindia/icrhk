@@ -206,31 +206,35 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 						<input id="cer-full-name" name="full_name" placeholder="Jane Doe" autocomplete="name" required type="text" />
 					</div>
 				</div>
-				<div class="cer-field-row" data-cer-field-row>
+				<div class="cer-field-row cer-contact-details-row" data-cer-field-row>
 					<div class="cer-field-group cer-email-group">
 						<label for="cer-email">Email Address <span aria-hidden="true">*</span></label>
 						<input id="cer-email" name="email" placeholder="jane@example.com" autocomplete="email" required type="email" />
 					</div>
 					<div class="cer-field-group payment-field">
-						<label for="cer-phone">Mobile / Telephone <span aria-hidden="true">*</span></label>
+						<label for="cer-phone">Mobile / Telephone</label>
 						<div class="cer-phone-field">
 							<span class="cer-phone-prefix">+254</span>
-							<input id="cer-phone" name="phone" placeholder="712 345 678" autocomplete="tel-national" required type="tel" />
+							<input id="cer-phone" name="phone" placeholder="712 345 678" autocomplete="tel-national" type="tel" />
 						</div>
+					</div>
+					<div class="cer-field-group">
+						<label for="cer-identification-number">Identification Number</label>
+						<input id="cer-identification-number" name="identification_number" placeholder="ID / Passport number" autocomplete="off" type="text" maxlength="100" />
 					</div>
 				</div>
 				<div class="cer-field-row cer-profile-row" data-cer-field-row>
 					<div class="cer-field-group">
-						<label for="cer-organization">Organization <span aria-hidden="true">*</span></label>
-						<input id="cer-organization" name="organization" placeholder="Organization name" autocomplete="organization" required type="text" />
+						<label for="cer-organization">Organization</label>
+						<input id="cer-organization" name="organization" placeholder="Organization name" autocomplete="organization" type="text" />
 					</div>
 					<div class="cer-field-group">
-						<label for="cer-role">Role <span aria-hidden="true">*</span></label>
-						<input id="cer-role" name="attendee_role" placeholder="e.g. Programme Manager" autocomplete="organization-title" required type="text" />
+						<label for="cer-role">Role</label>
+						<input id="cer-role" name="attendee_role" placeholder="e.g. Programme Manager" autocomplete="organization-title" type="text" />
 					</div>
 					<?php if ( ! $single_ticket ) : ?>
 						<div class="cer-field-group cer-ticket-field">
-							<label for="cer-ticket-type">Ticket / Event Type <span aria-hidden="true">*</span></label>
+							<label for="cer-ticket-type">Ticket / Event Type</label>
 							<select id="cer-ticket-type" name="ticket_type" required>
 								<option value="">Select a ticket</option>
 								<?php if ( ! empty( $ticket_types ) ) : ?>
@@ -255,15 +259,15 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 			<div class="cer-form-grid cer-details-layout">
 				<div class="cer-field-row cer-demographic-row" data-cer-field-row>
 					<div class="cer-field-group cer-county-group">
-						<label for="cer-county">County <span aria-hidden="true">*</span></label>
-						<input id="cer-county" name="county" list="cer-kenyan-counties" placeholder="Type or choose" autocomplete="address-level1" required type="text" />
+						<label for="cer-county">County</label>
+						<input id="cer-county" name="county" list="cer-kenyan-counties" placeholder="Type or choose" autocomplete="address-level1" type="text" />
 						<datalist id="cer-kenyan-counties">
 							<?php foreach ( cer_kenyan_counties() as $county_name ) : ?><option value="<?php echo esc_attr( $county_name ); ?>"></option><?php endforeach; ?>
 						</datalist>
 					</div>
 					<div class="cer-field-group cer-age-group">
-						<label for="cer-age-group">Age <span aria-hidden="true">*</span></label>
-						<select id="cer-age-group" name="age_group" required>
+						<label for="cer-age-group">Age</label>
+						<select id="cer-age-group" name="age_group">
 							<option value="">Select</option>
 							<option value="18-24">18–24</option>
 							<option value="25-34">25–34</option>
@@ -271,8 +275,8 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 						</select>
 					</div>
 					<div class="cer-field-group cer-gender-group">
-						<label for="cer-gender">Gender <span aria-hidden="true">*</span></label>
-						<select id="cer-gender" name="gender" required>
+						<label for="cer-gender">Gender</label>
+						<select id="cer-gender" name="gender">
 							<option value="">Select</option>
 							<option value="M">Male</option>
 							<option value="F">Female</option>
@@ -285,10 +289,10 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 					<legend class="cer-visually-hidden">Do you require accessibility accommodations or support to participate in this conference? *</legend>
 					<div class="cer-accessibility-options">
 						<div class="cer-accessibility-prompt">
-							<p class="cer-accessibility-question">Do you require accessibility accommodations or support to participate in this conference? <span aria-hidden="true">*</span></p>
+							<p class="cer-accessibility-question">Do you require accessibility accommodations or support to participate in this conference?</p>
 							<div class="cer-radio-stack">
-								<label class="cer-radio-option"><input type="radio" name="accessibility_support" value="no" required> <span>No</span></label>
-								<label class="cer-radio-option"><input type="radio" name="accessibility_support" value="yes" required> <span>Yes</span></label>
+								<label class="cer-radio-option"><input type="radio" name="accessibility_support" value="no"> <span>No</span></label>
+								<label class="cer-radio-option"><input type="radio" name="accessibility_support" value="yes"> <span>Yes</span></label>
 							</div>
 						</div>
 						<div class="cer-accessibility-details">

@@ -24,6 +24,7 @@ require_once CER_PLUGIN_DIR . 'includes/class-cer-mail-smtp-resolver.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-mailer.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-ticket-service.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-event-notifications.php';
+require_once CER_PLUGIN_DIR . 'includes/class-cer-kamgc-campaign.php';
 require_once CER_PLUGIN_DIR . 'admin/admin-functions.php';
 
 register_activation_hook( __FILE__, 'cer_activate_plugin' );
@@ -31,6 +32,7 @@ register_deactivation_hook( __FILE__, 'cer_deactivate_plugin' );
 add_action( 'admin_menu', 'cer_register_admin_menu' );
 add_action( 'admin_init', 'cer_maybe_ensure_event_schema' );
 add_action( 'admin_init', 'cer_handle_admin_actions' );
+add_action( 'plugins_loaded', 'cer_maybe_install_identification_schema' );
 if ( did_action( 'plugins_loaded' ) ) {
 	cer_maybe_install_dashboard_trash_schema();
 	cer_maybe_install_event_item_trash_schema();
@@ -223,6 +225,14 @@ function cer_maybe_flush_rewrite_rules() {
 	update_option( 'cer_rewrite_version', '2', false );
 }
 
+function cer_maybe_install_identification_schema(): void {
+	global $wpdb;
+	$table = $wpdb->prefix . 'evt_registrations';
+	if ( ! cer_column_exists( $table, 'identification_number' ) ) {
+		cer_add_column_if_missing( $table, 'identification_number', 'VARCHAR(512) NULL', 'phone' );
+	}
+}
+
 function cer_maybe_ensure_event_schema() {
 	global $wpdb;
 	$registrations_table = $wpdb->prefix . 'evt_registrations';
@@ -255,7 +265,8 @@ function cer_maybe_ensure_event_schema() {
 		'attendee_title' => array( 'VARCHAR(512) NULL', 'full_name' ),
 		'organization' => array( 'VARCHAR(1024) NULL', 'attendee_title' ),
 		'attendee_role' => array( 'VARCHAR(1024) NULL', 'organization' ),
-		'county' => array( 'VARCHAR(512) NULL', 'phone' ),
+		'identification_number' => array( 'VARCHAR(512) NULL', 'phone' ),
+		'county' => array( 'VARCHAR(512) NULL', 'identification_number' ),
 		'age_group' => array( 'VARCHAR(128) NULL', 'county' ),
 		'gender' => array( 'VARCHAR(128) NULL', 'age_group' ),
 		'accessibility_support' => array( 'VARCHAR(512) NULL', 'gender' ),
@@ -265,11 +276,15 @@ function cer_maybe_ensure_event_schema() {
 		cer_add_column_if_missing( $registrations_table, $column, $definition[0], $definition[1] );
 	}
 
+	if ( '12' === $schema_version ) {
+		return;
+	}
 	if ( '11' === $schema_version ) {
+		update_option( 'cer_schema_version', '12', false );
 		return;
 	}
 	if ( in_array( $schema_version, array( '9', '10' ), true ) ) {
-		update_option( 'cer_schema_version', '11', false );
+		update_option( 'cer_schema_version', '12', false );
 		return;
 	}
 
@@ -961,6 +976,7 @@ function cer_install_event_schema() {
 		email_search_hash CHAR(64) NULL,
 		phone VARCHAR(50) NOT NULL,
 		phone_search_hash CHAR(64) NULL,
+		identification_number VARCHAR(512) NULL,
 		county VARCHAR(512) NULL,
 		age_group VARCHAR(128) NULL,
 		gender VARCHAR(128) NULL,
@@ -1847,6 +1863,7 @@ function cer_activate_plugin() {
 		attendee_role VARCHAR(1024) NULL,
 		email VARCHAR(255) NOT NULL,
 		phone VARCHAR(50) NOT NULL,
+		identification_number VARCHAR(512) NULL,
 		county VARCHAR(512) NULL,
 		age_group VARCHAR(128) NULL,
 		gender VARCHAR(128) NULL,
@@ -2268,6 +2285,7 @@ function cer_process_registration_submission( $payload = array() ) {
 	$attendee_role = sanitize_text_field( wp_unslash( $payload['attendee_role'] ?? '' ) );
 	$email = sanitize_email( wp_unslash( $payload['email'] ?? '' ) );
 	$phone = sanitize_text_field( wp_unslash( $payload['phone'] ?? '' ) );
+	$identification_number = sanitize_text_field( wp_unslash( $payload['identification_number'] ?? '' ) );
 	$county = sanitize_text_field( wp_unslash( $payload['county'] ?? '' ) );
 	$age_group = sanitize_text_field( wp_unslash( $payload['age_group'] ?? '' ) );
 	$gender = sanitize_text_field( wp_unslash( $payload['gender'] ?? '' ) );
@@ -2280,8 +2298,7 @@ function cer_process_registration_submission( $payload = array() ) {
 	$event_id = absint( wp_unslash( $payload['event_id'] ?? 0 ) );
 
 		$payment_method = in_array( $payment_method, array( 'mpesa', 'card' ), true ) ? $payment_method : '';
-		// Phone is required for both methods; full name is only collected for M-Pesa.
-		// Card intentionally never collects a name — Paystack supplies it from the charge.
+		// Phone remains an attendee optional field, except when M-Pesa needs it for checkout.
 		$phone_digits = preg_replace( '/\D+/', '', $phone );
 		if ( preg_match( '/^0?[17]\d{8}$/', $phone_digits ) ) {
 			$phone = '254' . ( '0' === $phone_digits[0] ? substr( $phone_digits, 1 ) : $phone_digits );
@@ -2295,14 +2312,13 @@ function cer_process_registration_submission( $payload = array() ) {
 		$valid_genders = array( 'M', 'F', 'Other', 'Prefer not to say' );
 		$valid_counties = function_exists( 'cer_kenyan_counties' ) ? cer_kenyan_counties() : array();
 		$valid_accessibility_answers = array( 'no', 'yes' );
-		$profile_complete = '' !== $full_name && '' !== $organization && '' !== $attendee_role
-			&& ( empty( $valid_counties ) || in_array( $county, $valid_counties, true ) )
-			&& in_array( $age_group, $valid_age_groups, true )
-			&& in_array( $gender, $valid_genders, true )
-			&& in_array( $accessibility_support, $valid_accessibility_answers, true )
-			&& ( 'no' === $accessibility_support || '' !== $accessibility_details );
-		if ( empty( $email ) || empty( $payment_method ) || empty( $phone ) || ! $profile_complete ) {
-			return array( 'success' => false, 'message' => 'Please complete your contact and conference details, including any requested accessibility support.' );
+		$optional_profile_valid = ( '' === $county || empty( $valid_counties ) || in_array( $county, $valid_counties, true ) )
+			&& ( '' === $age_group || in_array( $age_group, $valid_age_groups, true ) )
+			&& ( '' === $gender || in_array( $gender, $valid_genders, true ) )
+			&& ( '' === $accessibility_support || in_array( $accessibility_support, $valid_accessibility_answers, true ) )
+			&& ( 'yes' !== $accessibility_support || '' !== $accessibility_details );
+		if ( '' === $full_name || empty( $email ) || empty( $payment_method ) || ! $optional_profile_valid ) {
+			return array( 'success' => false, 'message' => 'Please provide your name and valid email address, and check any optional details, including accessibility support.' );
 		}
 	$event = $wpdb->get_row( $wpdb->prepare( "SELECT id, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d AND status = %s AND deleted_at IS NULL LIMIT 1", $event_id, 'published' ) );
 	$ticket = $wpdb->get_row( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold, is_maintenance FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d AND event_id = %d AND deleted_at IS NULL LIMIT 1", $ticket_type_id, $event_id ) );
@@ -2321,6 +2337,9 @@ function cer_process_registration_submission( $payload = array() ) {
 		return array( 'success' => false, 'message' => 'This ticket type is sold out.' );
 	}
 
+	if ( (float) $ticket->price > 0 && 'mpesa' === $payment_method && '' === $phone ) {
+		return array( 'success' => false, 'message' => 'A valid Kenyan phone number is required for M-Pesa payment.' );
+	}
 	$ticket_type = (string) $ticket->name;
 	$amount = number_format( (float) $ticket->price, 2, '.', '' );
 	$registration_uuid = wp_generate_uuid4();
@@ -2393,6 +2412,7 @@ function cer_process_registration_submission( $payload = array() ) {
 			'attendee_role' => $attendee_role,
 			'email' => $email,
 			'phone' => $phone,
+			'identification_number' => $identification_number,
 			'county' => $county,
 			'age_group' => $age_group,
 			'gender' => $gender,
@@ -2415,7 +2435,7 @@ function cer_process_registration_submission( $payload = array() ) {
 			$inserted = $wpdb->insert(
 				$registrations_table,
 				cer_prepare_registration_row( $registration_data ),
-				array( '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s' )
+				array( '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s' )
 			);
 			$registration_id = (int) $wpdb->insert_id;
 		}
@@ -2470,6 +2490,7 @@ function cer_process_registration_submission( $payload = array() ) {
 			'attendee_role' => $attendee_role,
 			'email' => $email,
 			'phone' => $phone,
+			'identification_number' => $identification_number,
 			'county' => $county,
 			'age_group' => $age_group,
 			'gender' => $gender,

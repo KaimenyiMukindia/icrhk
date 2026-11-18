@@ -194,6 +194,10 @@
         if (nameFieldContainer) {
             nameFieldContainer.style.display = '';
         }
+        var phoneField = document.getElementById('cer-phone');
+        if (phoneField) {
+            phoneField.required = needsPayment && method === 'mpesa';
+        }
 
         if (submitButton && !isSoldOut()) {
             submitButton.textContent = needsPayment ? (isCard ? 'Pay with Card' : 'Register & Pay') : 'Register';

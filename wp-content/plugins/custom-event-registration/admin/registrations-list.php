@@ -155,10 +155,10 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 	header( 'Content-Type: text/csv; charset=utf-8' );
 	header( 'Content-Disposition: attachment; filename=event-registrations.csv' );
 	$output = fopen( 'php://output', 'w' );
-	fputcsv( $output, array( 'ID', 'Event', 'Full Name', 'Title', 'Organization', 'Role', 'Email', 'Phone', 'County', 'Age Group', 'Gender', 'Accessibility Support', 'Accessibility Details', 'Ticket Type', 'Amount', 'Payment Method', 'Status', 'Date' ) );
+	fputcsv( $output, array( 'ID', 'Event', 'Full Name', 'Title', 'Organization', 'Role', 'Email', 'Phone', 'Identification Number', 'County', 'Age Group', 'Gender', 'Accessibility Support', 'Accessibility Details', 'Ticket Type', 'Amount', 'Payment Method', 'Status', 'Date' ) );
 	foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT r.*, e.name AS event_name, tt.name AS ticket_name FROM {$registrations_table} r LEFT JOIN {$events_table} e ON e.id = r.event_id LEFT JOIN {$ticket_types_table} tt ON tt.id = r.ticket_type_id {$where_sql} ORDER BY r.created_at DESC", $bindings ), ARRAY_A ) as $row ) {
 		$row = cer_decrypt_registration_row( $row );
-		fputcsv( $output, array( $row['id'], $row['event_name'] ?: '—', $row['full_name'], $row['attendee_title'] ?? '', $row['organization'] ?? '', $row['attendee_role'] ?? '', $row['email'], $row['phone'], $row['county'] ?? '', $row['age_group'] ?? '', $row['gender'] ?? '', $row['accessibility_support'] ?? '', $row['accessibility_details'] ?? '', $row['ticket_name'] ?: $row['ticket_type'], $row['amount'], $row['payment_method'], $row['status'], $row['created_at'] ) );
+		fputcsv( $output, array( $row['id'], $row['event_name'] ?: '—', $row['full_name'], $row['attendee_title'] ?? '', $row['organization'] ?? '', $row['attendee_role'] ?? '', $row['email'], $row['phone'], $row['identification_number'] ?? '', $row['county'] ?? '', $row['age_group'] ?? '', $row['gender'] ?? '', $row['accessibility_support'] ?? '', $row['accessibility_details'] ?? '', $row['ticket_name'] ?: $row['ticket_type'], $row['amount'], $row['payment_method'], $row['status'], $row['created_at'] ) );
 	}
 	fclose( $output );
 	exit;

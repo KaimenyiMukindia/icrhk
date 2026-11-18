@@ -8317,3 +8317,17 @@ body .cer-registration-form .cer-primary-button:active {
         transition: none;
     }
 }
+
+/* Optional contact details: phone and identification share the email row. */
+@media (min-width: 641px) {
+    .cer-contact-details-row > .cer-field-group,
+    .cer-contact-details-row.has-active-field > .cer-field-group.is-active-field,
+    .cer-contact-details-row.has-active-field > .cer-field-group:not(.is-active-field) {
+        flex-basis: 0;
+        transition: flex-grow 280ms var(--cer-ease-out, cubic-bezier(.2,.8,.2,1));
+    }
+
+    .cer-contact-details-row > .cer-field-group { flex-grow: 1; }
+    .cer-contact-details-row.has-active-field > .cer-field-group.is-active-field { flex-grow: 1.15; }
+    .cer-contact-details-row.has-active-field > .cer-field-group:not(.is-active-field) { flex-grow: .925; }
+}
