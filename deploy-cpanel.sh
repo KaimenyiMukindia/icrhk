@@ -38,6 +38,19 @@ mkdir -p "$DEPLOY_ROOT/laravel-engine/bootstrap/cache" \
     "$DEPLOY_ROOT/laravel-engine/storage/logs"
 chmod -R 775 "$DEPLOY_ROOT/laravel-engine/storage" "$DEPLOY_ROOT/laravel-engine/bootstrap/cache"
 
+# The one-time campaign is deployment-driven as well as cron-driven. The explicit
+# constant avoids relying on web-server HTTPS detection during a CLI deployment.
+if [ -f "$DEPLOY_ROOT/wp-load.php" ]; then
+    DEPLOY_ROOT="$DEPLOY_ROOT" php -r '
+        define("CER_KAMGC_REREGISTRATION_CAMPAIGN", true);
+        require getenv("DEPLOY_ROOT") . "/wp-load.php";
+        if (function_exists("cer_run_kamgc_campaign_after_deploy")) {
+            $result = cer_run_kamgc_campaign_after_deploy();
+            error_log("CER KAMGC deployment campaign: " . ($result["message"] ?? "unknown result"));
+        }
+    ' || echo 'CER KAMGC deployment campaign could not run.' >&2
+fi
+
 # The first pull intentionally happens before the live .env is created.
 if [ ! -f "$DEPLOY_ROOT/laravel-engine/.env" ] \
     || ! grep -q '^APP_KEY=[^[:space:]]' "$DEPLOY_ROOT/laravel-engine/.env" \

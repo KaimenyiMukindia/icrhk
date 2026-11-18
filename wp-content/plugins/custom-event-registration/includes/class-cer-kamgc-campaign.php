@@ -99,6 +99,26 @@ function cer_send_kamgc_campaign_message( string $recipient, int $event_id, stri
 	}
 }
 
+function cer_run_kamgc_campaign_after_deploy(): array {
+	if ( ! cer_kamgc_campaign_is_live_site() ) {
+		return array( 'success' => false, 'message' => 'Live campaign execution is disabled.', 'state' => cer_kamgc_campaign_state() );
+	}
+	$recipient_count = max( 1, count( cer_kamgc_campaign_recipients() ) );
+	$max_runs = (int) ceil( $recipient_count / 10 ) + 3;
+	for ( $run = 0; $run < $max_runs; $run++ ) {
+		cer_process_kamgc_reregistration_campaign();
+		$state = cer_kamgc_campaign_state();
+		if ( ! empty( $state['completed'] ) ) {
+			return array( 'success' => true, 'message' => 'KAMGC campaign completed.', 'state' => $state );
+		}
+		if ( 'test' === $state['phase'] && ! empty( $state['last_error'] ) ) {
+			return array( 'success' => false, 'message' => $state['last_error'], 'state' => $state );
+		}
+		usleep( 250000 );
+	}
+	return array( 'success' => false, 'message' => 'Campaign remains scheduled for the next WordPress cron pass.', 'state' => cer_kamgc_campaign_state() );
+}
+
 function cer_process_kamgc_reregistration_campaign(): void {
 	if ( ! cer_kamgc_campaign_is_live_site() ) {
 		return;
