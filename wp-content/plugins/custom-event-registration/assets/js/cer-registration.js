@@ -1187,8 +1187,9 @@
         }
         var remaining = document.createElement('strong');
         remaining.className = 'cer-availability-count';
+        var showRemaining = value.remaining !== null && value.capacity !== null && value.remaining <= value.capacity / 4;
         remaining.textContent = allMaintenance ? 'Scheduled for maintenance' : (
-            value.remaining === null ? 'Available' : ( value.remaining === 0 ? 'Sold out' : value.remaining.toLocaleString('en-KE') + ' left' )
+            value.remaining === 0 ? 'Sold out' : (showRemaining ? value.remaining.toLocaleString('en-KE') + ' left' : 'Available')
         );
         var total = document.createElement('small');
         total.textContent = allMaintenance ? 'Registration will reopen when maintenance is complete.' :
@@ -1206,6 +1207,9 @@
         }
         if (disabled && item.remaining === 0) {
             return ' - Sold out';
+        }
+        if (item.capacity === null || item.remaining > item.capacity / 4) {
+            return disabled ? ' - Available (refresh to select)' : '';
         }
         return ' - ' + item.remaining.toLocaleString('en-KE') + ' left' + (disabled ? ' (refresh to select)' : '');
     }

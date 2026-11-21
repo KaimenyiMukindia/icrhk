@@ -9,10 +9,13 @@ const source = script.slice(script.lastIndexOf('(function (document, window) {')
 
 function render({ tickets, capacity, remaining, single = false, configuredCount = tickets.length,
     paymentRequired = false, soldOut = false, initial = true }) {
+    tickets = tickets.map(item => ({ maintenance: false, ...item }));
     function element() {
         return {
             dataset: {}, textContent: '', children: [],
             replaceChildren(...children) { this.children = children; },
+            querySelector() { return null; },
+            addEventListener() {},
         };
     }
     const data = { capacity, remaining, tickets };
@@ -24,7 +27,10 @@ function render({ tickets, capacity, remaining, single = false, configuredCount 
         paymentRequired: paymentRequired ? 'true' : 'false',
         paymentMethod: 'mpesa',
     };
-    form.classList = { contains: name => name === 'cer-sold-out' && soldOut };
+    form.classList = {
+        contains: name => name === 'cer-sold-out' && soldOut,
+        toggle(name, enabled) { if (name === 'cer-sold-out') soldOut = enabled; },
+    };
     const ticket = element();
     if (single) {
         ticket.value = tickets[0].name;
@@ -83,7 +89,7 @@ for (const paymentRequired of [false, true]) {
             capacity: 100, remaining: 70, single: true, paymentRequired,
         });
         await ui.settle();
-        assert.equal(ui.count.children[0].textContent, '70 left');
+        assert.equal(ui.count.children[0].textContent, 'Available');
         assert.equal(ui.count.children[1].textContent, 'out of 100 capacity');
         assert.equal(ui.form.dataset.paymentRequired, String(paymentRequired));
         assert.equal(ui.ticket.value, 'Delegate');
@@ -95,7 +101,7 @@ for (const paymentRequired of [false, true]) {
             ...ui.data, remaining: 69, tickets: [{ ...ui.data.tickets[0], remaining: 69 }],
         } }) });
         await ui.tick();
-        assert.equal(ui.count.children[0].textContent, '69 left');
+        assert.equal(ui.count.children[0].textContent, 'Available');
         assert.equal(ui.form.dataset.paymentMethod, 'card');
     });
 }
@@ -110,8 +116,8 @@ test('multiple ticket types show counts in the original options without changing
         capacity: 110, remaining: 70, paymentRequired: true,
     });
     await ui.settle();
-    assert.equal(ui.ticket.options[1].textContent, 'Regular (KES 2,000.00) - 50 left');
-    assert.equal(ui.ticket.options[2].textContent, 'VIP - 20 left');
+    assert.equal(ui.ticket.options[1].textContent, 'Regular (KES 2,000.00)');
+    assert.equal(ui.ticket.options[2].textContent, 'VIP');
     assert.equal(ui.ticket.options[3].textContent, 'Early - Sold out');
     assert.equal(ui.count.children.length, 0);
 
@@ -123,8 +129,8 @@ test('multiple ticket types show counts in the original options without changing
         tickets: [ui.data.tickets[0], { ...ui.data.tickets[1], remaining: 0 }, ui.data.tickets[2]],
     } }) });
     await ui.tick();
-    assert.equal(ui.ticket.options[2].textContent, 'VIP - 0 left');
-    assert.equal(ui.ticket.options[2].disabled, false);
+    assert.equal(ui.ticket.options[2].textContent, 'VIP - Sold out');
+    assert.equal(ui.ticket.options[2].disabled, true);
     assert.equal(ui.ticket.value, 'VIP');
     assert.equal(ui.form.dataset.paymentMethod, 'card');
 });
@@ -132,17 +138,17 @@ test('multiple ticket types show counts in the original options without changing
 test('the existing auto-selected last ticket shows its count beside its label', async () => {
     const ui = render({
         tickets: [
-            { id: 1, name: 'Regular', capacity: 20, remaining: 10 },
+            { id: 1, name: 'Regular', capacity: 20, remaining: 5 },
             { id: 2, name: 'Sold out', capacity: 10, remaining: 0 },
         ],
-        capacity: 30, remaining: 10, single: true, configuredCount: 2,
+        capacity: 30, remaining: 5, single: true, configuredCount: 2,
     });
     await ui.settle();
-    assert.equal(ui.inline.textContent, ' - 10 left');
+    assert.equal(ui.inline.textContent, ' - 5 left');
     assert.equal(ui.count.children.length, 0);
 });
 
-test('a previously disabled ticket that becomes available asks for a refresh', async () => {
+test('a previously disabled ticket that becomes available is selectable again', async () => {
     const ui = render({
         tickets: [
             { id: 1, name: 'Regular', capacity: 10, remaining: 3 },
@@ -151,8 +157,8 @@ test('a previously disabled ticket that becomes available asks for a refresh', a
         capacity: 20, remaining: 5,
     });
     await ui.settle();
-    assert.equal(ui.ticket.options[2].textContent, 'VIP - 2 left (refresh to select)');
-    assert.equal(ui.ticket.options[2].disabled, true);
+    assert.equal(ui.ticket.options[2].textContent, 'VIP - 2 left');
+    assert.equal(ui.ticket.options[2].disabled, false);
 });
 
 test('refresh failures warn about stale counts and recover, including when returning to the tab', async () => {
@@ -182,11 +188,11 @@ test('refresh failures warn about stale counts and recover, including when retur
 });
 
 test('changed ticket types and reopened sold-out forms require a refresh without altering the form', async () => {
-    const ticket = { id: 1, name: 'Delegate', capacity: 10, remaining: 5 };
+    const ticket = { id: 1, name: 'Delegate', capacity: 10, remaining: 5, maintenance: false };
     const ui = render({ tickets: [ticket], capacity: 10, remaining: 5, single: true });
     await ui.settle();
     ui.respond({ ok: true, json: async () => ({ success: true, data: {
-        capacity: 20, remaining: 15, tickets: [ticket, { id: 2, name: 'New', capacity: 10, remaining: 10 }],
+        capacity: 20, remaining: 15, tickets: [ticket, { id: 2, name: 'New', capacity: 10, remaining: 10, maintenance: false }],
     } }) });
     await ui.tick();
     assert.match(ui.error.textContent, /Refresh this page/);
@@ -208,5 +214,49 @@ test('invalid live data does not replace the last valid counts', async () => {
     ui.respond({ ok: true, json: async () => ({ success: true, data: { ...ui.data, remaining: 'unknown' } }) });
     await ui.tick();
     assert.match(ui.error.textContent, /out of date/);
-    assert.equal(ui.count.children[0].textContent, '5 left');
+    assert.equal(ui.count.children[0].textContent, 'Available');
+});
+
+test('remaining counts appear at or below 25% and hide again after inventory recovers', async () => {
+    for (const [capacity, remaining, label] of [
+        [100, 26, 'Available'], [100, 25, '25 left'], [100, 24, '24 left'],
+        [100, 0, 'Sold out'], [10, 3, 'Available'], [10, 2, '2 left'],
+        [null, 5, 'Available'],
+    ]) {
+        const ui = render({
+            tickets: [{ id: 1, name: 'Delegate', capacity, remaining }],
+            capacity, remaining, single: true,
+        });
+        await ui.settle();
+        assert.equal(ui.count.children[0].textContent, label);
+    }
+    const ui = render({
+        tickets: [{ id: 1, name: 'Delegate', capacity: 100, remaining: 26 }],
+        capacity: 100, remaining: 26, single: true,
+    });
+    await ui.settle();
+    for (const remaining of [25, 24, 26]) {
+        ui.respond({ ok: true, json: async () => ({ success: true, data: {
+            ...ui.data, remaining, tickets: [{ ...ui.data.tickets[0], remaining }],
+        } }) });
+        await ui.tick();
+        assert.equal(ui.count.children[0].textContent, remaining <= 25 ? `${remaining} left` : 'Available');
+    }
+});
+
+test('each option uses its own capacity, not the combined event capacity', async () => {
+    const ui = render({
+        tickets: [
+            { id: 1, name: 'Regular', capacity: 100, remaining: 25 },
+            { id: 2, name: 'VIP', capacity: 20, remaining: 6 },
+            { id: 3, name: 'Early', capacity: 20, remaining: 5 },
+            { id: 4, name: 'Reopened', capacity: 100, remaining: 26, disabled: true },
+        ],
+        capacity: 240, remaining: 62,
+    });
+    await ui.settle();
+    assert.equal(ui.ticket.options[1].textContent, 'Regular - 25 left');
+    assert.equal(ui.ticket.options[2].textContent, 'VIP');
+    assert.equal(ui.ticket.options[3].textContent, 'Early - 5 left');
+    assert.equal(ui.ticket.options[4].textContent, 'Reopened');
 });

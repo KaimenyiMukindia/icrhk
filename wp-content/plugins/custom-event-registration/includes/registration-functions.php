@@ -97,7 +97,8 @@ function cer_ticket_availability_markup( array $availability ): string {
 	}
 	$remaining = $availability['remaining'];
 	$capacity = $availability['capacity'];
-	return '<strong class="cer-availability-count">' . esc_html( null === $remaining ? 'Available' : ( 0 === $remaining ? 'Sold out' : number_format_i18n( $remaining, 0 ) . ' left' ) ) . '</strong>'
+	$show_remaining = null !== $remaining && null !== $capacity && $remaining <= $capacity / 4;
+	return '<strong class="cer-availability-count">' . esc_html( 0 === $remaining ? 'Sold out' : ( $show_remaining ? number_format_i18n( $remaining, 0 ) . ' left' : 'Available' ) ) . '</strong>'
 		. '<small>' . esc_html( null === $capacity ? 'Capacity not specified' : 'out of ' . number_format_i18n( $capacity, 0 ) . ' capacity' ) . '</small>';
 }
 
@@ -110,6 +111,9 @@ function cer_ticket_option_availability_suffix( ?array $ticket, bool $sold_out )
 	}
 	if ( $sold_out && 0 === $ticket['remaining'] ) {
 		return ' - Sold out';
+	}
+	if ( ! isset( $ticket['capacity'] ) || $ticket['remaining'] > $ticket['capacity'] / 4 ) {
+		return $sold_out ? ' - Available (refresh to select)' : '';
 	}
 	return ' - ' . number_format_i18n( $ticket['remaining'], 0 ) . ' left' . ( $sold_out ? ' (refresh to select)' : '' );
 }

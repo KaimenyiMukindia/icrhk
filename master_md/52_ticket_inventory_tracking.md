@@ -44,6 +44,12 @@ This workspace does not provide a verified live Paystack webhook run or an end-t
 - End-to-end payment and ticket issuance have not been proven in this environment.
 
 ## Policy alignment
+
+### Public remaining-count display
+- Remaining counts are hidden above 25% of each ticket type's available capacity; at or below 25%, its count is shown.
+- The initial registration markup and live availability refresh use the same threshold. Single-ticket summaries show `Available` above the threshold; multi-ticket options omit the count.
+- Sold-out and maintenance messages, capacity labels, inventory reservations, and payment behavior are unchanged.
+
 The code path now aligns with the required policy in the following way:
 
 1. Inventory is reduced immediately when a registration is inserted, before payment is initiated.
