@@ -29,6 +29,7 @@ require_once CER_PLUGIN_DIR . 'includes/class-cer-admin-payment.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-event-composer.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-admin-tickets.php';
 require_once CER_PLUGIN_DIR . 'includes/class-cer-group-tickets.php';
+require_once CER_PLUGIN_DIR . 'includes/event-content.php';
 require_once CER_PLUGIN_DIR . 'admin/admin-functions.php';
 
 register_activation_hook( __FILE__, 'cer_activate_plugin' );
@@ -232,6 +233,7 @@ function cer_maybe_flush_rewrite_rules() {
 
 function cer_maybe_install_identification_schema(): void {
 	cer_ensure_registration_profile_storage();
+	cer_ensure_event_content_schema();
 }
 
 function cer_ensure_registration_profile_storage(): void {
@@ -1066,6 +1068,7 @@ function cer_install_event_schema() {
 	dbDelta( $sql_partners );
 	dbDelta( $sql_faqs );
 	dbDelta( $sql_registrations );
+	cer_ensure_event_content_schema();
 
 	cer_add_column_if_missing( $events_table, 'subtitle', 'VARCHAR(255) NULL', 'name' );
 	cer_add_column_if_missing( $events_table, 'target_audience', 'LONGTEXT NULL', 'subtitle' );
@@ -1807,11 +1810,6 @@ function cer_enqueue_admin_assets( $hook ) {
 				'mediaCleared' => __( 'Image cleared. Save the event to apply this change.', 'custom-event-registration' ),
 				'locationApplied' => __( 'Location updated. Save the event to apply this change.', 'custom-event-registration' ),
 				'contentGroups' => array(
-					'information' => __( 'Event information', 'custom-event-registration' ),
-					'registration' => __( 'Registration', 'custom-event-registration' ),
-					'program' => __( 'Program headings', 'custom-event-registration' ),
-					'partners' => __( 'Partners & FAQ', 'custom-event-registration' ),
-					'description' => __( 'Description & audience', 'custom-event-registration' ),
 					'hero' => __( 'Hero content', 'custom-event-registration' ),
 					'search' => __( 'Search preview', 'custom-event-registration' ),
 				),

@@ -225,7 +225,37 @@ foreach ( $item_section_tabs as $item_type => $event_tab ) {
 	}
 }
 
+foreach ( cer_event_content_columns() as $field => $definition ) {
+	$default_event[ $field ] = $event->{$field} ?? ( 'show_page_content' === $field ? 1 : null );
+}
+foreach ( cer_event_content_sections() as $section => $copy_defaults ) {
+	if ( null === $default_event[ $section . '_eyebrow' ] ) {
+		$default_event[ $section . '_eyebrow' ] = $copy_defaults['eyebrow'];
+	}
+}
+
 if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form', 'cer_event_nonce' ) ) {
+	foreach ( cer_event_content_columns() as $field => $definition ) {
+		if ( 'show_page_content' === $field ) {
+			$default_event[ $field ] = empty( $_POST[ $field ] ) ? 0 : 1;
+		} elseif ( in_array( $field, array( 'hero_details', 'page_content' ), true ) ) {
+			if ( isset( $_POST[ $field . '_present' ] ) ) {
+				$rows = cer_parse_event_content_rows( wp_unslash( $_POST[ $field ] ?? array() ), 'hero_details' === $field );
+				if ( is_wp_error( $rows ) ) {
+					$errors['database'] = $rows->get_error_message();
+				} else {
+					$default_event[ $field ] = wp_json_encode( $rows );
+				}
+			}
+		} elseif ( isset( $_POST[ $field ] ) ) {
+			$value = wp_unslash( $_POST[ $field ] );
+			if ( ! is_string( $value ) || ( 'speakers_intro' !== $field && mb_strlen( $value ) > 255 ) ) {
+				$errors['database'] = __( 'Section headings and eyebrows must be text of 255 characters or fewer.', 'custom-event-registration' );
+			} else {
+				$default_event[ $field ] = 'speakers_intro' === $field ? wp_kses_post( $value ) : sanitize_text_field( $value );
+			}
+		}
+	}
 	$event_id = absint( $_POST['event_id'] ?? 0 );
 	$default_event['event_id'] = $event_id;
 	$default_event['title'] = sanitize_text_field( wp_unslash( $_POST['event_title'] ?? '' ) );
@@ -235,12 +265,7 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	$default_event['meta_description'] = sanitize_textarea_field( wp_unslash( $_POST['meta_description'] ?? '' ) );
 	$default_event['meta_keywords'] = sanitize_text_field( wp_unslash( $_POST['meta_keywords'] ?? '' ) );
 	$default_event['hero_badge_text'] = sanitize_text_field( wp_unslash( $_POST['hero_badge_text'] ?? '' ) );
-	$default_event['hero_convened_by'] = sanitize_text_field( wp_unslash( $_POST['hero_convened_by'] ?? '' ) );
 	$default_event['hero_features'] = sanitize_textarea_field( wp_unslash( $_POST['hero_features'] ?? '' ) );
-	$default_event['event_info_heading'] = sanitize_text_field( wp_unslash( $_POST['event_info_heading'] ?? '' ) );
-	$default_event['event_info_paragraph_1'] = wp_kses_post( wp_unslash( $_POST['event_info_paragraph_1'] ?? '' ) );
-	$default_event['event_info_paragraph_2'] = wp_kses_post( wp_unslash( $_POST['event_info_paragraph_2'] ?? '' ) );
-	$default_event['target_audience_heading'] = sanitize_text_field( wp_unslash( $_POST['target_audience_heading'] ?? '' ) );
 	$default_event['registration_heading'] = sanitize_text_field( wp_unslash( $_POST['registration_heading'] ?? '' ) );
 	$default_event['registration_intro'] = wp_kses_post( wp_unslash( $_POST['registration_intro'] ?? '' ) );
 	$default_event['sponsorship_heading'] = sanitize_text_field( wp_unslash( $_POST['sponsorship_heading'] ?? '' ) );
@@ -249,11 +274,9 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 	$default_event['pillars_heading'] = sanitize_text_field( wp_unslash( $_POST['pillars_heading'] ?? '' ) );
 	$default_event['pillars_intro'] = wp_kses_post( wp_unslash( $_POST['pillars_intro'] ?? '' ) );
 	$default_event['summary_heading'] = sanitize_text_field( wp_unslash( $_POST['summary_heading'] ?? '' ) );
-	$default_event['summary_note'] = wp_kses_post( wp_unslash( $_POST['summary_note'] ?? '' ) );
 	$default_event['primary_cta_text'] = sanitize_text_field( wp_unslash( $_POST['primary_cta_text'] ?? '' ) );
 	$default_event['secondary_cta_text'] = sanitize_text_field( wp_unslash( $_POST['secondary_cta_text'] ?? '' ) );
 	$default_event['description'] = wp_kses_post( wp_unslash( $_POST['event_description'] ?? '' ) );
-	$default_event['target_audience'] = wp_kses_post( wp_unslash( $_POST['target_audience'] ?? '' ) );
 	$default_event['event_date'] = cer_normalize_datetime_value( wp_unslash( $_POST['event_date'] ?? '' ) );
 	$default_event['event_end_date'] = cer_normalize_datetime_value( wp_unslash( $_POST['event_end_date'] ?? '' ) );
 	// The standalone venue field was removed from the form (it duplicated the
@@ -264,7 +287,6 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 		$default_event['venue'] = $posted_venue;
 	}
 	$default_event['status'] = sanitize_key( wp_unslash( $_POST['status'] ?? 'draft' ) );
-	$default_event['show_event_information'] = empty( $_POST['show_event_information'] ) ? 0 : 1;
 	$default_event['show_speakers'] = empty( $_POST['show_speakers'] ) ? 0 : 1;
 	$default_event['show_sponsors'] = empty( $_POST['show_sponsors'] ) ? 0 : 1;
 	$default_event['show_pillars'] = empty( $_POST['show_pillars'] ) ? 0 : 1;
@@ -490,6 +512,7 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'updated_at' => current_time( 'mysql' ),
 			);
 
+			$event_data = array_merge( $event_data, array_intersect_key( $default_event, cer_event_content_columns() ) );
 			if ( $event_id ) {
 				$event_update_formats = array();
 				foreach ( array_keys( $event_data ) as $field_name ) {
@@ -789,7 +812,7 @@ if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form',
 				'cer_event_active_tab' => sanitize_key( wp_unslash( $_POST['cer_event_active_tab'] ?? 'setup' ) ),
 				'cer_item_active_tabs' => array(),
 			);
-			foreach ( array_keys( $item_repeater_configs ) as $item_type ) {
+			foreach ( array_merge( array_keys( $item_repeater_configs ), array( 'section_setup', 'section_content' ) ) as $item_type ) {
 				$redirect_args['cer_item_active_tabs'][ $item_type ] = max( 0, absint( $posted_item_tabs[ $item_type ] ?? 0 ) );
 			}
 			$redirect_url = add_query_arg( $redirect_args, admin_url( 'admin.php' ) );
@@ -866,6 +889,7 @@ $event_data = array(
 	'mail_notification_email' => $default_event['mail_notification_email'] ?? '',
 	'event_uuid' => $default_event['uuid'],
 );
+$event_data = array_merge( $event_data, array_intersect_key( $default_event, cer_event_content_columns() ) );
 
 if ( empty( $ticket_rows ) ) {
 	$ticket_rows = array( array( 'id' => '', 'name' => '', 'price' => '', 'quantity_available' => '', 'description' => '' ) );
@@ -907,7 +931,9 @@ if ( isset( $_POST['cer_event_active_tab'] ) ) {
 }
 if ( ! empty( $errors ) ) {
 	foreach ( array_keys( $errors ) as $error_key ) {
-		if ( in_array( $error_key, array( 'event_title', 'event_slug', 'event_date' ), true ) || 0 === strpos( $error_key, 'ticket_name_' ) ) {
+		if ( 'event_title' === $error_key ) {
+			$active_event_tab = 'content';
+		} elseif ( in_array( $error_key, array( 'event_slug', 'event_date' ), true ) || 0 === strpos( $error_key, 'ticket_name_' ) ) {
 			$active_event_tab = 'setup';
 		} elseif ( 0 === strpos( $error_key, 'speaker_name_' ) || 0 === strpos( $error_key, 'pillar_title_' ) || 0 === strpos( $error_key, 'objective_title_' ) || 0 === strpos( $error_key, 'summit_title_' ) ) {
 			$active_event_tab = 'program';
@@ -1036,7 +1062,7 @@ if ( ! empty( $errors ) ) {
 		<input type="hidden" id="cer-event-active-tab" name="cer_event_active_tab" value="<?php echo esc_attr( $active_event_tab ); ?>" />
 		<input type="hidden" name="cer_item_type" value="<?php echo esc_attr( $requested_item_type ); ?>" />
 		<input type="hidden" name="cer_item_view" value="<?php echo esc_attr( $item_view ); ?>" />
-		<?php foreach ( $repeater_types as $item_type ) : ?>
+		<?php foreach ( array_merge( $repeater_types, array( 'section_setup', 'section_content' ) ) as $item_type ) : ?>
 			<input type="hidden" id="cer-item-active-tab-<?php echo esc_attr( $item_type ); ?>" name="cer_item_active_tabs[<?php echo esc_attr( $item_type ); ?>]" value="<?php echo esc_attr( absint( $posted_item_tabs[ $item_type ] ?? 0 ) ); ?>" />
 		<?php endforeach; ?>
 		<div class="cer-admin-layout">
@@ -1070,20 +1096,29 @@ if ( ! empty( $errors ) ) {
 							<input type="text" id="meta-keywords" name="meta_keywords" value="<?php echo esc_attr( $event_data['meta_keywords'] ); ?>" placeholder="comma, separated, keywords" />
 						</div>
 						<div class="cer-field cer-full">
-							<label for="event_description"><?php esc_html_e( 'Description', 'custom-event-registration' ); ?></label>
+							<label for="event_description"><?php esc_html_e( 'Hero Description', 'custom-event-registration' ); ?></label>
 							<?php wp_editor( $event_data['event_description'], 'event_description', array( 'textarea_name' => 'event_description', 'media_buttons' => true, 'teeny' => false, 'textarea_rows' => 9 ) ); ?>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="target-audience"><?php esc_html_e( 'Target Audience', 'custom-event-registration' ); ?></label>
-							<textarea id="target-audience" name="target_audience" rows="4" placeholder="Describe the intended participants and audience."><?php echo esc_textarea( $event_data['target_audience'] ); ?></textarea>
 						</div>
 						<div class="cer-field cer-full">
 							<label for="hero-badge-text"><?php esc_html_e( 'Hero Badge Text', 'custom-event-registration' ); ?></label>
 							<input type="text" id="hero-badge-text" name="hero_badge_text" value="<?php echo esc_attr( $event_data['hero_badge_text'] ); ?>" placeholder="16 Days of Activism Flag-off" />
 						</div>
+						<div class="cer-field cer-full" data-hero-details>
+							<h3><?php esc_html_e( 'Hero details', 'custom-event-registration' ); ?></h3>
+							<p><?php esc_html_e( 'Repeatable labels and values, including Convened by.', 'custom-event-registration' ); ?></p>
+							<?php cer_render_content_repeater( 'hero_details', cer_event_content_rows( (object) $event_data, 'hero_details' ) ); ?>
+						</div>
 						<div class="cer-field cer-full">
-							<label for="hero-convened-by"><?php esc_html_e( 'Convened By', 'custom-event-registration' ); ?></label>
-							<input type="text" id="hero-convened-by" name="hero_convened_by" value="<?php echo esc_attr( $event_data['hero_convened_by'] ); ?>" placeholder="ICRHK & Council of Governors" />
+							<label for="hero-summary-heading"><?php esc_html_e( 'Hero Summary Title', 'custom-event-registration' ); ?></label>
+							<input type="text" id="hero-summary-heading" name="hero_summary_heading" maxlength="255" value="<?php echo esc_attr( $event_data['hero_summary_heading'] ?? '' ); ?>" placeholder="Conference Summary" />
+						</div>
+						<div class="cer-field">
+							<label for="primary-cta-text"><?php esc_html_e( 'Primary CTA Text', 'custom-event-registration' ); ?></label>
+							<input type="text" id="primary-cta-text" name="primary_cta_text" value="<?php echo esc_attr( $event_data['primary_cta_text'] ); ?>" placeholder="Register Now" />
+						</div>
+						<div class="cer-field">
+							<label for="secondary-cta-text"><?php esc_html_e( 'Secondary CTA Text', 'custom-event-registration' ); ?></label>
+							<input type="text" id="secondary-cta-text" name="secondary_cta_text" value="<?php echo esc_attr( $event_data['secondary_cta_text'] ); ?>" placeholder="Learn More" />
 						</div>
 						<div class="cer-field cer-full">
 							<label for="hero-features"><?php esc_html_e( 'Hero Feature Bullets', 'custom-event-registration' ); ?></label>
@@ -1155,109 +1190,29 @@ if ( ! empty( $errors ) ) {
 
 			<div class="cer-panel is-collapsed" data-cer-tab="content" style="margin-top: 24px;">
 				<div class="cer-panel-header">
-					<h2><?php esc_html_e( 'Event Display & Marketing Content', 'custom-event-registration' ); ?></h2>
-					<div class="cer-panel-header-actions">
-						<label class="cer-toggle cer-toggle-compact" for="show-event-information"><span><?php esc_html_e( 'Visible on front-end', 'custom-event-registration' ); ?></span><input id="show-event-information" type="checkbox" name="show_event_information" value="1" <?php checked( (int) $event_data['show_event_information'], 1 ); ?> /></label>
-					</div>
+					<h2><?php esc_html_e( 'Registration & Payment', 'custom-event-registration' ); ?></h2>
+					<div class="cer-panel-header-actions"></div>
 				</div>
 				<div class="cer-panel-body">
 					<div class="cer-field-grid">
-						<div class="cer-field cer-full">
-							<label for="event-info-heading"><?php esc_html_e( 'Event Information Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="event-info-heading" name="event_info_heading" value="<?php echo esc_attr( $event_data['event_info_heading'] ); ?>" placeholder="Event Information" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="event-info-paragraph-1"><?php esc_html_e( 'Event Information Paragraph 1', 'custom-event-registration' ); ?></label>
-							<textarea id="event-info-paragraph-1" name="event_info_paragraph_1" rows="4" placeholder="First supporting paragraph."><?php echo esc_textarea( $event_data['event_info_paragraph_1'] ); ?></textarea>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="event-info-paragraph-2"><?php esc_html_e( 'Event Information Paragraph 2', 'custom-event-registration' ); ?></label>
-							<textarea id="event-info-paragraph-2" name="event_info_paragraph_2" rows="4" placeholder="Second supporting paragraph."><?php echo esc_textarea( $event_data['event_info_paragraph_2'] ); ?></textarea>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="target-audience-heading"><?php esc_html_e( 'Target Audience Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="target-audience-heading" name="target_audience_heading" value="<?php echo esc_attr( $event_data['target_audience_heading'] ); ?>" placeholder="Target Audience" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="registration-heading"><?php esc_html_e( 'Registration Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="registration-heading" name="registration_heading" value="<?php echo esc_attr( $event_data['registration_heading'] ); ?>" placeholder="Secure Your Place" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="registration-intro"><?php esc_html_e( 'Registration Intro', 'custom-event-registration' ); ?></label>
-							<textarea id="registration-intro" name="registration_intro" rows="3" placeholder="Intro copy above the form."><?php echo esc_textarea( $event_data['registration_intro'] ); ?></textarea>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="sponsorship-heading"><?php esc_html_e( 'Sponsorship Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="sponsorship-heading" name="sponsorship_heading" value="<?php echo esc_attr( $event_data['sponsorship_heading'] ); ?>" placeholder="Partner With Us" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="sponsorship-intro"><?php esc_html_e( 'Sponsorship Intro', 'custom-event-registration' ); ?></label>
-							<textarea id="sponsorship-intro" name="sponsorship_intro" rows="3" placeholder="Intro copy for sponsor cards."><?php echo esc_textarea( $event_data['sponsorship_intro'] ); ?></textarea>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="speakers-heading"><?php esc_html_e( 'Speakers Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="speakers-heading" name="speakers_heading" value="<?php echo esc_attr( $event_data['speakers_heading'] ); ?>" placeholder="Keynote Speakers" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="pillars-heading"><?php esc_html_e( 'Pillars Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="pillars-heading" name="pillars_heading" value="<?php echo esc_attr( $event_data['pillars_heading'] ); ?>" placeholder="Thematic Pillars" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="pillars-intro"><?php esc_html_e( 'Pillars Intro', 'custom-event-registration' ); ?></label>
-							<textarea id="pillars-intro" name="pillars_intro" rows="3" placeholder="Intro copy for the pillars grid."><?php echo esc_textarea( $event_data['pillars_intro'] ); ?></textarea>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="objectives-heading"><?php esc_html_e( 'Objectives Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="objectives-heading" name="objectives_heading" value="<?php echo esc_attr( $event_data['objectives_heading'] ); ?>" placeholder="Our Objectives" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="objectives-intro"><?php esc_html_e( 'Objectives Intro', 'custom-event-registration' ); ?></label>
-							<textarea id="objectives-intro" name="objectives_intro" rows="3" placeholder="Intro copy for the objectives grid."><?php echo esc_textarea( $event_data['objectives_intro'] ); ?></textarea>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="summit-structure-heading"><?php esc_html_e( 'Summit Structure Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="summit-structure-heading" name="summit_structure_heading" value="<?php echo esc_attr( $event_data['summit_structure_heading'] ); ?>" placeholder="Summit Structure" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="summit-structure-intro"><?php esc_html_e( 'Summit Structure Intro', 'custom-event-registration' ); ?></label>
-							<textarea id="summit-structure-intro" name="summit_structure_intro" rows="3" placeholder="Intro copy for the summit structure grid."><?php echo esc_textarea( $event_data['summit_structure_intro'] ); ?></textarea>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="partners-heading"><?php esc_html_e( 'Partners Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="partners-heading" name="partners_heading" value="<?php echo esc_attr( $event_data['partners_heading'] ); ?>" placeholder="Our Partners" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="partners-intro"><?php esc_html_e( 'Partners Intro', 'custom-event-registration' ); ?></label>
-							<textarea id="partners-intro" name="partners_intro" rows="3" placeholder="Intro copy for the partner logos."><?php echo esc_textarea( $event_data['partners_intro'] ); ?></textarea>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="faq-heading"><?php esc_html_e( 'FAQ Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="faq-heading" name="faq_heading" value="<?php echo esc_attr( $event_data['faq_heading'] ); ?>" placeholder="Frequently Asked Questions" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="faq-intro"><?php esc_html_e( 'FAQ Intro', 'custom-event-registration' ); ?></label>
-							<textarea id="faq-intro" name="faq_intro" rows="3" placeholder="Intro copy shown above the FAQ accordion."><?php echo esc_textarea( $event_data['faq_intro'] ); ?></textarea>
-						</div>
-						<div class="cer-field cer-full">
-							<label for="summary-heading"><?php esc_html_e( 'Summary Heading', 'custom-event-registration' ); ?></label>
-							<input type="text" id="summary-heading" name="summary_heading" value="<?php echo esc_attr( $event_data['summary_heading'] ); ?>" placeholder="Payment Summary" />
-						</div>
-						<div class="cer-field cer-full">
-							<label for="summary-note"><?php esc_html_e( 'Summary Note', 'custom-event-registration' ); ?></label>
-							<textarea id="summary-note" name="summary_note" rows="3" placeholder="Copy shown under the payment summary."><?php echo esc_textarea( $event_data['summary_note'] ); ?></textarea>
-						</div>
-						<div class="cer-field">
-							<label for="primary-cta-text"><?php esc_html_e( 'Primary CTA Text', 'custom-event-registration' ); ?></label>
-							<input type="text" id="primary-cta-text" name="primary_cta_text" value="<?php echo esc_attr( $event_data['primary_cta_text'] ); ?>" placeholder="Register Now" />
-						</div>
-						<div class="cer-field">
-							<label for="secondary-cta-text"><?php esc_html_e( 'Secondary CTA Text', 'custom-event-registration' ); ?></label>
-							<input type="text" id="secondary-cta-text" name="secondary_cta_text" value="<?php echo esc_attr( $event_data['secondary_cta_text'] ); ?>" placeholder="Learn More" />
-						</div>
+						<?php cer_render_section_copy_fields( 'registration', $event_data ); ?>
+						<h3><?php esc_html_e( 'Payment summary', 'custom-event-registration' ); ?></h3>
+						<?php cer_render_section_copy_fields( 'summary', $event_data ); ?>
 					</div>
 				</div>
 			</div>
 
+		</div>
+
+		<div class="cer-panel" data-cer-tab="content" data-cer-page-content>
+			<div class="cer-panel-header"><h2><?php esc_html_e( 'Page Content', 'custom-event-registration' ); ?></h2><div class="cer-panel-header-actions">
+				<button type="button" class="button button-small cer-section-link-btn" data-section-id="page-content"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
+				<label class="cer-toggle cer-toggle-compact" for="show-page-content"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-page-content" type="checkbox" name="show_page_content" value="1" <?php checked( (int) $event_data['show_page_content'], 1 ); ?> /></label>
+			</div></div>
+			<div class="cer-panel-body">
+				<p><?php esc_html_e( 'Ordered content sections displayed after registration and payment, before FAQs. Body supports safe HTML.', 'custom-event-registration' ); ?></p>
+				<?php cer_render_content_repeater( 'page_content', cer_event_content_rows( (object) $event_data, 'page_content' ) ); ?>
+			</div>
 		</div>
 
 		<div class="cer-panel" data-cer-tab="setup" data-cer-item-type="tickets" style="margin-top: 24px;">
@@ -1328,6 +1283,7 @@ if ( ! empty( $errors ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<?php cer_render_section_copy_fields( 'speakers', $event_data ); ?>
 				<nav class="cer-item-view-nav" aria-label="<?php esc_attr_e( 'Speaker views', 'custom-event-registration' ); ?>">
 					<a href="<?php echo esc_url( $item_nav_urls['speakers']['active'] ); ?>" class="<?php echo 'speakers' === $requested_item_type && 'active' === $item_view ? 'current' : ''; ?>"><?php esc_html_e( 'Active items', 'custom-event-registration' ); ?></a>
 					<?php if ( $event_id ) : ?><a href="<?php echo esc_url( $item_nav_urls['speakers']['trash'] ); ?>" class="<?php echo 'speakers' === $requested_item_type && 'trash' === $item_view ? 'current' : ''; ?>"><?php printf( esc_html__( 'Trash (%d)', 'custom-event-registration' ), (int) $item_trash_counts['speakers'] ); ?></a><?php endif; ?>
@@ -1394,6 +1350,7 @@ if ( ! empty( $errors ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<?php cer_render_section_copy_fields( 'sponsorship', $event_data ); ?>
 				<nav class="cer-item-view-nav" aria-label="<?php esc_attr_e( 'Sponsorship package views', 'custom-event-registration' ); ?>">
 					<a href="<?php echo esc_url( $item_nav_urls['sponsors']['active'] ); ?>" class="<?php echo 'sponsors' === $requested_item_type && 'active' === $item_view ? 'current' : ''; ?>"><?php esc_html_e( 'Active items', 'custom-event-registration' ); ?></a>
 					<?php if ( $event_id ) : ?><a href="<?php echo esc_url( $item_nav_urls['sponsors']['trash'] ); ?>" class="<?php echo 'sponsors' === $requested_item_type && 'trash' === $item_view ? 'current' : ''; ?>"><?php printf( esc_html__( 'Trash (%d)', 'custom-event-registration' ), (int) $item_trash_counts['sponsors'] ); ?></a><?php endif; ?>
@@ -1453,6 +1410,7 @@ if ( ! empty( $errors ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<?php cer_render_section_copy_fields( 'pillars', $event_data ); ?>
 				<nav class="cer-item-view-nav" aria-label="<?php esc_attr_e( 'Thematic pillar views', 'custom-event-registration' ); ?>">
 					<a href="<?php echo esc_url( $item_nav_urls['pillars']['active'] ); ?>" class="<?php echo 'pillars' === $requested_item_type && 'active' === $item_view ? 'current' : ''; ?>"><?php esc_html_e( 'Active items', 'custom-event-registration' ); ?></a>
 					<?php if ( $event_id ) : ?><a href="<?php echo esc_url( $item_nav_urls['pillars']['trash'] ); ?>" class="<?php echo 'pillars' === $requested_item_type && 'trash' === $item_view ? 'current' : ''; ?>"><?php printf( esc_html__( 'Trash (%d)', 'custom-event-registration' ), (int) $item_trash_counts['pillars'] ); ?></a><?php endif; ?>
@@ -1508,6 +1466,7 @@ if ( ! empty( $errors ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<?php cer_render_section_copy_fields( 'objectives', $event_data ); ?>
 				<p class="cer-inline-help"><?php esc_html_e( 'Compact objective cards shown after the hero section.', 'custom-event-registration' ); ?></p>
 				<div class="cer-repeater" data-repeater="objectives">
 					<?php foreach ( $objective_rows as $index => $objective ) : ?>
@@ -1548,6 +1507,7 @@ if ( ! empty( $errors ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<?php cer_render_section_copy_fields( 'summit_structure', $event_data ); ?>
 				<p class="cer-inline-help"><?php esc_html_e( 'Compact cards describing how the summit is structured (tracks, days, formats).', 'custom-event-registration' ); ?></p>
 				<div class="cer-repeater" data-repeater="summit">
 					<?php foreach ( $summit_rows as $index => $summit_item ) : ?>
@@ -1588,6 +1548,7 @@ if ( ! empty( $errors ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<?php cer_render_section_copy_fields( 'partners', $event_data ); ?>
 				<p class="cer-inline-help"><?php esc_html_e( 'Partner logos linking out to their websites (opens in a new tab).', 'custom-event-registration' ); ?></p>
 				<div class="cer-repeater" data-repeater="partners">
 					<?php foreach ( $partner_rows as $index => $partner ) : ?>
@@ -1649,6 +1610,7 @@ if ( ! empty( $errors ) ) {
 				</div>
 			</div>
 			<div class="cer-panel-body">
+				<?php cer_render_section_copy_fields( 'faq', $event_data ); ?>
 				<p class="cer-inline-help"><?php esc_html_e( 'Rendered as an accordion, right before the FAQ closes out the page.', 'custom-event-registration' ); ?></p>
 				<div class="cer-repeater" data-repeater="faqs">
 					<?php foreach ( $faq_rows as $index => $faq ) : ?>

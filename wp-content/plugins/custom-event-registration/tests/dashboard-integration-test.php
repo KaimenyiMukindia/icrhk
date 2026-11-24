@@ -66,8 +66,8 @@ function cer_test_json_request( callable $handler, array $post ): array {
 	return $result;
 }
 
-function cer_test_render_form( int $event_id ): string {
-	$_GET = array( 'page' => 'cer-event-new', 'event_id' => (string) $event_id );
+function cer_test_render_form( int $event_id, array $state = array() ): string {
+	$_GET = array_merge( $state, array( 'page' => 'cer-event-new', 'event_id' => (string) $event_id ) );
 	$_POST = array();
 	$_REQUEST = $_GET;
 	ob_start();
@@ -130,7 +130,7 @@ function cer_test_save_form( array $post ): array {
 	if ( null !== $redirect ) {
 		parse_str( parse_url( $redirect, PHP_URL_QUERY ), $query );
 		cer_test_assert( ! isset( $query['cer_item_pages'] ) && ! isset( $query['cer_item_navigate'] ), 'A save redirect retained item pagination state.' );
-		$html = cer_test_render_form( (int) $query['event_id'] );
+		$html = cer_test_render_form( (int) $query['event_id'], $query );
 	}
 	return array(
 		'success' => null !== $redirect,
@@ -152,7 +152,7 @@ function cer_test_form_data( string $html ): array {
 	$form = $xpath->query( '//form[@id="cer-event-form"]' )->item( 0 );
 	cer_test_assert( null !== $form, 'The event form was not rendered.' );
 	$pairs = array();
-	foreach ( $xpath->query( './/input[@name] | .//textarea[@name] | .//select[@name]', $form ) as $control ) {
+	foreach ( $xpath->query( './/input[@name][not(ancestor::template)] | .//textarea[@name][not(ancestor::template)] | .//select[@name][not(ancestor::template)]', $form ) as $control ) {
 		$type = strtolower( $control->getAttribute( 'type' ) );
 		if ( $control->hasAttribute( 'disabled' ) || in_array( $type, array( 'submit', 'button', 'reset', 'file' ), true ) ||
 			( in_array( $type, array( 'checkbox', 'radio' ), true ) && ! $control->hasAttribute( 'checked' ) ) ) {
@@ -243,6 +243,12 @@ try {
 	set_current_screen( 'cer-test' );
 	require dirname( __DIR__ ) . '/custom-event-registration.php';
 
+	cer_ensure_event_content_schema();
+	cer_test_query( "ALTER TABLE `{$prefix}evt_events` DROP COLUMN `show_page_content`" );
+	update_option( 'cer_event_content_schema', '1' );
+	cer_ensure_event_content_schema();
+	cer_test_assert( '2' === get_option( 'cer_event_content_schema' ), 'Content schema migration must complete on an existing event table.' );
+	cer_test_assert( cer_column_exists( $prefix . 'evt_events', 'show_page_content' ), 'Existing version-one content storage must gain the visibility column.' );
 	$wpdb->queries = array();
 	cer_maybe_ensure_event_schema();
 	$schema_checks = array_filter( $wpdb->queries, static function ( $query ) {
@@ -256,6 +262,9 @@ try {
 	$event_a = cer_test_insert( $prefix . 'evt_events', array(
 		'event_uuid' => 'cer-test-event-a', 'name' => 'Event Alpha', 'slug' => 'cer-test-alpha',
 		'event_date' => '2030-01-02 10:00:00', 'status' => 'published',
+		'hero_convened_by' => 'Legacy convenor', 'event_info_heading' => 'Legacy information',
+		'event_info_paragraph_1' => '<p>Legacy body</p>', 'target_audience' => 'Legacy audience',
+		'summary_note' => 'Legacy summary intro must not be displayed',
 	) );
 	$event_b = cer_test_insert( $prefix . 'evt_events', array(
 		'event_uuid' => 'cer-test-event-b', 'name' => 'Event Beta', 'slug' => 'cer-test-beta',
@@ -364,6 +373,22 @@ try {
 	$post['speakers'][0]['photo_id'] = '123';
 	$post['objectives'][0]['title'] = 'New objective';
 	$post['objectives'][0]['description'] = 'Objective description';
+	$post['hero_details'] = array(
+		array( 'label' => 'Convened by', 'value' => 'Fixture convenor' ),
+		array( 'label' => 'Hosted by', 'value' => 'Fixture host' ),
+	);
+	$post['page_content'] = array(
+		array( 'header' => 'Travel information', 'subtitle' => 'Getting here', 'body' => "<p>Bring your ticket.</p><ul><li>First instruction</li></ul>" ),
+		array( 'header' => 'Access information', 'subtitle' => 'On arrival', 'body' => '<p><a href="https://example.test/guide">Read the guide</a></p>' ),
+	);
+	foreach ( cer_event_content_sections() as $section => $defaults ) {
+		$post[ $section . '_heading' ] = 'Fixture ' . $section;
+		$post[ $section . '_eyebrow' ] = 'Eyebrow ' . $section;
+		$post[ 'summary' === $section ? 'summary_note' : $section . '_intro' ] = '<p>Intro ' . $section . '</p>';
+	}
+	$post['hero_summary_heading'] = 'Fixture hero summary';
+	$post['cer_item_active_tabs']['section_content'] = '2';
+	$post['cer_item_active_tabs']['section_setup'] = '1';
 	$post['deleted_faqs'] = array( $faq_id );
 	$version_before = $cache_version;
 	$result = cer_test_save_form( $post );
@@ -378,8 +403,17 @@ try {
 	cer_test_assert( null === $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$prefix}evt_faqs WHERE id = %d", $faq_id ) ), 'Pending deletions were not saved.' );
 	cer_test_assert( $cache_version > $version_before, 'Event cache was not invalidated.' );
 	$saved_form = cer_test_form_data( $result['data']['html'] );
+	cer_test_assert( '2' === $saved_form['cer_item_active_tabs']['section_content'] && '1' === $saved_form['cer_item_active_tabs']['section_setup'], 'Section tabs must retain their selection across the save redirect and reload.' );
 	cer_test_assert( 7 === count( $saved_form['tickets'] ) && 'Ticket 7' === $saved_form['tickets'][6]['name'], 'Saving must preserve all items.' );
 	cer_test_assert( ! empty( $saved_form['objectives'][0]['id'] ), 'New item IDs were not returned after saving.' );
+	$saved_event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ) );
+	cer_test_assert( $post['hero_details'] === cer_event_content_rows( $saved_event, 'hero_details' ) && $post['page_content'] === cer_event_content_rows( $saved_event, 'page_content' ), 'Hero and page content rows must survive a real save and reload in order.' );
+	cer_test_assert( 'Legacy convenor' === $saved_event->hero_convened_by && 'Legacy information' === $saved_event->event_info_heading && '<p>Legacy body</p>' === $saved_event->event_info_paragraph_1 && 'Legacy audience' === $saved_event->target_audience, 'Removing obsolete controls must preserve their stored copy.' );
+	cer_test_assert( false === strpos( $result['data']['html'], 'name="event_info_heading"' ) && false === strpos( $result['data']['html'], 'name="show_event_information"' ), 'The redundant Event Information controls must be removed.' );
+	foreach ( cer_event_content_sections() as $section => $defaults ) {
+		cer_test_assert( $post[ $section . '_heading' ] === $saved_event->{$section . '_heading'} && $post[ $section . '_eyebrow' ] === $saved_event->{$section . '_eyebrow'}, 'Section copy did not save: ' . $section );
+		cer_test_assert( 1 === substr_count( $result['data']['html'], 'name="' . $section . '_heading"' ), 'A section heading must have exactly one editing surface.' );
+	}
 
 	$unchanged = $saved_form;
 	$event_before_unchanged = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ), ARRAY_A );
@@ -403,6 +437,89 @@ try {
 	$changed_event_fields = array_keys( array_diff_assoc( $event_before_unchanged, $event_after_unchanged ) );
 	cer_test_assert( 0 === count( $item_writes ) && 0 === count( $item_lookups ), 'Unchanged save performed redundant item writes or existence lookups: ' . implode( ', ', $query_summary ) . '; changed event fields: ' . implode( ', ', $changed_event_fields ) );
 	cer_test_assert( $version_before === $cache_version, 'Unchanged save invalidated the event cache.' );
+
+	$content_fixture_ids = array(
+		'evt_pillars' => cer_test_insert( $prefix . 'evt_pillars', array( 'event_id' => $event_a, 'title' => 'Content test pillar', 'description' => 'Pillar', 'order_index' => 0 ) ),
+		'evt_summit_structure' => cer_test_insert( $prefix . 'evt_summit_structure', array( 'event_id' => $event_a, 'title' => 'Content test summit', 'description' => 'Summit', 'order_index' => 0 ) ),
+		'evt_partners' => cer_test_insert( $prefix . 'evt_partners', array( 'event_id' => $event_a, 'name' => 'Content test partner', 'order_index' => 0 ) ),
+		'evt_faqs' => cer_test_insert( $prefix . 'evt_faqs', array( 'event_id' => $event_a, 'question' => 'Content test question?', 'answer' => 'Answer', 'order_index' => 0 ) ),
+	);
+	require_once dirname( __DIR__ ) . '/includes/event-page-renderer.php';
+	$_GET = array( 'event_id' => $event_a );
+	ob_start();
+	cer_render_event_registration_page();
+	$content_markup = ob_get_clean();
+	$registration_position = strpos( $content_markup, 'id="registration"' );
+	$page_position = strpos( $content_markup, 'id="page-content-1"' );
+	cer_test_assert( false !== $registration_position && $registration_position < $page_position && $page_position < strpos( $content_markup, 'id="page-content-2"' ), 'Page rows must render after payment and in their saved order.' );
+	cer_test_assert( strpos( $content_markup, 'id="page-content-2"' ) < strpos( $content_markup, 'id="faq"' ), 'Page rows must render before FAQs.' );
+	cer_test_assert( false !== strpos( $content_markup, 'Travel information' ) && false !== strpos( $content_markup, '<li>First instruction</li>' ) && false !== strpos( $content_markup, 'https://example.test/guide' ), 'Page header, subtitle and formatted body must reach the frontend.' );
+	cer_test_assert( false !== strpos( $content_markup, 'Fixture convenor' ) && false !== strpos( $content_markup, 'Fixture host' ) && false !== strpos( $content_markup, 'Fixture hero summary' ), 'All hero detail rows and the summary title must render.' );
+	cer_test_assert( false === strpos( $content_markup, 'cer-kamgc-copy-stack' ) && false !== strpos( $content_markup, 'data-eyebrow="Eyebrow objectives"' ), 'The removed card must stay absent and section eyebrows must use saved data.' );
+	$content_document = new DOMDocument();
+	$previous = libxml_use_internal_errors( true );
+	$content_document->loadHTML( $content_markup, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING );
+	libxml_clear_errors();
+	libxml_use_internal_errors( $previous );
+	$content_xpath = new DOMXPath( $content_document );
+	$admin_document = new DOMDocument();
+	$previous = libxml_use_internal_errors( true );
+	$admin_document->loadHTML( $result['data']['html'], LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING );
+	libxml_clear_errors();
+	libxml_use_internal_errors( $previous );
+	$admin_xpath = new DOMXPath( $admin_document );
+	cer_test_assert( 1 === $admin_xpath->query( '//*[@data-cer-page-content]//div[@class="cer-panel-header-actions"]/button[@data-section-id="page-content" and contains(@class,"cer-section-link-btn")]' )->length, 'Page Content must use the existing Section Link control targeting the entire frontend section.' );
+	cer_test_assert( 1 === $admin_xpath->query( '//*[@data-cer-page-content]//div[@class="cer-panel-header-actions"]//input[@name="show_page_content"]' )->length, 'Page Content must pair Section Link and Visible in the existing section action group.' );
+	cer_test_assert( 1 === $content_xpath->query( '//div[@class="cer-kamgc-actions"]/div[contains(@class,"cer-share-bar")]' )->length, 'Existing share controls must be inside the hero CTA row.' );
+	cer_test_assert( 2 === $content_xpath->query( '//section[@id="page-content"]/div[@class="cer-page-content-grid"]/article' )->length, 'Page content rows must share one grid section.' );
+	cer_test_assert( 1 === $content_xpath->query( '//div[contains(@class,"cer-kamgc-summary-total")]/div[contains(@class,"cer-kamgc-security")]' )->length, 'Secure Payment must share the total row.' );
+	cer_test_assert( false === strpos( $content_markup, 'Legacy summary intro' ) && false === strpos( $result['data']['html'], 'name="summary_note"' ), 'Editable summary intro must not appear in the summary, status notification or admin controls.' );
+	foreach ( cer_event_content_sections() as $section => $defaults ) {
+		cer_test_assert( false !== strpos( $content_markup, 'data-eyebrow="Eyebrow ' . $section . '"' ) && ( 'summary' === $section || false !== strpos( $content_markup, 'Intro ' . $section ) ) && false !== strpos( $content_markup, 'Fixture ' . $section ), 'Every visible section must render its own saved copy: ' . $section );
+	}
+	$hidden_content = $saved_form;
+	unset( $hidden_content['show_page_content'] );
+	$hidden_result = cer_test_save_form( $hidden_content );
+	cer_test_assert( $hidden_result['success'], 'Hiding Page Content must save.' );
+	$hidden_event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ) );
+	cer_test_assert( 0 === (int) $hidden_event->show_page_content && $saved_event->page_content === $hidden_event->page_content && $saved_event->summary_note === $hidden_event->summary_note, 'Hiding content must preserve its rows and the legacy summary note.' );
+	$_GET = array( 'event_id' => $event_a );
+	ob_start();
+	cer_render_event_registration_page();
+	$hidden_markup = ob_get_clean();
+	cer_test_assert( false === strpos( $hidden_markup, 'id="page-content"' ) && false === strpos( $hidden_markup, 'id="page-content-1"' ) && false === strpos( $hidden_markup, 'cer-page-content-grid' ) && false !== strpos( $hidden_markup, 'id="cer-form-message"' ), 'The visibility toggle must omit the entire Page Content section and cards, without hiding system notifications.' );
+	cer_test_assert( cer_test_save_form( $saved_form )['success'], 'Showing Page Content again must save.' );
+	$event_after_unchanged = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ), ARRAY_A );
+	foreach ( $content_fixture_ids as $table => $id ) {
+		cer_test_assert( false !== $wpdb->delete( $prefix . $table, array( 'id' => $id ) ), 'Temporary content render fixture cleanup failed.' );
+	}
+	$legacy_hero = (object) array( 'hero_convened_by' => 'Legacy convenor' );
+	cer_test_assert( 'Legacy convenor' === cer_event_content_rows( $legacy_hero, 'hero_details' )[0]['value'], 'Existing Convened by copy must survive before migration.' );
+	$legacy_hero->hero_details = '[]';
+	cer_test_assert( array() === cer_event_content_rows( $legacy_hero, 'hero_details' ), 'Removing every hero row must not resurrect the legacy convenor.' );
+	foreach ( array( 'invalid', array( 'invalid' ), array( array( 'header' => array( 'bad' ) ) ), array( array( 'header' => '', 'body' => 'Missing header' ) ) ) as $invalid_content ) {
+		cer_test_assert( is_wp_error( cer_parse_event_content_rows( $invalid_content ) ), 'Malformed and incomplete page rows must be rejected.' );
+	}
+	$safe_rows = cer_parse_event_content_rows( array( array( 'header' => '<b>Header</b>', 'subtitle' => 'Subtitle', 'body' => '<p>Safe</p><script>alert(1)</script><a href="javascript:alert(1)">Unsafe link</a>' ) ) );
+	cer_test_assert( 'Header' === $safe_rows[0]['header'] && false === strpos( $safe_rows[0]['body'], '<script>' ) && false === strpos( $safe_rows[0]['body'], 'javascript:' ), 'Page rows must retain safe formatting but reject executable HTML.' );
+	foreach ( array( array( array( 'body' => 'Missing header' ) ), array( array( 'header' => str_repeat( 'x', 256 ) ) ) ) as $invalid_rows ) {
+		$invalid_post = $saved_form;
+		$invalid_post['page_content'] = $invalid_rows;
+		$invalid_post['event_title'] = 'Must not save';
+		$invalid_save = cer_test_save_form( $invalid_post );
+		$unchanged_event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ), ARRAY_A );
+		cer_test_assert( false === $invalid_save['success'] && $event_after_unchanged === $unchanged_event, 'Invalid content must visibly reject the entire save and preserve all stored event data.' );
+		cer_test_assert( false !== strpos( $invalid_save['data']['html'], 'notice-error' ), 'Invalid content must display the existing form error notice.' );
+	}
+	cer_test_assert( '' === cer_event_section_eyebrow( (object) array( 'faq_eyebrow' => '' ), 'faq' ), 'Explicitly clearing an eyebrow must not restore the old default.' );
+	$remove_content = $saved_form;
+	$remove_content['page_content'] = array();
+	$remove_content['hero_details'] = array();
+	$remove_content_result = cer_test_save_form( $remove_content );
+	cer_test_assert( $remove_content_result['success'], 'Removing all content rows must save.' );
+	$empty_content_event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ) );
+	cer_test_assert( '[]' === $empty_content_event->page_content && '[]' === $empty_content_event->hero_details, 'Removed rows must remain removed after reload.' );
+	cer_test_assert( cer_test_save_form( $saved_form )['success'], 'Restoring saved content rows must succeed.' );
 
 	$invalid = $saved_form;
 	$invalid['event_title'] = '';

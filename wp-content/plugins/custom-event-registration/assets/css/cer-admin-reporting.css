@@ -1896,3 +1896,111 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
         grid-column: 1 / -1;
     }
 }
+.cer-section-copy-fields {
+    margin-bottom: 16px;
+    min-width: 0;
+}
+
+.cer-field-grid > .cer-section-copy-fields,
+.cer-field-grid > h3 {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+[data-hero-details] .cer-repeater,
+[data-cer-page-content] .cer-repeater {
+    min-width: 0;
+    width: 100%;
+}
+
+.cer-section-tab-list {
+    margin-bottom: 10px;
+}
+
+.cer-section-visibility {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+}
+
+.cer-section-tab-list .cer-item-tab {
+    max-width: none;
+}
+
+.cer-section-tab-panel > .cer-panel-header {
+    display: none;
+}
+
+.cer-admin-shell .cer-hero-fields {
+    align-items: start;
+    grid-template-areas:
+        "title badge"
+        "description details"
+        "summary logo"
+        "primary secondary"
+        "features features";
+}
+
+.cer-hero-fields > .cer-field:has([name="event_title"]) { grid-area: title; }
+.cer-hero-fields > .cer-field:has([name="hero_badge_text"]) { grid-area: badge; }
+.cer-hero-fields > .cer-hero-description-field { grid-area: description; }
+.cer-hero-fields > [data-hero-details] { grid-area: details; }
+.cer-hero-fields > .cer-field:has([name="hero_summary_heading"]) { grid-area: summary; }
+.cer-hero-fields > .cer-hero-logo-field { grid-area: logo; }
+.cer-hero-fields > .cer-field:has([name="primary_cta_text"]) { grid-area: primary; }
+.cer-hero-fields > .cer-field:has([name="secondary_cta_text"]) { grid-area: secondary; }
+.cer-hero-fields > .cer-hero-features-field { grid-area: features; }
+
+.cer-admin-shell [data-hero-details] {
+    grid-column: auto;
+}
+
+.cer-admin-shell .cer-hero-logo-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+}
+
+.cer-hero-logo-field > :is(label, p) {
+    grid-column: 1 / -1;
+}
+
+.cer-hero-logo-field #secondary-logo-preview img {
+    max-height: 80px;
+    width: auto;
+}
+
+[data-hero-details] > :is(h3, p) {
+    margin: 0;
+}
+
+.cer-admin-shell :is([data-hero-details], [data-cer-page-content]) .cer-repeater-row > .cer-field:not(:has(textarea)) {
+    grid-column: auto;
+}
+
+.cer-admin-shell [data-cer-page-content] .cer-add-row {
+    margin-top: 10px;
+}
+
+@media (max-width: 782px) {
+    .cer-admin-shell .cer-hero-fields {
+        grid-template-areas:
+            "title"
+            "badge"
+            "description"
+            "details"
+            "summary"
+            "logo"
+            "primary"
+            "secondary"
+            "features";
+    }
+
+    .cer-admin-shell .cer-hero-logo-field {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .cer-hero-logo-field #secondary-logo-preview {
+        grid-column: 1 / -1;
+    }
+}

@@ -138,7 +138,7 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 	$event = null;
 	$amount = '0';
 	if ( $event_id ) {
-		$event = $wpdb->get_row( $wpdb->prepare( "SELECT slug, summary_note, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d LIMIT 1", $event_id ) );
+		$event = $wpdb->get_row( $wpdb->prepare( "SELECT slug, max_attendees FROM {$wpdb->prefix}evt_events WHERE id = %d LIMIT 1", $event_id ) );
 		$table = $wpdb->prefix . 'evt_ticket_types';
 		$ticket_types = $wpdb->get_results( $wpdb->prepare( "SELECT id, name, price, quantity_available, quantity_sold, is_maintenance FROM $table WHERE event_id = %d AND deleted_at IS NULL ORDER BY order_index ASC, id ASC", $event_id ) );
 		if ( ! empty( $ticket_types ) ) {
@@ -147,13 +147,7 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 	}
 
 	$event_reference = ! empty( $event->slug ) ? strtoupper( str_replace( '-', '-', $event->slug ) ) : strtoupper( get_bloginfo( 'name' ) );
-	$summary_note = ! empty( $event->summary_note ) ? $event->summary_note : '';
-	if ( '' === trim( $summary_note ) || in_array( trim( wp_strip_all_tags( $summary_note ) ), array(
-		'Payment verification and receipt delivery are handled after registration using a secure gateway workflow.',
-		'Payment verification and receipt delivery are handled after registration using the secure gateway workflow.',
-	), true ) ) {
-		$summary_note = 'Your registration is secure. Once submitted, payment verification and your receipt will be processed automatically through our secure gateway.';
-	}
+	$summary_note = 'Your registration is secure. Once submitted, payment verification and your receipt will be processed automatically through our secure gateway.';
 	$payee_name = get_bloginfo( 'name' );
 	// Mirrors the submission handler's capacity and inventory checks so the form shows availability up front.
 	$event_full = false;

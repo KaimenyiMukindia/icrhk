@@ -20,12 +20,9 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 		$event_description = $current_event ? wp_kses_post( $current_event->description ) : '';
 
 		$hero_badge_text = cer_event_page_copy_value( $current_event, 'hero_badge_text', 'Event Registration' );
-		$hero_convened_by = cer_event_page_copy_value( $current_event, 'hero_convened_by', '' );
+		$hero_details = cer_event_content_rows( $current_event, 'hero_details' );
+		$page_content = cer_event_content_rows( $current_event, 'page_content' );
 		$hero_features = cer_event_page_split_lines( cer_event_page_copy_value( $current_event, 'hero_features', '' ) );
-		$event_info_heading = cer_event_page_copy_value( $current_event, 'event_info_heading', 'Event Information' );
-		$event_info_paragraph_1 = cer_event_page_copy_value( $current_event, 'event_info_paragraph_1', $event_description );
-		$event_info_paragraph_2 = cer_event_page_copy_value( $current_event, 'event_info_paragraph_2', '' );
-		$target_audience_heading = cer_event_page_copy_value( $current_event, 'target_audience_heading', 'Target Audience' );
 		$registration_heading = cer_event_page_copy_value( $current_event, 'registration_heading', 'Secure Your Place' );
 		$registration_intro = cer_event_page_copy_value( $current_event, 'registration_intro', 'Complete your registration details below.' );
 		$sponsorship_heading = cer_event_page_copy_value( $current_event, 'sponsorship_heading', 'Partner With Us' );
@@ -46,7 +43,6 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 		$secondary_cta_text = cer_event_page_copy_value( $current_event, 'secondary_cta_text', 'Learn More' );
 		if ( $current_event ) {
 			$event_id = (int) $current_event->id;
-			$show_event_information = isset( $current_event->show_event_information ) ? (int) $current_event->show_event_information : 1;
 			$show_speakers = isset( $current_event->show_speakers ) ? (int) $current_event->show_speakers : 1;
 			$show_sponsors = isset( $current_event->show_sponsors ) ? (int) $current_event->show_sponsors : 1;
 			$show_pillars  = isset( $current_event->show_pillars ) ? (int) $current_event->show_pillars : 1;
@@ -68,7 +64,6 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 			$location_address = isset( $current_event->location_address ) ? trim( (string) $current_event->location_address ) : '';
 		} else {
 			$event_id = 0;
-			$show_event_information = 0;
 			$show_speakers = 0;
 			$show_sponsors = 0;
 			$show_pillars  = 0;
@@ -129,9 +124,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 					}
 					$hero_features = cer_event_page_split_lines( cer_event_page_copy_value( $current_event, 'hero_features', '' ) );
 					$hero_badge_text = cer_event_page_copy_value( $current_event, 'hero_badge_text', 'Event Registration' );
-					$hero_convened_by = cer_event_page_copy_value( $current_event, 'hero_convened_by', '' );
 					$registration_intro = cer_event_page_copy_value( $current_event, 'registration_intro', 'Complete your registration details below.' );
-					$target_audience_text = ! empty( $current_event->target_audience ) ? wp_strip_all_tags( $current_event->target_audience ) : wp_strip_all_tags( $current_event->description );
 					?>
 					<div class="cer-event-page cer-kamgc-page">
 						<div class="cer-event-shell cer-kamgc-shell">
@@ -192,16 +185,17 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 												<span><?php echo esc_html( ': ' . $event_title_highlight ); ?></span>
 											<?php endif; ?>
 										</h1>
-										<p class="cer-kamgc-hero-description"><?php echo wp_kses_post( $event_description ); ?></p>
+										<div class="cer-kamgc-hero-description"><?php echo wp_kses_post( wpautop( $event_description ) ); ?></div>
 										
-										<?php if ( ! empty( $hero_convened_by ) ) : ?>
-											<div class="cer-kamgc-convened-by"><span>Convened by:</span> <?php echo esc_html( $hero_convened_by ); ?></div>
-										<?php endif; ?>
+										<?php foreach ( $hero_details as $hero_detail ) : ?>
+											<div class="cer-kamgc-convened-by"><?php if ( '' !== $hero_detail['label'] ) : ?><span><?php echo esc_html( $hero_detail['label'] ); ?>:</span> <?php endif; ?><?php echo esc_html( $hero_detail['value'] ); ?></div>
+										<?php endforeach; ?>
 
 										<div class="cer-kamgc-actions">
+											<div class="cer-kamgc-primary-actions">
 											<a class="cer-kamgc-button cer-kamgc-button-primary" href="#registration"><?php echo esc_html( $primary_cta_text ); ?> <span class="material-symbols-outlined">arrow_forward</span></a>
 											<a class="cer-kamgc-button cer-kamgc-button-secondary" href="#pillars"><?php echo esc_html( $secondary_cta_text ); ?></a>
-										</div>
+											</div>
 													<?php $share_links = cer_get_event_share_links( $current_event ); if ( ! empty( $share_links ) ) : ?>
 													<div class="cer-share-bar" aria-label="Share event">
 														<span class="cer-share-label"><?php esc_html_e( 'Share event:', 'custom-event-registration' ); ?></span>
@@ -211,9 +205,10 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 																<a href="<?php echo esc_url( $share_links['whatsapp'] ); ?>" target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp" title="<?php esc_attr_e( 'Share on WhatsApp', 'custom-event-registration' ); ?>"><span class="fa fa-whatsapp cer-share-brand-icon" aria-hidden="true"></span></a>
 													</div>
 													<?php endif; ?>
+										</div>
 									</div>
 									<div class="cer-kamgc-summary-box cer-kamgc-hero-summary">
-										<h3>Conference Summary</h3>
+										<h3><?php echo esc_html( cer_event_page_copy_value( $current_event, 'hero_summary_heading', 'Conference Summary' ) ); ?></h3>
 										<?php $countdown = cer_event_page_countdown_data( $current_event ); ?>
 										<?php if ( $countdown ) : ?>
 											<div class="cer-kamgc-countdown" role="timer" aria-live="off" data-state="<?php echo esc_attr( $countdown['state'] ); ?>" data-starts="<?php echo esc_attr( $countdown['starts'] ); ?>" data-ends="<?php echo esc_attr( $countdown['ends'] ); ?>" data-timezone="<?php echo esc_attr( $countdown['timezone'] ); ?>" data-start-time="<?php echo esc_attr( $countdown['start_time'] ); ?>" data-label="<?php echo esc_attr( $countdown['label'] ); ?>">
@@ -263,9 +258,9 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 								<section class="cer-kamgc-objectives" id="objectives">
 									<div class="cer-kamgc-card cer-kamgc-objectives-card">
 										<span class="cer-kamgc-blobs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-										<div class="cer-kamgc-section-title">
+										<div class="cer-kamgc-section-title" data-eyebrow="<?php echo esc_attr( cer_event_section_eyebrow( $current_event, 'objectives' ) ); ?>">
 											<h2><?php echo esc_html( $objectives_heading ); ?></h2>
-											<?php if ( ! empty( $objectives_intro ) ) : ?><p><?php echo wp_kses_post( $objectives_intro ); ?></p><?php endif; ?>
+											<?php if ( ! empty( $objectives_intro ) ) : ?><div class="cer-section-intro"><?php echo wp_kses_post( wpautop( $objectives_intro ) ); ?></div><?php endif; ?>
 											<div class="cer-kamgc-divider-center"></div>
 										</div>
 										<div class="cer-kamgc-compact-grid">
@@ -284,10 +279,10 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 							<?php if ( $show_pillars && ! empty( $event_pillars ) ) : ?>
 								<section class="cer-kamgc-pillars" id="pillars">
 									<div class="cer-kamgc-card cer-kamgc-pillars-card-wrapper">
-										<div class="cer-kamgc-pillar-header">
+										<div class="cer-kamgc-pillar-header" data-eyebrow="<?php echo esc_attr( cer_event_section_eyebrow( $current_event, 'pillars' ) ); ?>">
 											<h2><?php echo esc_html( $pillars_heading ); ?></h2>
 												<?php if ( ! empty( $pillars_intro ) ) : ?>
-													<p><?php echo wp_kses_post( $pillars_intro ); ?></p>
+													<div class="cer-section-intro"><?php echo wp_kses_post( wpautop( $pillars_intro ) ); ?></div>
 												<?php endif; ?>
 										</div>
 										<div class="cer-kamgc-pillar-grid">
@@ -306,9 +301,9 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 							<?php if ( $show_summit_structure && ! empty( $event_summit_structure ) ) : ?>
 								<section class="cer-kamgc-summit-structure" id="summit-structure">
 									<div class="cer-kamgc-card cer-kamgc-summit-structure-card">
-										<div class="cer-kamgc-section-title">
+										<div class="cer-kamgc-section-title" data-eyebrow="<?php echo esc_attr( cer_event_section_eyebrow( $current_event, 'summit_structure' ) ); ?>">
 											<h2><?php echo esc_html( $summit_structure_heading ); ?></h2>
-											<?php if ( ! empty( $summit_structure_intro ) ) : ?><p><?php echo wp_kses_post( $summit_structure_intro ); ?></p><?php endif; ?>
+											<?php if ( ! empty( $summit_structure_intro ) ) : ?><div class="cer-section-intro"><?php echo wp_kses_post( wpautop( $summit_structure_intro ) ); ?></div><?php endif; ?>
 											<div class="cer-kamgc-divider-center"></div>
 										</div>
 										<div class="cer-kamgc-compact-grid">
@@ -328,8 +323,9 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 								<section class="cer-kamgc-speakers" id="speakers">
 									<div class="cer-kamgc-card cer-kamgc-speakers-card">
 										<span class="cer-kamgc-blobs" aria-hidden="true"><i></i><i></i><i></i></span>
-										<div class="cer-kamgc-section-title">
+										<div class="cer-kamgc-section-title" data-eyebrow="<?php echo esc_attr( cer_event_section_eyebrow( $current_event, 'speakers' ) ); ?>">
 											<h2><?php echo esc_html( $speakers_heading ); ?></h2>
+											<?php if ( ! empty( $current_event->speakers_intro ) ) : ?><div class="cer-section-intro"><?php echo wp_kses_post( wpautop( $current_event->speakers_intro ) ); ?></div><?php endif; ?>
 											<div class="cer-kamgc-divider-center"></div>
 										</div>
 										<div class="cer-kamgc-speaker-grid">
@@ -350,36 +346,17 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 								<span class="cer-kamgc-blobs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
 								<div class="cer-kamgc-two-col">
 									<div class="cer-kamgc-main-column">
-										<?php if ( $show_event_information ) : ?>
-											<div class="cer-kamgc-card">
-												<div class="cer-kamgc-heading-with-icon"><span class="cer-kamgc-heading-icon material-symbols-outlined">info</span><h2><?php echo esc_html( $event_info_heading ); ?></h2></div>
-												<div class="cer-kamgc-copy-stack">
-													<?php if ( ! empty( $event_info_paragraph_1 ) ) : ?><p><?php echo wp_kses_post( $event_info_paragraph_1 ); ?></p><?php endif; ?>
-													<?php if ( ! empty( $event_info_paragraph_2 ) ) : ?><p><?php echo wp_kses_post( $event_info_paragraph_2 ); ?></p><?php endif; ?>
-												</div>
-												<?php if ( ! empty( $current_event->target_audience ) ) : ?>
-													<div class="cer-kamgc-callout">
-														<div class="cer-kamgc-callout-icon"><span class="material-symbols-outlined">info</span></div>
-														<div>
-															<h4><?php echo esc_html( $target_audience_heading ); ?></h4>
-															<p><?php echo wp_kses_post( $current_event->target_audience ); ?></p>
-														</div>
-													</div>
-												<?php endif; ?>
-											</div>
-										<?php endif; ?>
-
 										<div class="cer-kamgc-card">
-											<h2><?php echo esc_html( $registration_heading ); ?></h2>
-											<p class="cer-kamgc-form-intro"><?php echo wp_kses_post( $registration_intro ); ?></p>
+											<h2 data-eyebrow="<?php echo esc_attr( cer_event_section_eyebrow( $current_event, 'registration' ) ); ?>"><?php echo esc_html( $registration_heading ); ?></h2>
+											<div class="cer-kamgc-form-intro"><?php echo wp_kses_post( wpautop( $registration_intro ) ); ?></div>
 											<?php echo cer_get_registration_form_markup( $event_id, $ticket_availability ); ?>
 										</div>
 									</div>
 									<div class="cer-kamgc-sidebar-column">
 										<?php if ( ! empty( $event_sponsors ) ) : ?>
 											<div class="cer-kamgc-sponsor-box">
-												<h3 style="font-size: 25px; font-weight: bold;"><?php echo esc_html( $sponsorship_heading ); ?></h3>
-												<p><?php echo wp_kses_post( $sponsorship_intro ); ?></p>
+												<h3 data-eyebrow="<?php echo esc_attr( cer_event_section_eyebrow( $current_event, 'sponsorship' ) ); ?>" style="font-size: 25px; font-weight: bold;"><?php echo esc_html( $sponsorship_heading ); ?></h3>
+												<div class="cer-section-intro"><?php echo wp_kses_post( wpautop( $sponsorship_intro ) ); ?></div>
 												<ul class="cer-kamgc-sponsor-list">
 													<?php foreach ( $event_sponsors as $sponsor ) : ?>
 														<li>
@@ -394,24 +371,42 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 											</div>
 										<?php endif; ?>
 										<div class="cer-kamgc-summary-box">
-											<h3 class="cer-summary-payment-only"><?php echo esc_html( $summary_heading ); ?></h3>
+											<h3 class="cer-summary-payment-only" data-eyebrow="<?php echo esc_attr( cer_event_section_eyebrow( $current_event, 'summary' ) ); ?>"><?php echo esc_html( $summary_heading ); ?></h3>
 											<h3 class="cer-summary-free-heading">Ticket Information</h3>
 											<div class="cer-kamgc-summary-row"><span>Tickets</span><strong id="cer-summary-ticket"><?php echo $initial_availability && 1 === count( $initial_availability['tickets'] ) ? esc_html( $initial_availability['tickets'][0]['name'] ) : '&mdash;'; ?></strong></div>
 											<div class="cer-kamgc-summary-row cer-summary-single-availability"><span>Availability</span><div id="cer-ticket-availability" class="cer-availability-value" role="status" aria-live="polite"><?php echo $initial_availability && 1 === count( $initial_availability['tickets'] ) ? cer_ticket_availability_markup( $initial_availability ) : ''; ?></div></div>
 											<div class="cer-kamgc-summary-row cer-summary-payment-only"><span>Payment Method</span><strong id="cer-summary-method">M-Pesa</strong></div>
-											<div class="cer-kamgc-summary-total cer-summary-payment-only"><span>Total</span><strong id="cer-summary-amount">KES 0.00</strong></div>
-											<div class="cer-kamgc-security cer-summary-payment-only"><span class="material-symbols-outlined">lock</span><span>Secure Payment</span></div>
+											<div class="cer-kamgc-summary-total cer-summary-payment-only">
+												<div class="cer-kamgc-security"><span class="material-symbols-outlined" aria-hidden="true">lock</span><span>Secure Payment</span></div>
+												<div class="cer-summary-total-value"><span>Total</span><strong id="cer-summary-amount">KES 0.00</strong></div>
+											</div>
 										</div>
 									</div>
 								</div>
 							</section>
 
+							<?php if ( ! empty( $page_content ) && ( ! isset( $current_event->show_page_content ) || $current_event->show_page_content ) ) : ?>
+							<section class="cer-kamgc-page-content" id="page-content" aria-label="<?php esc_attr_e( 'Event information', 'custom-event-registration' ); ?>">
+								<div class="cer-page-content-grid">
+								<?php foreach ( $page_content as $content_index => $content_row ) : ?>
+									<article class="cer-kamgc-card" id="page-content-<?php echo (int) $content_index + 1; ?>">
+										<div class="cer-page-content-heading">
+											<h2><?php echo esc_html( $content_row['header'] ); ?></h2>
+											<?php if ( '' !== $content_row['subtitle'] ) : ?><p><?php echo esc_html( $content_row['subtitle'] ); ?></p><?php endif; ?>
+										</div>
+										<div class="cer-page-content-body"><?php echo wp_kses_post( wpautop( $content_row['body'] ) ); ?></div>
+									</article>
+								<?php endforeach; ?>
+								</div>
+							</section>
+							<?php endif; ?>
+
 							<?php if ( $show_faq && ! empty( $event_faqs ) ) : ?>
 								<section class="cer-kamgc-faq" id="faq">
 									<div class="cer-kamgc-card cer-kamgc-faq-card">
-										<div class="cer-kamgc-section-title">
+										<div class="cer-kamgc-section-title" data-eyebrow="<?php echo esc_attr( cer_event_section_eyebrow( $current_event, 'faq' ) ); ?>">
 											<h2><?php echo esc_html( $faq_heading ); ?></h2>
-											<?php if ( ! empty( $faq_intro ) ) : ?><p><?php echo wp_kses_post( $faq_intro ); ?></p><?php endif; ?>
+											<?php if ( ! empty( $faq_intro ) ) : ?><div class="cer-section-intro"><?php echo wp_kses_post( wpautop( $faq_intro ) ); ?></div><?php endif; ?>
 											<div class="cer-kamgc-divider-center"></div>
 										</div>
 										<div class="cer-kamgc-faq-accordion">
@@ -434,9 +429,9 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 							<?php if ( $show_partners && ! empty( $event_partners ) ) : ?>
 								<section class="cer-kamgc-partners" id="partners">
 									<div class="cer-kamgc-card cer-kamgc-partners-card">
-										<div class="cer-kamgc-section-title">
+										<div class="cer-kamgc-section-title" data-eyebrow="<?php echo esc_attr( cer_event_section_eyebrow( $current_event, 'partners' ) ); ?>">
 											<h2><?php echo esc_html( $partners_heading ); ?></h2>
-											<?php if ( ! empty( $partners_intro ) ) : ?><p><?php echo wp_kses_post( $partners_intro ); ?></p><?php endif; ?>
+											<?php if ( ! empty( $partners_intro ) ) : ?><div class="cer-section-intro"><?php echo wp_kses_post( wpautop( $partners_intro ) ); ?></div><?php endif; ?>
 											<div class="cer-kamgc-divider-center"></div>
 										</div>
 										<div class="cer-kamgc-partner-grid" aria-label="<?php esc_attr_e( 'Event partners', 'custom-event-registration' ); ?>" tabindex="0">

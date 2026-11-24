@@ -217,7 +217,8 @@ foreach ( array(
 	expect_feedback( false !== strpos( $markup, 'aria-live="polite"' ), 'Feedback must be announced accessibly.' );
 }
 $wpdb->summary_note = 'Custom event payment guidance.';
-expect_feedback( false !== strpos( cer_get_registration_form_markup( 1 ), $wpdb->summary_note ), 'Custom event notes must be preserved.' );
+$markup = cer_get_registration_form_markup( 1 );
+expect_feedback( false === strpos( $markup, $wpdb->summary_note ) && false !== strpos( $markup, $secure_copy ), 'Status notifications must use system guidance, never editable summary copy.' );
 foreach ( array( null, '', '0', '100.00' ) as $price ) {
 	$wpdb = new CER_Feedback_DB_Fixture( $price );
 	$markup = cer_get_registration_form_markup( 1 );

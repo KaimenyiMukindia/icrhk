@@ -29,6 +29,10 @@
 
     function createRow(type, index) {
         var row = '';
+        var template = document.getElementById('cer-template-' + type);
+        if (template) {
+            return $(template.innerHTML.replace(/__INDEX__/g, String(index)));
+        }
 
         if ('tickets' === type) {
             row = '<div class="cer-repeater-row" data-row-index="' + index + '">' +
@@ -294,7 +298,6 @@
         }
 
         var identityNames = {
-            event_title: true,
             event_slug: true,
             event_date: true,
             event_end_date: true,
@@ -303,7 +306,6 @@
             event_uuid: true
         };
         var appearanceNames = {
-            secondary_logo_id: true,
             brand_color_1: true,
             brand_color_2: true,
             background_image_id: true
@@ -324,7 +326,7 @@
             }
         });
 
-        ['background_image_id', 'secondary_logo_id', 'brand_color_1', 'brand_color_2'].forEach(function (name) {
+        ['background_image_id', 'brand_color_1', 'brand_color_2'].forEach(function (name) {
             var $field = appearancePanel.find('[name="' + name + '"]').closest('.cer-field');
             $field.addClass('cer-branding-' + name.replace(/_/g, '-'));
             appearancePanel.find('.cer-field-grid').append($field);
@@ -340,7 +342,8 @@
             panels.push($panel);
         });
 
-        panels.push(contentPanel, appearancePanel);
+        panels.unshift(contentPanel);
+        panels.push(appearancePanel);
         var labels = strings.tabs || {};
         var tabOrder = ['setup', 'content', 'program', 'partners', 'registration', 'appearance', 'mail'];
         var $tabs = $('<div class="cer-event-tabs"></div>');
@@ -475,19 +478,15 @@
         $content.each(function (index) {
             var $panel = $(this).attr('data-cer-fields', index);
             var names = $panel.find('[name]').map(function () { return this.name; }).get();
-            if (names.indexOf('event_info_heading') !== -1) {
+            if (names.indexOf('event_description') !== -1) {
                 initializeFieldTabs($panel, [
-                    {label: labels.information || 'Event information', matches: function (name) { return /^(event_info_|target_audience_heading)/.test(name); }},
-                    {label: labels.registration || 'Registration', matches: function (name) { return /^(registration_|summary_|primary_cta_|secondary_cta_)/.test(name); }},
-                    {label: labels.program || 'Program headings', matches: function (name) { return /^(speakers_|pillars_|objectives_|summit_structure_)/.test(name); }},
-                    {label: labels.partners || 'Partners & FAQ', matches: function (name) { return /^(sponsorship_|partners_|faq_)/.test(name); }}
-                ]);
-            } else {
-                initializeFieldTabs($panel, [
-                    {label: labels.description || 'Description & audience', matches: function (name) { return name === 'event_description' || name === 'target_audience'; }},
-                    {label: labels.hero || 'Hero content', matches: function (name) { return /^hero_/.test(name); }},
+                    {label: labels.hero || 'Hero content', matches: function (name) { return name === 'event_title' || name === 'event_description' || name === 'secondary_logo_id' || /^(hero_|primary_cta_|secondary_cta_)/.test(name); }},
                     {label: labels.search || 'Search preview', matches: function (name) { return /^meta_/.test(name); }}
                 ]);
+                $panel.find('[name="event_description"]').closest('.cer-field').addClass('cer-hero-description-field');
+                $panel.find('[name="hero_features"]').closest('.cer-field').addClass('cer-hero-features-field');
+                $panel.find('[name="secondary_logo_id"]').closest('.cer-field').addClass('cer-hero-logo-field');
+                $panel.find('[name="event_title"]').closest('[role="tabpanel"]').addClass('cer-hero-fields');
             }
         });
     }
@@ -509,7 +508,9 @@
         objectives: 'title',
         summit: 'title',
         partners: 'name',
-        faqs: 'question'
+        faqs: 'question',
+        hero_details: 'label',
+        page_content: 'header'
     };
     function initializeRepeaterTabs($container, preferredIndex) {
         var type = $container.data('repeater');
@@ -662,7 +663,9 @@
     function enhanceEditableFields($root) {
         $root.find('.cer-field').addBack('.cer-field').each(function () {
             var $field = $(this);
-            var $controls = editableControls($field);
+            var $controls = editableControls($field).filter(function () {
+                return $(this).closest('.cer-field')[0] === $field[0];
+            });
             if (!$controls.length) {
                 return;
             }
@@ -857,9 +860,82 @@
         });
     }
 
+    function initializePanelTabs($container, tabName) {
+        var $panels = $container.children('.cer-panel');
+        var $tabs = $('<div class="cer-item-tab-list cer-section-tab-list" role="tablist"></div>')
+            .attr('aria-label', $('#cer-event-tab-' + tabName).text());
+        var $activeTabInput = $('[name="cer_item_active_tabs[section_' + tabName + ']"]');
+        var selected = parseInt($activeTabInput.val(), 10) || 0;
+        if (selected < 0 || selected >= $panels.length) {
+            selected = 0;
+        }
+        $panels.each(function (index) {
+            var $panel = $(this);
+            var id = 'cer-section-' + tabName + '-' + index;
+            var itemType = $panel.attr('data-cer-item-type');
+            $panel.removeClass('is-collapsed').addClass('cer-item-tab-panel cer-section-tab-panel')
+                .attr({id: id, role: 'tabpanel', 'aria-labelledby': id + '-tab'});
+            var $tab = $('<button type="button" class="cer-item-tab" role="tab"></button>')
+                .attr({id: id + '-tab', 'aria-controls': id})
+                .text($panel.find('.cer-panel-header h2').first().text());
+            if ($panel.is('[data-cer-page-content]')) {
+                $panel.find('.cer-panel-header-actions').first().addClass('cer-section-visibility').prependTo($panel.find('.cer-panel-body').first());
+            }
+            $tabs.append($tab);
+            if ($panel.find('.cer-inline-error').length || (itemType && itemType === $('[name="cer_item_type"]').val())) {
+                selected = index;
+            }
+        });
+        function select(index, focus) {
+            $activeTabInput.val(index);
+            $panels.each(function (position) {
+                $(this).prop('hidden', position !== index);
+                $tabs.children().eq(position).attr({
+                    'aria-selected': position === index ? 'true' : 'false',
+                    tabindex: position === index ? 0 : -1
+                });
+            });
+            if ('setup' === tabName) {
+                $('[name="cer_item_type"]').val($panels.eq(index).attr('data-cer-item-type') || '');
+            }
+            if (focus) {
+                $tabs.children().eq(index).trigger('focus');
+            }
+        }
+        $tabs.on('click', '[role="tab"]', function () {
+            select($tabs.children().index(this), false);
+        }).on('keydown', '[role="tab"]', function (event) {
+            var index = $tabs.children().index(this);
+            if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].indexOf(event.key) === -1) {
+                return;
+            }
+            event.preventDefault();
+            if ('Home' === event.key) {
+                index = 0;
+            } else if ('End' === event.key) {
+                index = $panels.length - 1;
+            } else {
+                index = (index + ('ArrowRight' === event.key ? 1 : $panels.length - 1)) % $panels.length;
+            }
+            select(index, true);
+        });
+        $container.prepend($tabs);
+        select(selected, false);
+    }
+
+    function revealControlTabs($control) {
+        $($control.parents('[role="tabpanel"]').get().reverse()).each(function () {
+            $('#' + $(this).attr('aria-labelledby')).trigger('click');
+        });
+    }
+
     function initializePanelAccordions() {
         $('.cer-event-tab-panel').each(function () {
             var tabName = $(this).attr('data-cer-tab-panel');
+            if ('setup' === tabName || 'content' === tabName) {
+                initializePanelTabs($(this), tabName);
+                return;
+            }
             var $panels = $(this).children('.cer-panel');
             if ($panels.length < 2) {
                 return;
@@ -917,6 +993,7 @@
         });
         if ($errors.length) {
             var $firstError = $errors.first();
+            revealControlTabs($firstError);
             var $panel = $firstError.closest('.cer-panel');
             $panel.removeClass('is-collapsed');
             $panel.find('.cer-panel-toggle').attr('aria-expanded', 'true')
@@ -1186,11 +1263,7 @@
     markAndFocusErrors();
     $('#cer-event-form')[0].addEventListener('invalid', function (event) {
         var $control = $(event.target);
-        var $outer = $control.closest('[data-cer-tab-panel]');
-        $('#cer-event-tab-' + $outer.attr('data-cer-tab-panel')).trigger('click');
-        $control.parents('[role="tabpanel"]').each(function () {
-            $('#' + $(this).attr('aria-labelledby')).trigger('click');
-        });
+        revealControlTabs($control);
         var $panel = $control.closest('.cer-panel');
         if ($panel.hasClass('is-collapsed')) {
             $panel.find('.cer-panel-toggle').trigger('click');
