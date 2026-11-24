@@ -78,6 +78,11 @@ $GLOBALS['cer_current_mail_config'] = array( 'event_id' => 7, 'display_name' => 
 expect_mail_contract( true === cer_maybe_send_via_resend( null, array_merge( $atts, array( 'headers' => array( 'Content-Type: text/html; charset=UTF-8', 'Reply-To: organizer@example.test' ) ) ) ), 'Event mail must send.' );
 expect_mail_contract( '"KAMGC 2026 x Bcc: evil@example.test" <tickets@example.test>' === $http_payload['from'], 'Event name must be a sanitised display name on the verified no-reply address: ' . $http_payload['from'] );
 expect_mail_contract( array( 'organizer@example.test' ) === $http_payload['reply_to'] && ! isset( $http_payload['bcc'] ) && ! isset( $http_payload['cc'] ), 'Replies must go to the event Sender Email without copying anyone.' );
+expect_mail_contract( true === cer_maybe_send_via_resend( null, array_merge( $atts, array( 'headers' => array( 'Reply-To: organizer@example.test', 'Cc: organizer@example.test' ) ) ) ), 'Composed event mail must send through the existing transport.' );
+expect_mail_contract( array( 'organizer@example.test' ) === $http_payload['cc'] && array( 'organizer@example.test' ) === $http_payload['reply_to'], 'Composed mail must copy the Sender Email through Resend.' );
+$formatted_html = '<p>Dear attendee,</p><p><strong>Welcome</strong><br />Next line</p><ul><li>First</li><li>Second<ul><li>Nested</li></ul></li></ul><ol><li>Step one</li></ol><p><a href="https://example.test/?a=1&amp;b=2">Agenda</a></p><p style="text-align: center;"><span style="color: #123456;">Thank you &amp; welcome</span></p>';
+expect_mail_contract( true === cer_maybe_send_via_resend( null, array_merge( $atts, array( 'message' => $formatted_html, 'headers' => array( 'Content-Type: text/html; charset=UTF-8' ) ) ) ), 'Rich HTML mail must send through the existing Resend transport.' );
+expect_mail_contract( $formatted_html === $http_payload['html'], 'Resend must receive the composed paragraphs, lists, links, entities and inline formatting unchanged.' );
 unset( $GLOBALS['cer_current_mail_config'] );
 $wpdb = new CER_Mail_Contract_DB_Fixture();
 expect_mail_contract( 'organizer@example.test' === cer_get_event_reply_to( 7 ), 'Attendee replies must use the event Sender Email.' );

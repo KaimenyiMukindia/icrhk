@@ -4,6 +4,13 @@
     var ticketType = document.getElementById('cer-ticket-type');
     var ticketTypeId = document.getElementById('cer-ticket-type-id');
     var amountInput = document.getElementById('cer-amount');
+    var quantityInput = document.getElementById('cer-ticket-quantity');
+    var quantityMinus = document.getElementById('cer-quantity-minus');
+    var quantityPlus = document.getElementById('cer-quantity-plus');
+    var quantityTotal = document.getElementById('cer-quantity-total');
+    var ticketQuantities = form ? Array.prototype.slice.call(form.querySelectorAll('[data-ticket-quantity]')) : [];
+    var ticketPickerLabel = document.getElementById('cer-ticket-picker-label');
+    var ticketPicker = form ? form.querySelectorAll('.cer-ticket-picker')[0] : null;
     var summaryTicket = document.getElementById('cer-summary-ticket');
     var summaryAmount = document.getElementById('cer-summary-amount');
     var summaryMethod = document.getElementById('cer-summary-method');
@@ -23,17 +30,8 @@
     var requestInFlight = false;
     var paystackHandler = null;
     var feedbackState = 'idle';
-    var supportsViewTransitions = typeof document.startViewTransition === 'function';
 
     var currency = (window.cerRegistrationSettings && window.cerRegistrationSettings.currency) || 'KES';
-
-    function runUiTransition(callback) {
-        if (supportsViewTransitions) {
-            document.startViewTransition(callback);
-            return;
-        }
-        callback();
-    }
 
     function getPaystackHandler() {
         if (typeof window.PaystackPop !== 'function') {
@@ -67,12 +65,10 @@
             return;
         }
 
-        runUiTransition(function () {
-            messageBox.textContent = text;
-            messageBox.className = 'cer-form-footnote cer-form-message cer-form-message-' + state;
-            messageBox.setAttribute('aria-busy', state === 'info' ? 'true' : 'false');
-            messageBox.classList.toggle('cer-form-message-pending', state === 'info');
-        });
+        messageBox.textContent = text;
+        messageBox.className = 'cer-form-footnote cer-form-message cer-form-message-' + state;
+        messageBox.setAttribute('aria-busy', state === 'info' ? 'true' : 'false');
+        messageBox.classList.toggle('cer-form-message-pending', state === 'info');
     }
 
     function selectedTicket() {
@@ -83,6 +79,9 @@
     }
 
     function paymentRequired() {
+        if (ticketQuantities.length) {
+            return ticketQuantities.some(function (field) { return Number(field.value) > 0 && Number(field.dataset.price) > 0; });
+        }
         var selected = selectedTicket();
         if (selected && ticketType.value) {
             return parseFloat(selected.dataset.price || 0) > 0;
@@ -173,7 +172,7 @@
 
     function setPaymentMethod(method) {
         var needsPayment = paymentRequired();
-        method = needsPayment && method === 'card' ? 'card' : 'mpesa';
+        method = method === 'card' ? 'card' : 'mpesa';
         var isCard = method === 'card';
         if (form) {
             form.classList.toggle('cer-card-selected', isCard);
@@ -211,6 +210,16 @@
     };
 
     function updateSummary() {
+        var chosen = ticketQuantities.filter(function (field) { return Number(field.value) > 0; });
+        if (ticketQuantities.length && ticketType) {
+            ticketType.value = chosen.length ? chosen[0].dataset.title : '';
+            if (ticketType.options && chosen.length) {
+                ticketType.selectedIndex = Array.prototype.findIndex.call(ticketType.options, function (option) {
+                    return option.dataset.id === chosen[0].dataset.id;
+                });
+            }
+            if (quantityInput) { quantityInput.value = chosen.length ? chosen[0].value : '1'; }
+        }
         var activeTicketType = ticketType;
         var ticket = safeText(activeTicketType && activeTicketType.value);
         var amountValue = '0.00';
@@ -218,12 +227,19 @@
         if ( activeTicketType && activeTicketType.value ) {
             var selected = selectedTicket();
             if ( selected && selected.dataset.price ) {
-                amountValue = parseFloat(selected.dataset.price).toFixed(2);
+                amountValue = (parseFloat(selected.dataset.price) * (quantityInput ? Number(quantityInput.value) : 1)).toFixed(2);
             }
             if ( selected && selected.dataset.id && ticketTypeId ) {
                 ticketTypeId.value = selected.dataset.id;
             } else if ( ticketTypeId ) {
                 ticketTypeId.value = '0';
+            }
+            if (ticketQuantities.length) {
+                if (ticketTypeId) { ticketTypeId.value = chosen.length ? chosen[0].dataset.id : '0'; }
+                amountValue = (ticketQuantities.reduce(function (total, field) {
+                    return total + Math.round(Number(field.dataset.price) * 100) * Number(field.value || 0);
+                }, 0) / 100).toFixed(2);
+                ticket = chosen.map(function (field) { return field.dataset.title + ' × ' + field.value; }).join('\n');
             }
         } else if ( ticketTypeId ) {
             ticketTypeId.value = '0';
@@ -233,11 +249,16 @@
             amountInput.value = amountValue;
         }
         if (summaryTicket && (ticket || !isSoldOut() || form.dataset.ticketCount !== '1')) {
-            summaryTicket.textContent = ticket || 'Select a ticket';
+            summaryTicket.textContent = ticket || '\u2014';
         }
         if (summaryAmount) {
             summaryAmount.textContent = formatCurrency(amountValue);
         }
+        if (quantityTotal) {
+            quantityTotal.textContent = (quantityInput ? quantityInput.value : '1') + ' ticket(s) — ' + formatCurrency(amountValue);
+        }
+        if (quantityMinus) { quantityMinus.disabled = requestInFlight || Number(quantityInput.value) <= 1; }
+        if (quantityPlus) { quantityPlus.disabled = requestInFlight || Number(quantityInput.value) >= Number(quantityInput.max); }
         if (summaryMethod) {
             var methodLabel = paymentMethodHidden && paymentMethodHidden.value === 'card' ? 'Credit/Debit Card' : 'M-Pesa';
             summaryMethod.textContent = methodLabel;
@@ -252,10 +273,50 @@
         }
     }
 
+    if (quantityInput && quantityMinus && quantityPlus) {
+        quantityInput.addEventListener('input', function () { updateSummary(); updateSubmitState(); });
+        quantityMinus.addEventListener('click', function () {
+            quantityInput.value = String(Math.max(1, Number(quantityInput.value || 1) - 1));
+            quantityInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        quantityPlus.addEventListener('click', function () {
+            quantityInput.value = String(Math.min(Number(quantityInput.max), Number(quantityInput.value || 1) + 1));
+            quantityInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+    ticketQuantities.forEach(function (field) {
+        var row = field.closest('[data-ticket-choice]');
+        row.querySelector('[data-ticket-minus]').addEventListener('click', function () {
+            field.value = String(Math.max(0, Number(field.value || 0) - 1));
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        row.querySelector('[data-ticket-plus]').addEventListener('click', function () {
+            field.value = String(Math.min(Number(field.max), Number(field.value || 0) + 1));
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        field.addEventListener('input', function () {
+            var others = ticketQuantities.reduce(function (sum, other) { return sum + (other === field ? 0 : Number(other.value || 0)); }, 0);
+            var sharedLimit = Math.min(20, Number(form.dataset.remainingSeats || 20));
+            if (Number.isInteger(Number(field.value)) && Number(field.value) > Math.min(Number(field.max), Math.max(0, sharedLimit - others))) {
+                field.value = String(Math.min(Number(field.max), Math.max(0, sharedLimit - others)));
+            }
+            updateSummary();
+            setPaymentMethod(paymentMethodHidden ? paymentMethodHidden.value : 'mpesa');
+            updateSubmitState();
+        });
+        field.addEventListener('change', function () {
+            if (field.value === '') {
+                field.value = '0';
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+    });
+
     function updateSubmitState() {
         if (!submitButton) {
             return;
         }
+        form.dataset.checkoutPending = requestInFlight ? 'true' : 'false';
         var requiredFields = form ? Array.prototype.slice.call(form.querySelectorAll('[required]')) : [];
         var valid = !!ticketType && !!ticketType.value && requiredFields.every(function (field) {
             if (field.type === 'radio') {
@@ -264,10 +325,23 @@
             return field.checkValidity();
         });
         submitButton.disabled = !valid || requestInFlight || isSoldOut();
+        if (quantityInput) { quantityInput.readOnly = requestInFlight; }
+        if (quantityMinus) { quantityMinus.disabled = requestInFlight || isSoldOut() || Number(quantityInput.value) <= 1; }
+        if (quantityPlus) { quantityPlus.disabled = requestInFlight || isSoldOut() || Number(quantityInput.value) >= Number(quantityInput.max); }
+        var totalQuantity = ticketQuantities.reduce(function (sum, field) { return sum + Number(field.value || 0); }, 0);
+        ticketQuantities.forEach(function (field) {
+            var row = field.closest('[data-ticket-choice]');
+            field.readOnly = requestInFlight;
+            row.querySelector('[data-ticket-minus]').disabled = requestInFlight || field.disabled || Number(field.value) <= 0;
+            row.querySelector('[data-ticket-plus]').disabled = requestInFlight || field.disabled || Number(field.value) >= Number(field.max)
+                || totalQuantity >= Math.min(20, Number(form.dataset.remainingSeats || 20));
+        });
+        if (ticketQuantities.length && (totalQuantity < 1 || totalQuantity > 20 || !ticketQuantities.every(function (field) { return field.checkValidity(); }))) { submitButton.disabled = true; }
     }
 
     function pollPaymentStatus(reference) {
         var attempts = 0;
+        var ticketWord = ticketQuantities.filter(function (field) { return Number(field.value) > 0; }).length > 1 ? 'tickets' : 'ticket';
         var verificationInFlight = false;
         var verificationUnavailable = false;
         function finish(text, state) {
@@ -300,7 +374,7 @@
                     verificationUnavailable = false;
                 }
                 if (verification.status === 'success' && verification.registration_status === 'paid') {
-                    finish('Payment confirmed. Your ticket and receipt will be emailed shortly.', 'success');
+                    finish('Payment confirmed. Your ' + ticketWord + ' and receipt will be emailed shortly.', 'success');
                     return;
                 }
                 if (['failed', 'abandoned', 'cancelled', 'canceled', 'reversed', 'timeout'].indexOf(verification.status) >= 0) {
@@ -308,7 +382,7 @@
                     return;
                 }
                 if (attempts >= 40) {
-                    finish('Your payment is still awaiting confirmation. If you approved it or were charged, do not pay again. Your ticket and receipt will be emailed once confirmed; contact the event team if you need help.', 'warning');
+                    finish('Your payment is still awaiting confirmation. If you approved it or were charged, do not pay again. Your ' + ticketWord + ' and receipt will be emailed once confirmed; contact the event team if you need help.', 'warning');
                 }
             }).catch(function (error) {
                 console.error('CER payment verification failed:', error);
@@ -338,9 +412,11 @@
     }
 
     function showStep(index) {
+        if (ticketPicker) { ticketPicker.open = false; }
         formSteps.forEach(function (step, stepIndex) {
             var active = stepIndex === index;
             step.hidden = !active;
+            step.inert = !active;
             step.classList.toggle('is-active', active);
             if (progressSteps[stepIndex]) {
                 progressSteps[stepIndex].classList.toggle('is-active', active || stepIndex < index);
@@ -384,6 +460,12 @@
                 invalid.reportValidity();
                 return;
             }
+            if (ticketQuantities.length && !ticketQuantities.some(function (field) { return Number(field.value) > 0; })) {
+                setMessage('Please select at least one ticket.', 'warning');
+                var picker = form.querySelector('.cer-ticket-picker');
+                if (picker) { picker.open = true; }
+                return;
+            }
             showStep(1);
         });
     }
@@ -399,10 +481,38 @@
         field.addEventListener('change', updateSubmitState);
     });
 
+    if (ticketPicker) {
+        var positionTicketChoices = function () {
+            if (!ticketPicker.open) { return; }
+            var choices = ticketPicker.querySelector('.cer-ticket-choices');
+            var anchor = ticketPicker.getBoundingClientRect();
+            var width = Math.min(352, document.documentElement.clientWidth - 24);
+            var left = Math.max(12, Math.min(anchor.right - width, document.documentElement.clientWidth - width - 12));
+            choices.style.width = width + 'px';
+            choices.style.left = (left - anchor.left) + 'px';
+            choices.style.right = 'auto';
+        };
+        ticketPicker.addEventListener('toggle', positionTicketChoices);
+        if (typeof window.ResizeObserver === 'function') {
+            new window.ResizeObserver(positionTicketChoices).observe(ticketPicker);
+        }
+        document.addEventListener('pointerdown', function (event) {
+            if (!ticketPicker.contains(event.target)) { ticketPicker.open = false; }
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && ticketPicker.open) {
+                ticketPicker.open = false;
+                ticketPickerLabel.focus();
+            }
+        });
+        window.addEventListener('resize', function () { ticketPicker.open = false; });
+    }
+
     Array.prototype.forEach.call(form ? form.querySelectorAll('[data-cer-field-row]') : [], function (row) {
         var groups = Array.prototype.slice.call(row.querySelectorAll(':scope > .cer-field-group'));
         groups.forEach(function (group) {
             var activate = function () {
+                if (ticketPicker && !group.contains(ticketPicker)) { ticketPicker.open = false; }
                 row.classList.add('has-active-field');
                 groups.forEach(function (item) { item.classList.toggle('is-active-field', item === group); });
             };
@@ -429,6 +539,14 @@
     if (!form) {
         return;
     }
+    form.addEventListener('cer:availability', function () {
+        updateSummary();
+        updateSubmitState();
+        if (form.dataset.quantityAdjusted === 'true') {
+            setMessage('Ticket availability changed. Your selected quantities were adjusted; please review the total before continuing.', 'warning');
+            delete form.dataset.quantityAdjusted;
+        }
+    });
 
     function submitRegistration(event) {
         if (event && event.preventDefault) {
@@ -917,6 +1035,9 @@
 
     groups.forEach(function (group) {
         Array.prototype.forEach.call(document.querySelectorAll(group.selector), function (el, i) {
+            if (el.querySelector('#cer-registration-form, #cer-summary-amount')) {
+                return;
+            }
             if (el.hasAttribute('data-aos')) {
                 return;
             }
@@ -1262,6 +1383,44 @@
         var allUnavailable = availability.tickets.length > 0 && availability.tickets.every(function (item) {
             return item.maintenance || item.remaining === 0;
         });
+        var basketFields = Array.prototype.slice.call(form.querySelectorAll('[data-ticket-quantity]'));
+        var quantityField = document.getElementById('cer-ticket-quantity');
+        if (!basketFields.length && quantityField && ticket) {
+            var quantityTicketId = ticket.options && ticket.selectedIndex >= 0 ? Number(ticket.options[ticket.selectedIndex].dataset.id) : Number(ticket.dataset.id);
+            var quantityItem = availability.tickets.find(function (item) { return item.id === quantityTicketId; });
+            var previousMax = quantityField.max;
+            quantityField.max = String(quantityItem && quantityItem.remaining !== null ? Math.max(1, Math.min(20, quantityItem.remaining)) : 20);
+            if (Number(quantityField.value) > Number(quantityField.max)) {
+                quantityField.value = quantityField.max;
+            }
+            if (previousMax !== quantityField.max) {
+                quantityField.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+        if (basketFields.length) {
+            selectedUnavailable = false;
+            selectedMaintenance = false;
+            form.dataset.remainingSeats = String(availability.remaining === null ? 20 : availability.remaining);
+            var seatsLeft = Math.min(20, availability.remaining === null ? 20 : availability.remaining);
+            basketFields.forEach(function (field) {
+                var item = availability.tickets.find(function (entry) { return entry.id === Number(field.dataset.id); });
+                var unavailable = !item || item.maintenance || item.remaining === 0;
+                field.max = String(unavailable ? 0 : Math.min(20, item.remaining === null ? 20 : item.remaining));
+                var stock = field.closest('[data-ticket-choice]').querySelector('[data-ticket-stock]');
+                stock.textContent = item ? optionSuffix(item, unavailable) : ' - Unavailable';
+                if (form.dataset.checkoutPending !== 'true') {
+                    var previousQuantity = field.value;
+                    field.disabled = unavailable;
+                    field.value = String(Math.max(0, Math.min(Number(field.value || 0), Number(field.max), seatsLeft)));
+                    if (previousQuantity !== field.value) { form.dataset.quantityAdjusted = 'true'; }
+                    seatsLeft -= Number(field.value);
+                }
+            });
+        }
+        if (form.dataset.checkoutPending === 'true') {
+            form.dataset.availabilityReady = optionsChanged ? 'false' : 'true';
+            return;
+        }
         var maintenanceUnavailable = allUnavailable && availability.tickets.some(function (item) { return item.maintenance; });
         var availabilityChangedToAvailable = initiallyUnavailable && !allUnavailable;
         var registrationUnavailable = allUnavailable || selectedUnavailable || availabilityChangedToAvailable;
@@ -1290,6 +1449,7 @@
         form.dataset.availabilityReady = optionsChanged ? 'false' : 'true';
         error.textContent = optionsChanged || availabilityChangedToAvailable || (registrationUnavailable && !maintenanceUnavailable && !selectedMaintenance && availability.remaining !== null && availability.remaining > 0)
             ? 'Ticket availability has changed. Refresh this page to update the registration form.' : '';
+        if (basketFields.length) { form.dispatchEvent(new Event('cer:availability')); }
     }
 
     if (ticket && ticket.options) {

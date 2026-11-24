@@ -52,6 +52,11 @@ function cer_process_event_notifications(): void {
 		$tickets = $wpdb->get_col( $wpdb->prepare(
 			"SELECT r.id FROM {$registrations} r INNER JOIN {$events} e ON e.id = r.event_id
 			WHERE r.status = 'confirmed' AND r.amount <= 0 AND r.deleted_at IS NULL
+			AND r.admission_quantity > 0
+			AND (r.parent_registration_id IS NULL OR EXISTS (
+				SELECT 1 FROM {$registrations} parent WHERE parent.id = r.parent_registration_id AND parent.deleted_at IS NULL
+				AND (parent.status = 'paid' OR (parent.status = 'confirmed' AND parent.amount <= 0))
+			))
 			AND r.ticket_sent_at IS NULL AND e.deleted_at IS NULL AND e.status = 'published'
 			AND e.event_date > %s AND (r.ticket_delivery_attempted_at IS NULL OR r.ticket_delivery_attempted_at <= %s)
 			ORDER BY r.ticket_delivery_attempted_at ASC, r.id ASC LIMIT 25",
@@ -71,10 +76,15 @@ function cer_process_event_notifications(): void {
 			}
 		}
 		$reminders = $wpdb->get_results( $wpdb->prepare(
-			"SELECT r.id, r.event_id, r.full_name, r.email, r.user_access_key, e.name AS event_name, e.event_date, e.venue FROM {$registrations} r
+			"SELECT r.*, e.name AS event_name, e.event_date, e.venue FROM {$registrations} r
 			INNER JOIN {$events} e ON e.id = r.event_id
 			WHERE (r.status = 'paid' OR (r.status = 'confirmed' AND r.amount <= 0))
 			AND r.deleted_at IS NULL AND e.deleted_at IS NULL AND e.status = 'published'
+			AND r.admission_quantity > 0
+			AND (r.parent_registration_id IS NULL OR EXISTS (
+				SELECT 1 FROM {$registrations} parent WHERE parent.id = r.parent_registration_id AND parent.deleted_at IS NULL
+				AND (parent.status = 'paid' OR (parent.status = 'confirmed' AND parent.amount <= 0))
+			))
 			AND e.event_date > %s AND e.event_date <= %s
 			AND (r.reminder_event_date IS NULL OR r.reminder_event_date <> e.event_date)
 			AND (r.reminder_attempted_at IS NULL OR r.reminder_attempted_at <= %s)
@@ -100,12 +110,19 @@ function cer_process_event_notifications(): void {
 			}
 		}
 		cer_process_vendor_notifications( $now );
+		if ( function_exists( 'cer_process_scheduled_event_mail' ) ) {
+			cer_process_scheduled_event_mail( $now );
+		}
 	} finally {
 		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(SHA2(CONCAT(DATABASE(), %s), 256))', $lock ) );
 	}
 }
 
 function cer_send_event_reminder( array $registration ): bool {
+	if ( ! cer_registration_ticket_is_valid( $registration ) ) {
+		error_log( 'CER reminder skipped for invalid admission ' . (int) $registration['id'] );
+		return false;
+	}
 	$email = cer_decrypt_pii( $registration['email'] );
 	if ( ! is_email( $email ) || empty( $registration['user_access_key'] ) ) {
 		error_log( 'CER reminder recipient or ticket key invalid for ' . (int) $registration['id'] );
@@ -182,6 +199,14 @@ function cer_mark_vendor_notified( array $registration_ids ): void {
 // Called after a ticket is delivered: notify the vendor now only inside the real-time window, otherwise queue for the digest.
 function cer_notify_vendor_of_registration( int $registration_id ): void {
 	global $wpdb;
+	$parent_id = $wpdb->get_var( $wpdb->prepare( "SELECT parent_registration_id FROM {$wpdb->prefix}evt_registrations WHERE id = %d", $registration_id ) );
+	if ( $wpdb->last_error ) {
+		error_log( 'CER vendor allocation lookup failed: ' . $wpdb->last_error );
+		return;
+	}
+	if ( $parent_id ) {
+		return;
+	}
 	if ( ! cer_vendor_notifications_ready() ) {
 		cer_send_admin_receipt_for_registration( $registration_id );
 		return;
@@ -209,13 +234,14 @@ function cer_process_vendor_notifications( DateTimeImmutable $now ): void {
 	$digest_due = $local->format( 'H:i' ) >= '03:05' && get_option( 'cer_vendor_digest_last_date', '' ) !== $today;
 	$cutoff = $local->setTime( 0, 0 )->setTimezone( wp_timezone() )->format( 'Y-m-d H:i:s' );
 	$rows = $wpdb->get_results( $wpdb->prepare(
-		"SELECT r.id, r.event_id, r.full_name, r.email, r.ticket_type, r.amount, COALESCE(r.ticket_sent_at, r.created_at) AS confirmed_on,
+		"SELECT r.id, r.event_id, r.full_name, r.email, r.ticket_type, r.ticket_quantity, r.amount, COALESCE(r.ticket_sent_at, r.created_at) AS confirmed_on,
 		e.name AS event_name, e.event_date, e.event_end_date, e.mail_notification_email, t.name AS ticket_name
 		FROM {$wpdb->prefix}evt_registrations r
 		INNER JOIN {$wpdb->prefix}evt_events e ON e.id = r.event_id
 		LEFT JOIN {$wpdb->prefix}evt_ticket_types t ON t.id = r.ticket_type_id
 		WHERE (r.status = 'paid' OR (r.status = 'confirmed' AND r.amount <= 0))
 		AND r.deleted_at IS NULL AND e.deleted_at IS NULL AND r.vendor_notified_at IS NULL
+		AND r.parent_registration_id IS NULL
 		AND e.mail_notification_email IS NOT NULL AND e.mail_notification_email <> ''
 		AND (r.vendor_notify_attempted_at IS NULL OR r.vendor_notify_attempted_at <= %s)
 		ORDER BY r.event_id ASC, r.id ASC LIMIT 2000",
@@ -272,7 +298,7 @@ function cer_send_vendor_registration_summary( int $event_id, array $rows, bool 
 		$email = cer_decrypt_pii( $row['email'] );
 		$items .= '<li>' . esc_html( cer_decrypt_pii( $row['full_name'] ) ) . ' &ndash; '
 			. ( is_email( $email ) ? '<a href="mailto:' . esc_attr( $email ) . '">' . esc_html( $email ) . '</a>' : esc_html( $email ) )
-			. ' &ndash; ' . esc_html( $row['ticket_name'] ?: ( $row['ticket_type'] ?: 'General admission' ) ) . '</li>';
+			. ' &ndash; ' . esc_html( $row['ticket_name'] ?: ( $row['ticket_type'] ?: 'General admission' ) ) . ' (' . (int) ( $row['ticket_quantity'] ?? 1 ) . ' seats)</li>';
 	}
 	$body = '<p>' . $intro . '</p><ol>' . $items . '</ol><p>Total: ' . count( $rows ) . '</p>';
 	$headers = array( 'Content-Type: text/html; charset=UTF-8' );

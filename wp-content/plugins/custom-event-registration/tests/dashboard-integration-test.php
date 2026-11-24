@@ -523,7 +523,7 @@ try {
 	libxml_clear_errors();
 	libxml_use_internal_errors( $previous );
 	$native_xpath = new DOMXPath( $native_document );
-	$enabled_submits = $native_xpath->query( '//form[@id="cer-event-form"]//*[@type="submit" and not(@disabled)] | //*[@form="cer-event-form" and @type="submit" and not(@disabled)]' );
+	$enabled_submits = $native_xpath->query( '//form[@id="cer-event-form"]//*[@type="submit" and not(@disabled) and (not(@form) or @form="cer-event-form")] | //*[@form="cer-event-form" and @type="submit" and not(@disabled)]' );
 	cer_test_assert( 0 === $enabled_submits->length, 'An unconfirmed native save must disable all save buttons.' );
 	cer_test_assert( 'Preserve unconfirmed native edits' === $native_xpath->query( '//input[@name="event_title"]' )->item( 0 )->getAttribute( 'value' ), 'Unconfirmed native edits were not preserved for copying.' );
 

@@ -923,6 +923,16 @@ if ( ! empty( $errors ) ) {
 ?>
 <div class="wrap cer-admin-shell">
 	<hr class="wp-header-end" />
+	<?php
+	if ( isset( $_GET['cer_mail_notice'] ) ) {
+		$mail_notice_key = 'cer_event_mail_notice_' . get_current_user_id();
+		$mail_notice = get_transient( $mail_notice_key );
+		delete_transient( $mail_notice_key );
+		if ( is_array( $mail_notice ) ) {
+			cer_render_admin_notice( $mail_notice['message'], $mail_notice['error'] ? 'error' : 'success' );
+		}
+	}
+	?>
 	<?php if ( isset( $_GET['cer_notice'] ) && 'updated' === sanitize_key( wp_unslash( $_GET['cer_notice'] ) ) && isset( $item_section_tabs[ $requested_item_type ] ) ) : ?>
 		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Event item updated successfully.', 'custom-event-registration' ); ?></p></div>
 	<?php endif; ?>
@@ -1704,7 +1714,9 @@ if ( ! empty( $errors ) ) {
 				<div class="cer-panel-header-actions"></div>
 			</div>
 			<div class="cer-panel-body">
-				<div class="cer-field-grid">
+				<div class="cer-mail-layout">
+					<?php include CER_PLUGIN_DIR . 'admin/event-mail-composer.php'; ?>
+					<div class="cer-mail-settings">
 					<div class="cer-field">
 						<label for="mail-sender-email"><?php esc_html_e( 'Sender Email', 'custom-event-registration' ); ?></label>
 						<input type="email" id="mail-sender-email" name="mail_sender_email" value="<?php echo esc_attr( $event_data['mail_sender_email'] ); ?>" placeholder="organizer@example.com" />
@@ -1714,6 +1726,7 @@ if ( ! empty( $errors ) ) {
 						<label for="mail-notification-email"><?php esc_html_e( 'Notification Email', 'custom-event-registration' ); ?></label>
 						<input type="email" id="mail-notification-email" name="mail_notification_email" value="<?php echo esc_attr( $event_data['mail_notification_email'] ?? '' ); ?>" placeholder="organizer@example.com" />
 						<p class="cer-help-text"><?php esc_html_e( 'Vendor address that receives a notification for each confirmed registration.', 'custom-event-registration' ); ?></p>
+					</div>
 					</div>
 				</div>
 			</div>
@@ -1743,4 +1756,11 @@ if ( ! empty( $errors ) ) {
 		<p id="cer-form-status" class="screen-reader-text" role="status" aria-live="polite"></p>
 		<input type="hidden" name="cer_event_form_complete" value="1" />
 	</form>
+	<?php if ( $event_id ) : ?>
+		<form id="cer-event-mail-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="cer_queue_event_mail" />
+			<input type="hidden" name="event_id" value="<?php echo esc_attr( $event_id ); ?>" />
+			<?php wp_nonce_field( 'cer_event_mail_' . $event_id, 'cer_event_mail_nonce' ); ?>
+		</form>
+	<?php endif; ?>
 </div>

@@ -50,7 +50,7 @@ function cer_get_dashboard_event_metrics( int $event_id, ?array $event = null ) 
 	$registration_metrics = $wpdb->get_row(
 		$wpdb->prepare(
 			"SELECT SUM(deleted_at IS NULL) AS total_registrations,
-				SUM(status IN ('paid','confirmed')) AS tickets_sold,
+				SUM(CASE WHEN parent_registration_id IS NULL AND status IN ('paid','confirmed') THEN ticket_quantity ELSE 0 END) AS tickets_sold,
 				COALESCE(SUM(CASE WHEN status IN ('paid','confirmed') THEN amount ELSE 0 END), 0) AS revenue_collected
 			FROM {$wpdb->prefix}evt_registrations
 			WHERE event_id = %d",
@@ -299,6 +299,32 @@ function cer_render_trash_admin_notice(): void {
 
 	if ( isset( $messages[ $notice ] ) ) {
 		printf( '<div class="notice notice-success is-dismissible"><p>%s</p></div>', esc_html( $messages[ $notice ] ) );
+	} elseif ( 'ticket_assigned' === $notice ) {
+		$key = 'cer_assignment_notice_' . get_current_user_id();
+		$result = get_transient( $key );
+		delete_transient( $key );
+		if ( is_array( $result ) ) {
+			cer_render_admin_notice( $result['message'], $result['error'] ? 'error' : 'success' );
+		}
+	} elseif ( 'payment_verified' === $notice ) {
+		$key = 'cer_payment_verify_' . get_current_user_id();
+		$result = get_transient( $key );
+		delete_transient( $key );
+		if ( is_array( $result ) ) {
+			cer_render_admin_notice( $result['message'], $result['error'] ? 'error' : 'success' );
+		}
+	} elseif ( 'ticket_retry' === $notice ) {
+		$key = 'cer_ticket_retry_result_' . get_current_user_id();
+		$result = get_transient( $key );
+		delete_transient( $key );
+		if ( is_array( $result ) ) {
+			$type = empty( $result['failed'] ) ? 'success' : 'warning';
+			$message = sprintf( __( 'Ticket delivery: %1$d sent; %2$d already sent.', 'custom-event-registration' ), $result['sent'], $result['already_sent'] );
+			if ( ! empty( $result['failed'] ) ) {
+				$message .= ' ' . implode( ' ', $result['failed'] );
+			}
+			printf( '<div class="notice notice-%s is-dismissible"><p>%s</p></div>', esc_attr( $type ), esc_html( $message ) );
+		}
 	} elseif ( 'error' === $notice ) {
 		$message = get_transient( 'cer_registration_bulk_error' );
 		delete_transient( 'cer_registration_bulk_error' );

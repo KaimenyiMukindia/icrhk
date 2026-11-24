@@ -31,6 +31,12 @@ if ( '' === $function_source ) {
 eval( $function_source );
 
 function wp_unslash( $value ) { return $value; }
+class WP_Error {
+	private $message;
+	public function __construct( $code, $message ) { $this->message = $message; }
+	public function get_error_message() { return $this->message; }
+}
+function is_wp_error( $value ) { return $value instanceof WP_Error; }
 function sanitize_text_field( $value ) { return trim( strip_tags( $value ) ); }
 function sanitize_textarea_field( $value ) { return sanitize_text_field( $value ); }
 function sanitize_email( $value ) { return filter_var( $value, FILTER_VALIDATE_EMAIL ) ?: ''; }
@@ -42,12 +48,18 @@ function cer_get_registration_hold_seconds() { return 600; }
 function cer_prepare_registration_row( $row ) { return $row; }
 function cer_registration_search_hash( $email ) { return hash( 'sha256', strtolower( trim( $email ) ) ); }
 function cer_send_ticket_for_registration( $id ) { return $GLOBALS['ticket_sends_succeed'] ?? true; }
+function cer_record_payment_error( $id, $message ) {}
+function cer_parse_ticket_quantity( $value ) {
+	return (int) $value >= 1 && (int) $value <= 20 ? (int) $value : new WP_Error( 'quantity', 'Choose between 1 and 20 tickets.' );
+}
 function delete_transient( $name ) {}
 function wp_schedule_single_event( $time, $hook, $args ) { return true; }
 function wp_strip_all_tags( $value ) { return strip_tags( $value ); }
 function wp_kses_post( $value ) { return $value; }
 function esc_attr( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES ); }
 function esc_html( $value ) { return esc_attr( $value ); }
+function disabled( $disabled ) { if ( $disabled ) { echo ' disabled'; } }
+function selected( $selected ) { if ( $selected ) { echo ' selected'; } }
 function number_format_i18n( $value, $decimals ) { return number_format( $value, $decimals ); }
 function get_bloginfo( $name ) { return 'Test Events'; }
 function wp_nonce_field( $action, $name ) { echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="valid">'; }
@@ -90,7 +102,7 @@ class CER_Feedback_DB_Fixture {
 	public function get_var( $query ) { return $this->paid_counts ? array_shift( $this->paid_counts ) : $this->paid; }
 	public function get_results( $query ) { return $this->tickets ?? array( $this->get_row( 'evt_ticket_types' ) ); }
 	public function query( $query ) { $this->queries[] = $query; return 1; }
-	public function insert( $table, $row, $formats ) {
+	public function insert( $table, $row, $formats = null ) {
 		if ( $this->insert_fails ) { return false; }
 		$this->saved = $row;
 		return 1;
@@ -212,7 +224,7 @@ foreach ( array( null, '', '0', '100.00' ) as $price ) {
 	expect_feedback( false === strpos( $markup, '<select id="cer-ticket-type"' ), 'A single ticket must not render a ticket dropdown.' );
 	expect_feedback( false !== strpos( $markup, 'id="cer-ticket-type" name="ticket_type" type="hidden" value="Delegate"' ), 'A single ticket name must still be submitted.' );
 	expect_feedback( false !== strpos( $markup, 'name="ticket_type_id" value="2"' ), 'A single ticket id must be selected without JavaScript.' );
-	expect_feedback( false !== strpos( $markup, 'Ticket: <strong>Delegate</strong>' ), 'A single ticket must have a visible label.' );
+	expect_feedback( false !== strpos( $markup, '<span>Delegate <small>' ), 'A single ticket must have a visible inline label.' );
 	foreach ( array( 'full_name', 'email', 'phone' ) as $field ) {
 		expect_feedback( false !== strpos( $markup, 'name="' . $field . '"' ), 'Contact fields must be retained.' );
 	}
@@ -220,7 +232,7 @@ foreach ( array( null, '', '0', '100.00' ) as $price ) {
 	expect_feedback( false !== strpos( $markup, 'data-payment-required="' . ( $required ? 'true' : 'false' ) . '"' ), 'Initial payment UI must reflect the stored price.' );
 	if ( ! $required ) {
 		expect_feedback( false !== strpos( $markup, '>Register</button>' ), 'Unpriced tickets need a registration-only action.' );
-		expect_feedback( false !== strpos( $markup, 'No payment is required to submit this form.' ), 'Unpriced tickets need registration-only guidance.' );
+		expect_feedback( false !== strpos( $markup, 'No payment is required yet to submit this form.' ), 'Unpriced tickets need registration-only guidance.' );
 	}
 }
 $wpdb->tickets = array(
@@ -230,7 +242,7 @@ $wpdb->tickets = array(
 $markup = cer_get_registration_form_markup( 1 );
 expect_feedback( 1 === substr_count( $markup, '<select id="cer-ticket-type"' ), 'Multiple tickets must retain the ticket selector.' );
 expect_feedback( false !== strpos( $markup, '>Contact registration</option>' ), 'Unpriced options must not display a misleading zero-price charge.' );
-expect_feedback( false !== strpos( $markup, '>Paid ticket (KES 100.00)</option>' ), 'Paid option labels must retain their prices.' );
+expect_feedback( false !== strpos( $markup, '>Paid ticket (100)</option>' ), 'Paid option labels must retain compact prices.' );
 $wpdb->tickets = array();
 $markup = cer_get_registration_form_markup( 1 );
 expect_feedback( false !== strpos( $markup, 'No ticket types available' ), 'No-ticket events must not auto-select a fictitious ticket.' );
@@ -240,8 +252,8 @@ function cer_test_ticket( $id, $name, $price, $available, $sold ) {
 $wpdb = new CER_Feedback_DB_Fixture( 100 );
 $wpdb->tickets = array( cer_test_ticket( 2, 'Early bird', '100.00', 5, 5 ), cer_test_ticket( 3, 'Regular', '200.00', 5, 1 ), cer_test_ticket( 4, 'VIP', '500.00', null, 9 ) );
 $markup = cer_get_registration_form_markup( 1 );
-expect_feedback( false !== strpos( $markup, 'data-price="100.00" disabled data-sold-out="true">Early bird (KES 100.00) - Sold out</option>' ), 'Sold-out options must be disabled and labelled.' );
-expect_feedback( false !== strpos( $markup, '>Regular (KES 200.00)</option>' ) && false !== strpos( $markup, '>VIP (KES 500.00)</option>' ), 'Available options must remain selectable.' );
+expect_feedback( false !== strpos( $markup, 'data-price="100.00" disabled data-sold-out="true">Early bird (100) - Sold out</option>' ), 'Sold-out options must be disabled and labelled.' );
+expect_feedback( false !== strpos( $markup, '>Regular (200)</option>' ) && false !== strpos( $markup, '>VIP (500)</option>' ), 'Available options must remain selectable.' );
 expect_feedback( false === strpos( $markup, 'cer-sold-out' ), 'Partial sell-out must not lock the form.' );
 $wpdb->tickets = array( cer_test_ticket( 2, 'Scheduled', '100.00', 10, 0 ) );
 $wpdb->tickets[0]->is_maintenance = true;
@@ -250,7 +262,7 @@ expect_feedback( false !== strpos( $markup, 'data-maintenance="true"' ) && false
 expect_feedback( false !== strpos( $markup, 'disabled>Temporarily Unavailable</button>' ) && false !== strpos( $markup, 'maintenance is in progress' ), 'A ticket under maintenance must disable registration and explain why.' );
 $wpdb->tickets = array( cer_test_ticket( 2, 'Early bird', '100.00', 5, 5 ), cer_test_ticket( 3, 'Regular', '0', 5, 1 ) );
 $markup = cer_get_registration_form_markup( 1 );
-expect_feedback( false === strpos( $markup, '<select id="cer-ticket-type"' ) && false !== strpos( $markup, 'Ticket: <strong>Regular</strong>' ), 'One remaining ticket must display without a ticket dropdown.' );
+expect_feedback( false === strpos( $markup, '<select id="cer-ticket-type"' ) && false !== strpos( $markup, '<span>Regular <small>' ), 'One remaining ticket must display without a ticket dropdown.' );
 expect_feedback( false !== strpos( $markup, 'data-payment-required="false"' ), 'Payment must follow the remaining ticket, not the sold-out one.' );
 foreach ( array(
 	array( array( cer_test_ticket( 2, 'Delegate', '100.00', 3, 3 ) ), null, 0, 'Tickets for this event are sold out.' ),

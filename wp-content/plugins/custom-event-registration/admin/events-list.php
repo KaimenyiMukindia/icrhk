@@ -51,7 +51,7 @@ $select_sql = "SELECT e.*, COALESCE(reg.total_registrations, 0) AS total_registr
 	LEFT JOIN (
 		SELECT event_id,
 			SUM(deleted_at IS NULL) AS total_registrations,
-			SUM(CASE WHEN status IN ('paid','confirmed') THEN 1 ELSE 0 END) AS tickets_sold,
+			SUM(CASE WHEN parent_registration_id IS NULL AND status IN ('paid','confirmed') THEN ticket_quantity ELSE 0 END) AS tickets_sold,
 			SUM(CASE WHEN status IN ('paid','confirmed') THEN amount ELSE 0 END) AS revenue
 		FROM {$registrations_table}
 		GROUP BY event_id

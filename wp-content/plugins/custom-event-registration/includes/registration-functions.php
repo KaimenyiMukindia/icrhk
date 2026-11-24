@@ -37,16 +37,20 @@ function cer_get_ticket_availability( int $event_id ) {
 		return new WP_Error( 'cer_availability_failed', 'Availability could not be refreshed.' );
 	}
 	$occupancy = $wpdb->get_results( $wpdb->prepare(
-		"SELECT ticket_type_id, COUNT(*) AS occupied FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d
+		"SELECT ticket_type_id, SUM(ticket_quantity) AS occupied FROM {$wpdb->prefix}evt_registrations WHERE parent_registration_id IS NULL AND event_id = %d
 		AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0)
-		OR (status IN ('pending', 'awaiting_payment') AND amount > 0 AND reserved_until > %s))
+		OR (status IN ('pending', 'awaiting_payment', 'failed') AND reserved_until IS NOT NULL))
 		GROUP BY ticket_type_id",
-		$event_id, gmdate( 'Y-m-d H:i:s' )
+		$event_id
 	), ARRAY_A );
 	if ( $wpdb->last_error ) {
 		error_log( 'CER availability capacity query failed: ' . $wpdb->last_error );
 		return new WP_Error( 'cer_availability_failed', 'Availability could not be refreshed.' );
 	}
+	return cer_build_ticket_availability( $event, $tickets, $occupancy );
+}
+
+function cer_build_ticket_availability( object $event, array $tickets, array $occupancy ): array {
 	$occupied = 0;
 	$ticket_occupied = array();
 	foreach ( $occupancy as $row ) {
@@ -154,7 +158,7 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 	// Mirrors the submission handler's capacity and inventory checks so the form shows availability up front.
 	$event_full = false;
 	if ( ! empty( $event->max_attendees ) ) {
-		$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}evt_registrations WHERE event_id = %d AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0))", $event_id ) );
+		$paid_registrations = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(ticket_quantity), 0) FROM {$wpdb->prefix}evt_registrations WHERE parent_registration_id IS NULL AND event_id = %d AND (status = 'paid' OR (status = 'confirmed' AND amount <= 0))", $event_id ) );
 		$event_full = $paid_registrations >= (int) $event->max_attendees;
 	}
 	$available_tickets = array();
@@ -181,7 +185,7 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 			break;
 		}
 	}
-	$contact_note = 'Your contact details will be saved securely. No payment is required to submit this form.';
+	$contact_note = 'Your contact details will be saved securely. No payment is required yet to submit this form.';
 	?>
 	<form id="cer-registration-form" class="cer-registration-form<?php echo $single_ticket ? ' cer-single-ticket' : ''; ?><?php echo $sold_out ? ' cer-sold-out' : ''; ?>" method="post" data-payment-method="mpesa" data-payment-required="<?php echo $payment_required ? 'true' : 'false'; ?>" data-ticket-count="<?php echo esc_attr( count( $ticket_types ) ); ?>"<?php if ( $availability_enabled ) : ?> data-availability="<?php echo $availability_data ? esc_attr( wp_json_encode( $availability_data ) ) : ''; ?>" data-availability-ready="<?php echo $availability_data ? 'true' : 'false'; ?>"<?php endif; ?> data-payment-note="<?php echo esc_attr( wp_kses_post( $summary_note ) ); ?>" data-contact-note="<?php echo esc_attr( $contact_note ); ?>" data-sold-out-note="Tickets for this event are sold out. Please contact the event team about future availability." novalidate>
 		<div class="cer-payment-toggle" role="tablist" aria-label="Select payment method">
@@ -189,15 +193,13 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 			<button class="cer-payment-toggle-btn" id="btn-card" type="button"><span class="cer-toggle-label-full">Credit/Debit Card</span><span class="cer-toggle-label-short">Card</span></button>
 		</div>
 		<input id="payment_method_hidden" name="payment_method" type="hidden" value="mpesa">
-		<?php if ( $single_ticket ) : ?>
-			<p class="cer-ticket-selection">Ticket: <strong><?php echo esc_html( $single_ticket->name ); ?></strong><?php if ( $availability_enabled && count( $ticket_types ) > 1 ) : ?> <small id="cer-inline-ticket-availability" aria-live="polite"><?php echo esc_html( cer_ticket_option_availability_suffix( $ticket_availability[ $single_ticket->id ] ?? null, false ) ); ?></small><?php endif; ?></p>
-			<input id="cer-ticket-type" name="ticket_type" type="hidden" value="<?php echo esc_attr( $single_ticket->name ); ?>" data-id="<?php echo esc_attr( $single_ticket->id ); ?>" data-price="<?php echo esc_attr( $single_ticket->price ); ?>">
-		<?php endif; ?>
+		<input id="cer-ticket-quantity" name="ticket_quantity" type="hidden" value="1">
 		<div class="cer-registration-progress" aria-label="Registration progress">
 			<span class="cer-progress-step is-active"><b>1</b> Contact</span>
 			<span class="cer-progress-line" aria-hidden="true"></span>
 			<span class="cer-progress-step"><b>2</b> Conference details</span>
 		</div>
+		<div class="cer-form-steps">
 		<div class="cer-form-step is-active" data-cer-step="1">
 			<div class="cer-form-grid cer-contact-layout">
 				<div class="cer-field-row cer-identity-row" data-cer-field-row>
@@ -236,22 +238,41 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 						<label for="cer-role">Role</label>
 						<input id="cer-role" name="attendee_role" placeholder="e.g. Programme Manager" autocomplete="organization-title" type="text" />
 					</div>
-					<?php if ( ! $single_ticket ) : ?>
 						<div class="cer-field-group cer-ticket-field">
-							<label for="cer-ticket-type">Ticket / Event Type</label>
-							<select id="cer-ticket-type" name="ticket_type" required>
+							<label>Ticket / Event Type</label>
+							<?php if ( ! $single_ticket ) : ?><details class="cer-ticket-picker"><summary id="cer-ticket-picker-label">Select ticket</summary><?php endif; ?>
+							<div class="cer-ticket-choices" aria-label="Ticket quantities">
+								<?php foreach ( $single_ticket ? array( $single_ticket ) : $ticket_types as $type ) :
+									$price_label = rtrim( rtrim( number_format( (float) $type->price, 2, '.', '' ), '0' ), '.' );
+									$unavailable = $type->sold_out || $type->maintenance;
+									?>
+									<div class="cer-ticket-choice" data-ticket-choice="<?php echo esc_attr( $type->id ); ?>">
+										<span><?php echo esc_html( $type->name ); ?> <small><?php echo esc_html( (float) $type->price > 0 ? $price_label : 'Free' ); ?></small><small data-ticket-stock><?php echo esc_html( cer_ticket_option_availability_suffix( $ticket_availability[ $type->id ] ?? null, $unavailable ) ); ?></small></span>
+										<div class="cer-quantity-control">
+											<button type="button" data-ticket-minus aria-label="<?php echo esc_attr( 'Remove one ' . $type->name . ' ticket' ); ?>"<?php disabled( $unavailable ); ?>>-</button>
+											<input name="ticket_quantities[<?php echo esc_attr( $type->id ); ?>]" data-ticket-quantity data-id="<?php echo esc_attr( $type->id ); ?>" data-price="<?php echo esc_attr( $type->price ); ?>" data-title="<?php echo esc_attr( $type->name ); ?>" aria-label="<?php echo esc_attr( $type->name . ' quantity' ); ?>" type="number" min="0" max="20" step="1" value="<?php echo $single_ticket && ! $unavailable ? '1' : '0'; ?>"<?php disabled( $unavailable ); ?>>
+											<button type="button" data-ticket-plus aria-label="<?php echo esc_attr( 'Add one ' . $type->name . ' ticket' ); ?>"<?php disabled( $unavailable ); ?>>+</button>
+										</div>
+									</div>
+								<?php endforeach; ?>
+							</div>
+							<?php if ( ! $single_ticket ) : ?></details><?php endif; ?>
+							<?php if ( $single_ticket ) : ?>
+								<input id="cer-ticket-type" name="ticket_type" type="hidden" value="<?php echo esc_attr( $single_ticket->name ); ?>" data-id="<?php echo esc_attr( $single_ticket->id ); ?>" data-price="<?php echo esc_attr( $single_ticket->price ); ?>">
+							<?php else : ?>
+							<select id="cer-ticket-type" name="ticket_type" hidden aria-hidden="true" tabindex="-1">
 								<option value="">Select a ticket</option>
 								<?php if ( ! empty( $ticket_types ) ) : ?>
 									<?php foreach ( $ticket_types as $type ) : ?>
-										<?php $option_label = $type->name . ( (float) $type->price > 0 ? ' (KES ' . number_format_i18n( (float) $type->price, 2 ) . ')' : '' ); ?>
-										<option value="<?php echo esc_attr( $type->name ); ?>" data-id="<?php echo esc_attr( $type->id ); ?>" data-price="<?php echo esc_attr( $type->price ); ?>"<?php if ( $availability_enabled ) : ?> data-base-label="<?php echo esc_attr( $option_label ); ?>"<?php endif; ?><?php echo ( $type->sold_out || $type->maintenance ) ? ' disabled' : ''; ?><?php echo $type->sold_out ? ' data-sold-out="true"' : ''; ?><?php echo $type->maintenance ? ' data-maintenance="true"' : ''; ?>><?php echo esc_html( $option_label . cer_ticket_option_availability_suffix( $ticket_availability[ $type->id ] ?? array( 'maintenance' => $type->maintenance, 'remaining' => null ), $type->sold_out ) ); ?></option>
+										<?php $option_label = $type->name . ( (float) $type->price > 0 ? ' (' . rtrim( rtrim( number_format( (float) $type->price, 2, '.', '' ), '0' ), '.' ) . ')' : '' ); ?>
+										<option value="<?php echo esc_attr( $type->name ); ?>" data-id="<?php echo esc_attr( $type->id ); ?>" data-price="<?php echo esc_attr( $type->price ); ?>"<?php selected( $single_ticket && $single_ticket->id === $type->id ); ?><?php if ( $availability_enabled ) : ?> data-base-label="<?php echo esc_attr( $option_label ); ?>"<?php endif; ?><?php echo ( $type->sold_out || $type->maintenance ) ? ' disabled' : ''; ?><?php echo $type->sold_out ? ' data-sold-out="true"' : ''; ?><?php echo $type->maintenance ? ' data-maintenance="true"' : ''; ?>><?php echo esc_html( $option_label . cer_ticket_option_availability_suffix( $ticket_availability[ $type->id ] ?? array( 'maintenance' => $type->maintenance, 'remaining' => null ), $type->sold_out ) ); ?></option>
 									<?php endforeach; ?>
 								<?php else : ?>
 									<option value="" disabled>No ticket types available</option>
 								<?php endif; ?>
 							</select>
+							<?php endif; ?>
 						</div>
-					<?php endif; ?>
 				</div>
 			</div>
 			<div class="cer-step-actions cer-step-actions-first">
@@ -259,7 +280,7 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 				<button type="button" class="cer-secondary-button" data-cer-next>Continue</button>
 			</div>
 		</div>
-		<div class="cer-form-step" data-cer-step="2" hidden>
+		<div class="cer-form-step" data-cer-step="2" hidden inert>
 			<div class="cer-form-grid cer-details-layout">
 				<div class="cer-field-row cer-demographic-row" data-cer-field-row>
 					<div class="cer-field-group cer-county-group">
@@ -310,6 +331,7 @@ function cer_get_registration_form_markup( $event_id = null, $availability = nul
 				<button type="button" class="cer-secondary-button cer-back-button" data-cer-back>Back</button>
 				<button type="submit" class="cer-primary-button"<?php echo $sold_out ? ' disabled' : ''; ?>><?php echo $sold_out ? ( $maintenance_unavailable ? 'Temporarily Unavailable' : 'Sold Out' ) : ( $payment_required ? 'Register &amp; Pay' : 'Register' ); ?></button>
 			</div>
+		</div>
 		</div>
 		<?php if ( $availability_enabled ) : ?><small id="cer-availability-error" role="status"><?php echo $availability_data ? '' : 'Live availability unavailable. Counts may be out of date; retrying automatically.'; ?></small><?php endif; ?>
 		<input type="hidden" id="cer-amount" name="amount" value="<?php echo esc_attr( $amount ); ?>" />

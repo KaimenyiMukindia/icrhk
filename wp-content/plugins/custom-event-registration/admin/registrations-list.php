@@ -110,6 +110,7 @@ if ( isset( $_POST['bulk_action'] ) && isset( $_POST['registration_ids'] ) && ch
 	$action = sanitize_key( wp_unslash( $_POST['bulk_action'] ) );
 	$ids = array_map( 'absint', (array) $_POST['registration_ids'] );
 	$bulk_error = false;
+	$ticket_results = array( 'sent' => 0, 'already_sent' => 0, 'failed' => array() );
 	if ( 'delete' === $action && ! $trash_view && '1' !== wp_unslash( $_POST['cer_confirm_trash'] ?? '' ) ) {
 		wp_die( esc_html__( 'Confirm moving the selected registrations to Trash. They will be recoverable for 30 days.', 'custom-event-registration' ) );
 	}
@@ -120,6 +121,13 @@ if ( isset( $_POST['bulk_action'] ) && isset( $_POST['registration_ids'] ) && ch
 			if ( empty( $result['ok'] ) ) {
 				set_transient( 'cer_registration_bulk_error', $result['message'] ?? __( 'Unable to confirm registration.', 'custom-event-registration' ), 30 );
 				$bulk_error = true;
+			}
+		} elseif ( 'send_missing_tickets' === $action && ! $trash_view ) {
+			$result = cer_retry_unsent_ticket_for_registration( $id );
+			if ( is_wp_error( $result ) ) {
+				$ticket_results['failed'][] = sprintf( '#%d: %s', $id, $result->get_error_message() );
+			} else {
+				++$ticket_results[ $result ];
 			}
 		} elseif ( 'mark_cancelled' === $action && ! $trash_view ) {
 			$updated = $wpdb->update( $registrations_table, array( 'status' => 'cancelled', 'updated_at' => current_time( 'mysql' ) ), array( 'id' => $id, 'deleted_at' => null ), array( '%s', '%s' ), array( '%d', '%s' ) );
@@ -144,6 +152,9 @@ if ( isset( $_POST['bulk_action'] ) && isset( $_POST['registration_ids'] ) && ch
 		$redirect_args['cer_notice'] = 'trashed';
 	} elseif ( 'restore' === $action ) {
 		$redirect_args['cer_notice'] = 'restored';
+	} elseif ( 'send_missing_tickets' === $action && ! $trash_view ) {
+		set_transient( 'cer_ticket_retry_result_' . get_current_user_id(), $ticket_results, 60 );
+		$redirect_args['cer_notice'] = 'ticket_retry';
 	} elseif ( in_array( $action, array( 'mark_paid', 'mark_cancelled' ), true ) ) {
 		$redirect_args['cer_notice'] = $bulk_error ? 'error' : 'updated';
 	}
@@ -171,7 +182,60 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 		<h1><?php esc_html_e( 'Event Registrations', 'custom-event-registration' ); ?></h1>
 		<a data-cer-filter-export href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'cer_export', '1', $list_url ), 'cer_export_registrations', 'cer_export_nonce' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Export CSV', 'custom-event-registration' ); ?></a>
 	</div>
-
+	<?php if ( ! $trash_view ) : ?>
+		<?php
+		try {
+			$assignment_inventory = cer_get_admin_assignment_inventory();
+		} catch ( Throwable $error ) {
+			error_log( 'CER assignment inventory preload failed: ' . $error->getMessage() );
+			$assignment_inventory = array();
+			echo '<p class="notice notice-error">' . esc_html__( 'Inventory could not be preloaded. Select an event to retry the live inventory request.', 'custom-event-registration' ) . '</p>';
+			$assignment_events = $wpdb->get_results( "SELECT id, name FROM {$events_table} WHERE status = 'published' AND deleted_at IS NULL ORDER BY name" );
+			if ( $wpdb->last_error ) {
+				error_log( 'CER assignment event fallback failed: ' . $wpdb->last_error );
+			} else {
+				foreach ( $assignment_events as $assignment_event ) { $assignment_inventory[ $assignment_event->id ] = array( 'name' => $assignment_event->name ); }
+			}
+		}
+		?>
+		<details class="cer-panel cer-assignment-panel">
+			<summary><strong><?php esc_html_e( 'Assign a ticket', 'custom-event-registration' ); ?></strong></summary>
+			<p><?php esc_html_e( 'Assign a ticket against existing inventory. For an existing registration, enter its ID; it must be an unconfirmed no-payment registration with no prior reservation. For a new registration, enter the attendee details.', 'custom-event-registration' ); ?></p>
+			<noscript><p class="notice notice-error"><?php esc_html_e( 'JavaScript is required to load the selected event’s ticket inventory.', 'custom-event-registration' ); ?></p></noscript>
+			<form id="cer-assignment-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-availability-url="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" data-inventory-nonce="<?php echo esc_attr( wp_create_nonce( 'cer_assignment_inventory' ) ); ?>">
+				<input type="hidden" name="action" value="cer_assign_ticket" />
+				<?php wp_nonce_field( 'cer_assign_ticket' ); ?>
+				<div class="cer-filter-bar">
+					<div class="field"><label for="cer-assign-event"><?php esc_html_e( 'Event', 'custom-event-registration' ); ?></label>
+						<select id="cer-assign-event" name="event_id" required><option value=""><?php esc_html_e( 'Select event', 'custom-event-registration' ); ?></option>
+						<?php foreach ( $assignment_inventory as $assign_id => $assign_event ) : ?><option value="<?php echo esc_attr( $assign_id ); ?>"><?php echo esc_html( $assign_event['name'] ); ?></option><?php endforeach; ?>
+						</select>
+					</div>
+					<div class="field" id="cer-assign-ticket-field"><label for="cer-assign-ticket"><?php esc_html_e( 'Existing ticket inventory', 'custom-event-registration' ); ?></label>
+						<select id="cer-assign-ticket" name="ticket_type_id" required><option value=""><?php esc_html_e( 'Select an event first', 'custom-event-registration' ); ?></option>
+						</select>
+					</div>
+					<div class="field cer-assignment-availability" role="status" aria-live="polite" id="cer-assign-availability"></div>
+					<div id="cer-assign-basket" class="cer-assignment-basket" hidden></div>
+					<div class="field"><label for="cer-assign-id"><?php esc_html_e( 'Existing registration ID (optional)', 'custom-event-registration' ); ?></label><input id="cer-assign-id" type="number" min="1" name="registration_id" /></div>
+					<div class="field"><label for="cer-assign-name"><?php esc_html_e( 'New attendee name', 'custom-event-registration' ); ?></label><input id="cer-assign-name" name="full_name" type="text" /></div>
+					<div class="field"><label for="cer-assign-email"><?php esc_html_e( 'New attendee email', 'custom-event-registration' ); ?></label><input id="cer-assign-email" name="email" type="email" /></div>
+					<div class="field"><label for="cer-assign-phone"><?php esc_html_e( 'Phone for M-Pesa', 'custom-event-registration' ); ?></label><input id="cer-assign-phone" name="phone" type="tel" /></div>
+					<div class="field"><label for="cer-assign-title"><?php esc_html_e( 'Ticket display title (optional)', 'custom-event-registration' ); ?></label><input id="cer-assign-title" name="ticket_title" maxlength="255" type="text" placeholder="Student" /></div>
+					<div class="field"><label for="cer-assign-color"><?php esc_html_e( 'Ticket header color', 'custom-event-registration' ); ?></label><input id="cer-assign-color" name="ticket_color" type="color" value="#5a2a8c" /></div>
+					<div class="field" data-cer-assignment-legacy><label for="cer-assign-amount"><?php esc_html_e( 'Assigned price per ticket (KES)', 'custom-event-registration' ); ?></label><input id="cer-assign-amount" name="amount" type="number" min="0" max="99999999.99" step="0.01" required /></div>
+					<div class="field" data-cer-assignment-legacy><label for="cer-assign-quantity"><?php esc_html_e( 'Number of tickets (price is per seat)', 'custom-event-registration' ); ?></label><input id="cer-assign-quantity" name="ticket_quantity" type="number" min="1" max="20" step="1" value="1" required /></div>
+					<div class="field"><label for="cer-assign-method"><?php esc_html_e( 'Payment method', 'custom-event-registration' ); ?></label><select id="cer-assign-method" name="payment_method"><option value="offline"><?php esc_html_e( 'Offline payment / free', 'custom-event-registration' ); ?></option><option value="mpesa"><?php esc_html_e( 'M-Pesa prompt', 'custom-event-registration' ); ?></option><option value="card"><?php esc_html_e( 'Card checkout link', 'custom-event-registration' ); ?></option></select></div>
+					<div class="field"><label for="cer-assign-reason"><?php esc_html_e( 'Reason / offline payment reference', 'custom-event-registration' ); ?></label><input id="cer-assign-reason" name="reason" type="text" required /></div>
+				</div>
+				<script type="application/json" id="cer-assign-inventory"><?php echo wp_json_encode( $assignment_inventory, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); ?></script>
+				<p id="cer-assign-total" role="status" aria-live="polite"></p>
+				<p><label><input type="checkbox" name="offline_confirmed" value="1" /> <?php esc_html_e( 'I confirm the offline payment has been received (required for a nonzero offline amount).', 'custom-event-registration' ); ?></label></p>
+				<p><label><input type="checkbox" name="email_checkout" value="1" /> <?php esc_html_e( 'Email the card checkout link to the attendee; it is also available on the registration.', 'custom-event-registration' ); ?></label></p>
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Assign ticket', 'custom-event-registration' ); ?></button>
+			</form>
+		</details>
+	<?php endif; ?>
 	<nav class="cer-list-view-links" aria-label="<?php esc_attr_e( 'Registration list views', 'custom-event-registration' ); ?>">
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=cer-registrations' ) ); ?>" class="<?php echo $trash_view ? '' : 'current'; ?>"><?php esc_html_e( 'Active Registrations', 'custom-event-registration' ); ?></a>
 		<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'cer-registrations', 'view' => 'trash' ), admin_url( 'admin.php' ) ) ); ?>" class="<?php echo $trash_view ? 'current' : ''; ?>"><?php esc_html_e( 'Trash', 'custom-event-registration' ); ?></a>
@@ -255,7 +319,8 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 						<th><?php esc_html_e( 'Payment Method', 'custom-event-registration' ); ?></th>
 						<th><?php esc_html_e( 'Status', 'custom-event-registration' ); ?></th>
 						<th><?php esc_html_e( 'Date', 'custom-event-registration' ); ?></th>
-						<?php if ( $trash_view ) : ?><th><?php esc_html_e( 'Deleted', 'custom-event-registration' ); ?></th><th><?php esc_html_e( 'Actions', 'custom-event-registration' ); ?></th><?php endif; ?>
+						<?php if ( $trash_view ) : ?><th><?php esc_html_e( 'Deleted', 'custom-event-registration' ); ?></th><?php endif; ?>
+						<th><?php esc_html_e( 'Actions', 'custom-event-registration' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -268,10 +333,18 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 								<td><?php echo esc_html( $registration->full_name ); ?></td>
 								<td><?php echo esc_html( $registration->email ); ?></td>
 								<td><?php echo esc_html( $registration->phone ); ?></td>
-								<td><?php echo esc_html( $registration->ticket_name ?: $registration->ticket_type ); ?></td>
+								<td><?php echo esc_html( ! empty( $registration->ticket_display_title ) ? $registration->ticket_display_title : ( $registration->ticket_name ?: $registration->ticket_type ) ); ?>
+									<?php if ( (int) ( $registration->ticket_quantity ?? 1 ) > 1 ) : ?>
+										<p><?php printf( esc_html__( 'Group purchase: %1$d seats, %2$d unallocated.', 'custom-event-registration' ), (int) $registration->ticket_quantity, (int) $registration->admission_quantity ); ?></p>
+									<?php elseif ( ! empty( $registration->parent_registration_id ) ) : ?>
+										<p><?php echo esc_html( 'Allocated from purchase #' . $registration->parent_registration_id ); ?></p>
+									<?php endif; ?>
+								</td>
 								<td><?php echo esc_html( 'KES ' . number_format_i18n( (float) $registration->amount, 2 ) ); ?></td>
 								<td><?php echo esc_html( $registration->payment_method ); ?></td>
-								<td><span class="cer-status-badge cer-status-<?php echo esc_attr( strtolower( $registration->status ) ); ?>"><?php echo esc_html( ucfirst( $registration->status ) ); ?></span></td>
+								<td><span class="cer-status-badge cer-status-<?php echo esc_attr( strtolower( $registration->status ) ); ?>"><?php echo esc_html( ucfirst( $registration->status ) ); ?></span>
+									<?php if ( ! empty( $registration->payment_error ) ) : ?><p><?php echo esc_html( $registration->payment_error ); ?></p><?php endif; ?>
+								</td>
 								<td><?php echo esc_html( date_i18n( 'M j, Y', strtotime( $registration->created_at ) ) ); ?></td>
 								<?php if ( $trash_view ) : ?>
 									<td><?php echo esc_html( date_i18n( 'M j, Y H:i', strtotime( $registration->deleted_at ) ) ); ?></td>
@@ -279,12 +352,27 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 										<?php $restore_url = add_query_arg( array( 'page' => 'cer-registrations', 'cer_action' => 'restore', 'registration_id' => $registration->id ), admin_url( 'admin.php' ) ); ?>
 										<a href="<?php echo esc_url( wp_nonce_url( $restore_url, 'cer_restore_registration_' . absint( $registration->id ) ) ); ?>" class="button button-small"><?php esc_html_e( 'Restore', 'custom-event-registration' ); ?></a>
 									</td>
+								<?php else : ?>
+									<td>
+										<?php if ( (int) ( $registration->ticket_quantity ?? 1 ) > 1 && (int) $registration->admission_quantity > 0 && in_array( $registration->status, array( 'paid', 'confirmed' ), true ) ) : ?>
+											<a href="#cer-group-<?php echo esc_attr( $registration->id ); ?>" class="button button-small" onclick="document.getElementById('cer-group-<?php echo esc_attr( $registration->id ); ?>').open=true;"><?php esc_html_e( 'Allocate individual tickets', 'custom-event-registration' ); ?></a>
+										<?php endif; ?>
+										<?php if ( (float) $registration->amount > 0 && ! empty( $registration->payment_uuid ) && in_array( $registration->payment_method, array( 'mpesa', 'card' ), true ) ) : ?>
+											<button type="submit" class="button button-small" form="cer-verify-payment-<?php echo esc_attr( $registration->id ); ?>"><?php esc_html_e( 'Verify payment', 'custom-event-registration' ); ?></button>
+										<?php endif; ?>
+										<?php if ( in_array( $registration->payment_method, array( 'mpesa', 'card' ), true ) && in_array( $registration->status, array( 'pending', 'awaiting_payment', 'failed', 'expired' ), true ) ) : ?>
+											<button type="submit" class="button button-small" form="cer-retry-payment-<?php echo esc_attr( $registration->id ); ?>" onclick="return confirm('<?php echo esc_js( __( 'Verify the previous payment and, only if it failed or was abandoned, start a new payment?', 'custom-event-registration' ) ); ?>');"><?php esc_html_e( 'Verify and retry', 'custom-event-registration' ); ?></button>
+										<?php endif; ?>
+										<?php if ( ! empty( $registration->payment_checkout_url ) && 'paid' !== $registration->status ) : ?>
+											<a class="button button-small" href="<?php echo esc_url( $registration->payment_checkout_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Card checkout link', 'custom-event-registration' ); ?></a>
+										<?php endif; ?>
+									</td>
 								<?php endif; ?>
 							</tr>
 						<?php endforeach; ?>
 					<?php else : ?>
 						<tr>
-							<td colspan="<?php echo $trash_view ? '13' : '11'; ?>"><?php echo $trash_view ? esc_html__( 'No registrations in the trash during the 30-day recovery period.', 'custom-event-registration' ) : esc_html__( 'No registrations match the current filters.', 'custom-event-registration' ); ?></td>
+							<td colspan="<?php echo $trash_view ? '13' : '12'; ?>"><?php echo $trash_view ? esc_html__( 'No registrations in the trash during the 30-day recovery period.', 'custom-event-registration' ) : esc_html__( 'No registrations match the current filters.', 'custom-event-registration' ); ?></td>
 						</tr>
 					<?php endif; ?>
 				</tbody>
@@ -299,6 +387,7 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 					<option value="restore"><?php esc_html_e( 'Restore', 'custom-event-registration' ); ?></option>
 				<?php else : ?>
 					<option value="mark_paid"><?php esc_html_e( 'Mark as Paid', 'custom-event-registration' ); ?></option>
+					<option value="send_missing_tickets"><?php esc_html_e( 'Send Missing Tickets', 'custom-event-registration' ); ?></option>
 					<option value="mark_cancelled"><?php esc_html_e( 'Mark as Cancelled', 'custom-event-registration' ); ?></option>
 					<option value="delete"><?php esc_html_e( 'Move to Trash', 'custom-event-registration' ); ?></option>
 				<?php endif; ?>
@@ -306,6 +395,35 @@ if ( isset( $_GET['cer_export'] ) && '1' === $_GET['cer_export'] && wp_verify_no
 			<input type="submit" class="button button-secondary" value="<?php esc_attr_e( 'Apply', 'custom-event-registration' ); ?>" />
 		</div>
 	</form>
+	<?php if ( ! $trash_view ) : foreach ( $registrations as $registration ) : if ( (float) $registration->amount <= 0 || empty( $registration->payment_uuid ) || ! in_array( $registration->payment_method, array( 'mpesa', 'card' ), true ) ) { continue; } ?>
+		<form id="cer-verify-payment-<?php echo esc_attr( $registration->id ); ?>" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="cer_verify_payment" />
+			<input type="hidden" name="registration_id" value="<?php echo esc_attr( $registration->id ); ?>" />
+			<?php wp_nonce_field( 'cer_verify_payment_' . (int) $registration->id ); ?>
+		</form>
+		<?php if ( in_array( $registration->payment_method, array( 'mpesa', 'card' ), true ) && in_array( $registration->status, array( 'pending', 'awaiting_payment', 'failed', 'expired' ), true ) ) : ?>
+			<form id="cer-retry-payment-<?php echo esc_attr( $registration->id ); ?>" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="cer_retry_payment" />
+				<input type="hidden" name="registration_id" value="<?php echo esc_attr( $registration->id ); ?>" />
+				<?php wp_nonce_field( 'cer_retry_payment_' . (int) $registration->id ); ?>
+			</form>
+		<?php endif; ?>
+	<?php endforeach; endif; ?>
+	<?php if ( ! $trash_view ) : foreach ( $registrations as $group ) : if ( (int) ( $group->ticket_quantity ?? 1 ) <= 1 || (int) $group->admission_quantity <= 0 || ! in_array( $group->status, array( 'paid', 'confirmed' ), true ) ) { continue; } ?>
+		<details id="cer-group-<?php echo esc_attr( $group->id ); ?>" class="cer-mail-job">
+			<summary><?php echo esc_html( sprintf( __( 'Allocate group purchase #%1$d — %2$d seats remaining', 'custom-event-registration' ), $group->id, $group->admission_quantity ) ); ?></summary>
+			<p><?php esc_html_e( 'Enter one Name,email per line. Quote names containing commas. Email may be blank; the purchaser receives that individual ticket. Allocating seats invalidates the current group ticket and sends a replacement for remaining seats. Inventory and the original payment are not changed. Staff must check the current code and record admission manually.', 'custom-event-registration' ); ?></p>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="cer_allocate_group" />
+				<input type="hidden" name="registration_id" value="<?php echo esc_attr( $group->id ); ?>" />
+				<input type="hidden" name="group_key" value="<?php echo esc_attr( $group->user_access_key ); ?>" />
+				<?php wp_nonce_field( 'cer_allocate_group_' . (int) $group->id ); ?>
+				<label for="cer-group-attendees-<?php echo esc_attr( $group->id ); ?>"><?php esc_html_e( 'Individual attendee details', 'custom-event-registration' ); ?></label>
+				<textarea id="cer-group-attendees-<?php echo esc_attr( $group->id ); ?>" name="attendees" rows="6" style="width:100%" required placeholder="Jane Doe,jane@example.com"></textarea>
+				<button type="submit" class="button button-primary" onclick="return confirm('<?php echo esc_js( __( 'Invalidate the current group ticket and allocate these seats? Do not allocate seats already admitted.', 'custom-event-registration' ) ); ?>');"><?php esc_html_e( 'Issue individual tickets', 'custom-event-registration' ); ?></button>
+			</form>
+		</details>
+	<?php endforeach; endif; ?>
 
 	<?php
 	$total_pages = max( 1, (int) ceil( $total_registrations / $per_page ) );

@@ -281,6 +281,7 @@ function cer_send_admin_receipt_for_registration( int $registration_id ): bool {
 	$event_name = ! empty( $registration['event_name'] ) ? (string) $registration['event_name'] : 'ICRHK Event';
 	$ticket_name = $wpdb->get_var( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}evt_ticket_types WHERE id = %d LIMIT 1", (int) ( $registration['ticket_type_id'] ?? 0 ) ) );
 	$body = ( (float) $registration['amount'] <= 0 ? "New registration for {$event_name}\n\nAttendee name: {$registrant_name}\nAttendee email: {$registrant_email}\nTicket type: " : "New ticket purchase for {$event_name}\n\nBuyer name: {$registrant_name}\nBuyer email: {$registrant_email}\nTicket type: " ) . ( $ticket_name ?: (string) ( $registration['ticket_type'] ?? 'General admission' ) );
+	$body .= "\nSeats: " . (int) ( $registration['ticket_quantity'] ?? 1 );
 	$context = cer_set_current_mail_config( $event_id, $event_name );
 	$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
 	if ( is_email( $registrant_email ) ) {

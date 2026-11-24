@@ -2754,19 +2754,6 @@ body:has(.cer-event-page) .elementor-location-header > .e-con {
     flex-shrink: 0;
 }
 
-.cer-registration-form[data-payment-required="false"] .cer-payment-toggle,
-.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]:not([data-ticket-count="1"])) .cer-kamgc-summary-box {
-    display: none;
-}
-
-.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]:not([data-ticket-count="1"])) {
-    grid-template-columns: minmax(0, 1fr);
-}
-
-.cer-kamgc-two-col:has(.cer-registration-form[data-payment-required="false"]:not([data-ticket-count="1"])) .cer-kamgc-sidebar-column:not(:has(.cer-kamgc-sponsor-box)) {
-    display: none;
-}
-
 .cer-ticket-selection {
     margin: 0 0 1rem;
     color: var(--cer-text-muted);
@@ -7451,11 +7438,6 @@ body .cer-kamgc-page .cer-kamgc-organiser img[alt="Council of Governors"] {
     display: flex;
 }
 
-.cer-kamgc-two-col:has(.cer-registration-form[data-ticket-count="1"][data-payment-required="false"]) .cer-summary-free-heading {
-    display: block;
-}
-
-.cer-kamgc-two-col:has(.cer-registration-form[data-ticket-count="1"][data-payment-required="false"]) .cer-summary-payment-only,
 .cer-registration-form[data-ticket-count="1"][data-payment-required="false"][data-availability-ready="true"] .cer-ticket-selection {
     display: none;
 }
@@ -8214,11 +8196,11 @@ body .cer-registration-form .cer-primary-button:active {
 body .cer-registration-form .cer-step-actions .cer-secondary-button,
 body .cer-registration-form .cer-step-actions .cer-primary-button {
     box-sizing: border-box;
-    height: 48px;
-    min-height: 48px;
-    max-height: 48px;
-    padding: 10px 20px;
-    line-height: 28px;
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    padding: 6px 12px;
+    line-height: 22px;
     white-space: nowrap;
     overflow: hidden;
 }
@@ -8289,11 +8271,11 @@ body .cer-registration-form .cer-primary-button:active {
 @media (max-width: 640px) {
     body .cer-registration-form .cer-step-actions .cer-secondary-button,
     body .cer-registration-form .cer-step-actions .cer-primary-button {
-        height: 46px;
-        min-height: 46px;
-        max-height: 46px;
-        line-height: 26px;
-        padding-inline: 14px;
+        height: 36px;
+        min-height: 36px;
+        max-height: 36px;
+        line-height: 22px;
+        padding: 6px 12px;
         font-size: clamp(1.4vh, 2.65vw, 1.7vh) !important;
     }
 
@@ -8330,4 +8312,309 @@ body .cer-registration-form .cer-primary-button:active {
     .cer-contact-details-row > .cer-field-group { flex-grow: 1; }
     .cer-contact-details-row.has-active-field > .cer-field-group.is-active-field { flex-grow: 1.15; }
     .cer-contact-details-row.has-active-field > .cer-field-group:not(.is-active-field) { flex-grow: .925; }
+}
+.cer-ticket-picker {
+    position: relative;
+}
+.cer-ticket-picker summary {
+    padding: 12px;
+    border: 1px solid #e4dcef;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.cer-ticket-picker[open] .cer-ticket-choices {
+    position: absolute;
+    z-index: 20;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e4dcef;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px #0002;
+    max-height: 280px;
+    overflow-y: auto;
+}
+.cer-ticket-choice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 8px;
+    font-size: .8125rem;
+    line-height: 20px;
+}
+.cer-ticket-choice > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.cer-ticket-choice small {
+    font-size: 12px;
+}
+.cer-ticket-choice [data-ticket-stock] {
+    display: block;
+}
+.cer-quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+.cer-quantity-control button {
+    width: 26px;
+    height: 30px;
+    border: 1px solid #5a2a8c;
+    border-radius: 8px;
+    background: #fff;
+    color: #5a2a8c;
+    font-size: 18px;
+    cursor: pointer;
+}
+.cer-quantity-control input {
+    width: 32px;
+    min-width: 0;
+    padding: 2px;
+    height: 30px;
+    text-align: center;
+    appearance: textfield;
+}
+.cer-quantity-control input::-webkit-inner-spin-button,
+.cer-quantity-control input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Keep expanding controls inside stable form and summary footprints. */
+body .cer-kamgc-page .cer-kamgc-card:has(#cer-registration-form),
+body .cer-kamgc-page .cer-kamgc-summary-box:has(#cer-summary-amount) {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: background-color 180ms ease, box-shadow 180ms ease !important;
+}
+
+.cer-form-steps {
+    display: grid;
+    min-width: 0;
+}
+
+.cer-form-steps > .cer-form-step,
+.cer-form-steps > .cer-form-step[hidden] {
+    display: flex !important;
+    flex-direction: column;
+    grid-area: 1 / 1;
+    min-width: 0;
+}
+
+.cer-form-steps > .cer-form-step[hidden] {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.cer-form-steps .cer-step-actions {
+    margin-top: auto;
+    padding-top: 8px;
+    min-width: 0;
+}
+
+.cer-registration-form .cer-field-row > .cer-field-group > label {
+    min-height: 1lh;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cer-registration-form .cer-field-group {
+    gap: 4px;
+}
+
+.cer-registration-form,
+.cer-registration-form label,
+.cer-registration-form input,
+.cer-registration-form select,
+.cer-registration-form textarea,
+.cer-registration-form button,
+.cer-registration-form summary {
+    font-family: var(--cer-font-body, "Plus Jakarta Sans", "Open Sans", sans-serif) !important;
+}
+
+.cer-registration-form .cer-field-group > label,
+.cer-registration-form .cer-optional-label {
+    font-size: .75rem !important;
+    line-height: 18px;
+}
+
+.cer-registration-form .cer-field-group input:not([type="radio"]):not([type="hidden"]):not([data-ticket-quantity]),
+.cer-registration-form .cer-field-group select,
+.cer-registration-form .cer-phone-field {
+    height: 36px;
+    min-height: 36px;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: .8125rem;
+    line-height: 22px;
+}
+
+.cer-registration-form .cer-phone-field {
+    padding: 0;
+}
+
+.cer-registration-form .cer-phone-field input {
+    height: 100% !important;
+    min-height: 0 !important;
+}
+
+.cer-registration-form .cer-phone-prefix {
+    height: 100%;
+    min-height: 0;
+}
+
+.cer-registration-form .cer-field-group,
+.cer-kamgc-sidebar-column,
+.cer-kamgc-summary-row > *,
+.cer-kamgc-summary-total > * {
+    min-width: 0;
+}
+
+.cer-kamgc-summary-row strong,
+.cer-kamgc-summary-total strong {
+    overflow-wrap: anywhere;
+}
+
+#cer-summary-ticket {
+    flex: 1 1 0;
+    white-space: pre-line;
+    text-align: left;
+    font-size: .8125rem;
+    line-height: 20px;
+    min-height: 3lh;
+    max-height: 3lh;
+    overflow-y: auto;
+}
+
+.cer-registration-form .cer-form-message {
+    box-sizing: border-box;
+    height: calc(2lh + 1rem);
+    min-height: calc(2lh + 1rem);
+    margin-top: 8px;
+    padding: 8px 10px;
+    font-size: .75rem;
+    line-height: 18px;
+    overflow-wrap: anywhere;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    animation: none;
+}
+
+.cer-registration-form #cer-availability-error {
+    display: block;
+    min-height: 1lh;
+    height: 1lh;
+    margin-top: 4px;
+    font-size: .75rem;
+    line-height: 18px;
+    overflow-wrap: anywhere;
+    overflow-y: auto;
+}
+
+.cer-ticket-picker summary {
+    box-sizing: border-box;
+    width: 100%;
+    height: 36px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    list-style: none;
+    padding: 6px 24px 6px 10px;
+    border-radius: 12px;
+    font-size: .8125rem;
+    line-height: 22px;
+}
+
+.cer-ticket-picker summary::-webkit-details-marker {
+    display: none;
+}
+
+.cer-ticket-picker summary::after {
+    content: "";
+    position: absolute;
+    right: 10px;
+    top: 13px;
+    width: 6px;
+    height: 6px;
+    border-right: 1px solid currentColor;
+    border-bottom: 1px solid currentColor;
+    transform: rotate(45deg);
+}
+
+.cer-ticket-picker[open] .cer-ticket-choices {
+    box-sizing: border-box;
+    width: min(22rem, calc(100vw - 24px));
+    left: auto;
+    right: 0;
+    overscroll-behavior: contain;
+}
+
+body .cer-registration-form .cer-quantity-control button,
+body .cer-registration-form .cer-quantity-control button:hover,
+body .cer-registration-form .cer-quantity-control button:focus-visible {
+    flex: 0 0 26px;
+    min-width: 26px;
+    max-width: 26px;
+    padding: 0;
+    justify-content: center;
+    text-align: center;
+}
+
+body .cer-registration-form .cer-quantity-control input {
+    flex: 0 0 32px;
+    min-width: 32px;
+    max-width: 32px;
+    height: 30px;
+    min-height: 30px;
+    padding: 2px;
+    font-size: .8125rem;
+    line-height: 24px;
+    box-sizing: border-box;
+}
+
+body .cer-registration-form .cer-step-actions button,
+body .cer-registration-form .cer-step-actions button:hover,
+body .cer-registration-form .cer-step-actions button:focus-visible,
+body .cer-registration-form .cer-step-actions button:active {
+    flex: 0 1 auto;
+    height: 36px;
+    min-height: 36px;
+    max-height: 36px;
+    min-width: 0;
+    padding: 6px 12px;
+    font-size: .8125rem !important;
+    line-height: 22px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.cer-step-required-note {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.cer-registration-form .cer-payment-toggle {
+    padding: 4px;
+    margin-bottom: 10px;
+}
+
+.cer-registration-form .cer-payment-toggle-btn {
+    height: 36px;
+    min-height: 36px;
+    padding-block: 6px;
+    font-size: .8125rem !important;
+    line-height: 22px;
+}
+
+@media (max-width: 640px) {
+    .cer-registration-form .cer-form-message {
+        height: calc(3lh + 1rem);
+        min-height: calc(3lh + 1rem);
+    }
 }

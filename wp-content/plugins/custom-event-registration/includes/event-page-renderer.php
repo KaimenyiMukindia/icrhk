@@ -396,7 +396,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 										<div class="cer-kamgc-summary-box">
 											<h3 class="cer-summary-payment-only"><?php echo esc_html( $summary_heading ); ?></h3>
 											<h3 class="cer-summary-free-heading">Ticket Information</h3>
-											<div class="cer-kamgc-summary-row"><span>Selected Ticket</span><strong id="cer-summary-ticket"><?php echo $initial_availability && 1 === count( $initial_availability['tickets'] ) ? esc_html( $initial_availability['tickets'][0]['name'] ) : 'Select a ticket'; ?></strong></div>
+											<div class="cer-kamgc-summary-row"><span>Tickets</span><strong id="cer-summary-ticket"><?php echo $initial_availability && 1 === count( $initial_availability['tickets'] ) ? esc_html( $initial_availability['tickets'][0]['name'] ) : '&mdash;'; ?></strong></div>
 											<div class="cer-kamgc-summary-row cer-summary-single-availability"><span>Availability</span><div id="cer-ticket-availability" class="cer-availability-value" role="status" aria-live="polite"><?php echo $initial_availability && 1 === count( $initial_availability['tickets'] ) ? cer_ticket_availability_markup( $initial_availability ) : ''; ?></div></div>
 											<div class="cer-kamgc-summary-row cer-summary-payment-only"><span>Payment Method</span><strong id="cer-summary-method">M-Pesa</strong></div>
 											<div class="cer-kamgc-summary-total cer-summary-payment-only"><span>Total</span><strong id="cer-summary-amount">KES 0.00</strong></div>

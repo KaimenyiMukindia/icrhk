@@ -8,14 +8,16 @@ const script = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'cer-r
 const source = script.slice(script.lastIndexOf('(function (document, window) {'));
 
 function render({ tickets, capacity, remaining, single = false, configuredCount = tickets.length,
-    paymentRequired = false, soldOut = false, initial = true }) {
+    paymentRequired = false, soldOut = false, initial = true, quantity = null, basket = null, pending = false }) {
     tickets = tickets.map(item => ({ maintenance: false, ...item }));
     function element() {
         return {
             dataset: {}, textContent: '', children: [],
             replaceChildren(...children) { this.children = children; },
             querySelector() { return null; },
+            querySelectorAll() { return []; },
             addEventListener() {},
+            dispatchEvent() {},
         };
     }
     const data = { capacity, remaining, tickets };
@@ -26,7 +28,14 @@ function render({ tickets, capacity, remaining, single = false, configuredCount 
         availabilityReady: initial ? 'true' : 'false',
         paymentRequired: paymentRequired ? 'true' : 'false',
         paymentMethod: 'mpesa',
+        checkoutPending: pending ? 'true' : 'false',
     };
+    const basketFields = basket ? tickets.map((item, index) => {
+        const stock = element();
+        return { dataset: { id: String(item.id) }, value: String(basket[index]), max: '20', disabled: false,
+            closest: () => ({ querySelector: () => stock }) };
+    }) : [];
+    form.querySelectorAll = () => basketFields;
     form.classList = {
         contains: name => name === 'cer-sold-out' && soldOut,
         toggle(name, enabled) { if (name === 'cer-sold-out') soldOut = enabled; },
@@ -55,6 +64,7 @@ function render({ tickets, capacity, remaining, single = false, configuredCount 
         'cer-inline-ticket-availability': single && configuredCount > 1 ? inline : null,
         'cer-availability-error': error,
         'cer-event-id': eventId,
+        'cer-ticket-quantity': quantity,
     };
     const document = {
         hidden: false, handlers: {}, getElementById: id => elements[id],
@@ -71,16 +81,58 @@ function render({ tickets, capacity, remaining, single = false, configuredCount 
         setInterval(callback, milliseconds) { assert.equal(milliseconds, 30000); tick = callback; },
     };
     vm.runInNewContext(source, {
-        document, window, URL,
+        document, window, URL, Event,
         fetch: async (...args) => { calls.push(args); return response; },
     });
     return {
-        form, ticket, count, inline, error, document, calls, errors, data,
+        form, ticket, count, inline, error, document, calls, errors, data, basketFields,
         settle: () => new Promise(resolve => setImmediate(resolve)),
         tick: () => tick(),
         respond: value => { response = value; },
     };
 }
+
+test('live availability clamps each type and the combined basket without mismatching types', async () => {
+    const ui = render({ capacity: 10, remaining: 9, basket: [6, 3], tickets: [
+        { id: 1, name: 'Delegate', capacity: 7, remaining: 7 },
+        { id: 2, name: 'Student', capacity: 3, remaining: 3 },
+    ] });
+    await ui.settle();
+    ui.respond({ ok: true, json: async () => ({ success: true, data: {
+        ...ui.data, remaining: 3, tickets: ui.data.tickets.map(item => ({ ...item, remaining: 2 })),
+    } }) });
+    await ui.tick();
+    assert.deepEqual(ui.basketFields.map(field => field.value), ['2', '1']);
+    assert.deepEqual(ui.basketFields.map(field => field.max), ['2', '2']);
+});
+
+test('live stock changes never rewrite a submitted basket while its payment is pending', async () => {
+    const ui = render({ capacity: 3, remaining: 0, basket: [2, 1], pending: true, tickets: [
+        { id: 1, name: 'Delegate', capacity: 2, remaining: 0 },
+        { id: 2, name: 'Student', capacity: 1, remaining: 0 },
+    ] });
+    await ui.settle();
+    assert.deepEqual(ui.basketFields.map(field => field.value), ['2', '1']);
+    assert.equal(ui.form.classList.contains('cer-sold-out'), false);
+});
+
+test('live stock caps group quantity and clamps it when remaining seats decrease', async () => {
+    const quantity = { value: '10', max: '20', events: 0, dispatchEvent() { this.events++; } };
+    const ui = render({
+        tickets: [{ id: 1, name: 'Delegate', capacity: 100, remaining: 7 }],
+        capacity: 100, remaining: 7, single: true, quantity,
+    });
+    await ui.settle();
+    assert.equal(quantity.max, '7');
+    assert.equal(quantity.value, '7');
+    ui.respond({ ok: true, json: async () => ({ success: true, data: {
+        ...ui.data, remaining: 2, tickets: [{ ...ui.data.tickets[0], remaining: 2 }],
+    } }) });
+    await ui.tick();
+    assert.equal(quantity.max, '2');
+    assert.equal(quantity.value, '2');
+    assert.ok(quantity.events >= 2, 'Total and button state must update when live stock changes.');
+});
 
 for (const paymentRequired of [false, true]) {
     test(`one ${paymentRequired ? 'paid' : 'free'} ticket updates the existing summary count`, async () => {

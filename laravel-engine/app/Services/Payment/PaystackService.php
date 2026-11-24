@@ -64,6 +64,7 @@ final class PaystackService
             'ok' => true,
             'access_code' => (string) $data['access_code'],
             'reference' => (string) $data['reference'],
+            'authorization_url' => (string) ($data['authorization_url'] ?? ''),
             'response' => $data,
         ];
     }

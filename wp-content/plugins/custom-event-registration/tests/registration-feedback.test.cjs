@@ -9,7 +9,7 @@ const source = fs.readFileSync(path.join(__dirname, '..', 'assets', 'js', 'cer-r
 
 function render({ result, method = 'mpesa', requestError, verification, verificationError, popup = true,
     tickets = [{ name: 'Delegate', price: '100', id: '1' }], single = false, selectedIndex = 0,
-    initialSoldOut = false, initialSummaryTicket = '', initialAvailability = '' } = {}) {
+    initialSoldOut = false, initialSummaryTicket = '', initialAvailability = '', quantity = false, basket = false, picker = false } = {}) {
     const elements = new Map();
     function element(id, value = '') {
         const handlers = new Map();
@@ -17,7 +17,12 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
         const classes = new Set();
         const node = {
             value, textContent: '', innerHTML: '', className: '', disabled: false, handlers, attributes, dataset: {},
-            addEventListener: (event, callback) => handlers.set(event, callback),
+            handlerCounts: {},
+            addEventListener(event, callback) {
+                handlers.set(event, callback);
+                this.handlerCounts[event] = (this.handlerCounts[event] || 0) + 1;
+            },
+            dispatchEvent(event) { const handler = handlers.get(event.type); if (handler) handler(event); },
             setAttribute: (name, value) => attributes.set(name, value),
             checkValidity: () => true,
             closest: () => ({ style: {} }),
@@ -27,12 +32,13 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
         elements.set(id, node);
         return node;
     }
+
     const button = element('submit');
     const form = element('cer-registration-form');
     form.dataset = {
         paymentRequired: tickets.some(ticket => Number(ticket.price) > 0) ? 'true' : 'false',
         paymentNote: 'Your registration is secure. Payment is processed through our secure gateway.',
-        contactNote: 'Your contact details will be saved securely. No payment is required to submit this form.',
+        contactNote: 'Your contact details will be saved securely. No payment is required yet to submit this form.',
         soldOutNote: 'Tickets for this event are sold out. Please contact the event team about future availability.',
         ticketCount: String(tickets.length),
     };
@@ -49,6 +55,56 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
     }
     const ticketId = element('cer-ticket-type-id');
     const amount = element('cer-amount');
+    element('payment_method_hidden', method);
+    element('btn-mpesa');
+    element('btn-card');
+    const basketFields = [];
+    const documentHandlers = new Map();
+    const windowHandlers = new Map();
+    let pickerNode;
+    let otherGroup;
+    if (picker) {
+        pickerNode = element('picker');
+        pickerNode.open = false;
+        const choices = element('choices');
+        choices.style = {};
+        pickerNode.querySelector = () => choices;
+        pickerNode.getBoundingClientRect = () => ({ left: 300, right: 440 });
+        pickerNode.contains = target => target === pickerNode;
+        otherGroup = element('other-group');
+        otherGroup.contains = () => false;
+        const row = element('field-row');
+        row.querySelectorAll = () => [otherGroup];
+        row.querySelector = () => null;
+        form.querySelectorAll = selector => selector === '.cer-ticket-picker' ? [pickerNode] : selector === '[data-cer-field-row]' ? [row] : [];
+    }
+    if (basket) {
+        element('cer-ticket-picker-label').textContent = 'Select ticket';
+        element('cer-summary-amount');
+        element('cer-ticket-quantity', '1');
+        tickets.forEach(option => {
+            const field = element('basket-' + option.id, '0');
+            field.dataset = { id: option.id, title: option.name, price: option.price };
+            field.max = '20';
+            field.checkValidity = () => Number.isInteger(Number(field.value)) && Number(field.value) >= 0 && Number(field.value) <= Number(field.max);
+            const minus = element('minus-' + option.id);
+            const plus = element('plus-' + option.id);
+            const row = { querySelector: selector => selector === '[data-ticket-minus]' ? minus : plus };
+            field.closest = () => row;
+            basketFields.push(field);
+        });
+        const previousQuery = form.querySelectorAll;
+        form.querySelectorAll = selector => ['[data-ticket-quantity]', '[required]'].includes(selector) ? basketFields : previousQuery(selector);
+    }
+    if (quantity) {
+        const field = element('cer-ticket-quantity', '1');
+        field.max = '20';
+        field.checkValidity = () => Number.isInteger(Number(field.value)) && Number(field.value) >= 1 && Number(field.value) <= Number(field.max);
+        form.querySelectorAll = selector => selector === '[required]' ? [field] : [];
+        element('cer-quantity-minus');
+        element('cer-quantity-plus');
+        element('cer-quantity-total');
+    }
     const summaryTicket = initialSummaryTicket ? element('cer-summary-ticket') : null;
     if (summaryTicket) summaryTicket.textContent = initialSummaryTicket;
     const availabilityLabel = initialAvailability ? { textContent: initialAvailability } : null;
@@ -64,14 +120,18 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
         cerRegistrationSettings: { nonce: 'test', ajax_url: 'register', payment_verify_url: 'verify' },
         setInterval: (callback) => { timers.set(1, callback); return 1; },
         clearInterval: (id) => timers.delete(id),
+        addEventListener: (name, handler) => windowHandlers.set(name, handler),
     };
     if (popup) {
         window.PaystackPop = class { resumeTransaction(code) { calls.push(code); } };
     }
     vm.runInNewContext(source, {
-        document: { getElementById: (id) => elements.get(id) || null },
+        document: { getElementById: (id) => elements.get(id) || null,
+            documentElement: { clientWidth: 480 },
+            addEventListener: (name, handler) => documentHandlers.set(name, handler) },
         window,
         FormData: class { set() {} },
+        Event,
         console: { error: (...args) => errors.push(args) },
         fetch: async (endpoint) => {
             calls.push(endpoint);
@@ -85,7 +145,8 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
     });
     const settle = () => new Promise((resolve) => setImmediate(resolve));
     return {
-        message, button, calls, timers, errors, form, ticketId, amount, elements, ticket, summaryTicket, availabilityLabel,
+        message, button, calls, timers, errors, form, ticketId, amount, elements, ticket, summaryTicket, availabilityLabel, basketFields,
+        pickerNode, otherGroup, documentHandlers, windowHandlers,
         select: (index) => {
             ticket.selectedIndex = index;
             ticket.value = tickets[index].name;
@@ -95,6 +156,113 @@ function render({ result, method = 'mpesa', requestError, verification, verifica
         tick: async () => { timers.get(1)(); await settle(); },
     };
 }
+
+test('inline type quantities keep multiple selections and update the existing total', () => {
+    const ui = render({ basket: true, initialSummaryTicket: 'Select a ticket', tickets: [{ name: 'Delegate', price: '5000', id: '1' }, { name: 'Student', price: '2500', id: '2' }] });
+    assert.equal(ui.button.disabled, true);
+    ui.elements.get('plus-1').handlers.get('click')();
+    ui.elements.get('plus-1').handlers.get('click')();
+    ui.elements.get('plus-2').handlers.get('click')();
+    assert.deepEqual(ui.basketFields.map(field => field.value), ['2', '1']);
+    assert.equal(ui.amount.value, '12500.00');
+    assert.equal(ui.elements.get('cer-ticket-picker-label').textContent, 'Select ticket');
+    assert.equal(ui.summaryTicket.textContent, 'Delegate × 2\nStudent × 1');
+    ui.elements.get('minus-1').handlers.get('click')();
+    assert.equal(ui.amount.value, '7500.00');
+    ui.basketFields.forEach(field => {
+        field.value = '0';
+        field.dispatchEvent(new Event('input'));
+    });
+    assert.equal(ui.elements.get('cer-ticket-picker-label').textContent, 'Select ticket');
+    assert.equal(ui.summaryTicket.textContent, '\u2014');
+    assert.equal(ui.amount.value, '0.00');
+});
+
+test('Card can be selected before any ticket and stays selected when a paid ticket is added', () => {
+    const ui = render({ basket: true });
+    ui.basketFields.forEach(field => {
+        field.value = '0';
+        field.dispatchEvent(new Event('input'));
+    });
+    ui.elements.get('btn-card').handlers.get('click')();
+    assert.equal(ui.elements.get('payment_method_hidden').value, 'card');
+    assert.equal(ui.elements.get('btn-card').classes.has('is-active'), true);
+    assert.equal(ui.form.dataset.paymentRequired, 'false');
+    ui.elements.get('plus-1').handlers.get('click')();
+    assert.equal(ui.elements.get('payment_method_hidden').value, 'card');
+    assert.equal(ui.form.dataset.paymentRequired, 'true');
+});
+
+test('ticket dropdown stays closed on unrelated field expansion and closes outside or on resize', () => {
+    const ui = render({ basket: true, picker: true });
+    assert.equal(ui.pickerNode.open, false);
+    ui.otherGroup.handlers.get('mouseenter')();
+    assert.equal(ui.otherGroup.classes.has('is-active-field'), true);
+    assert.equal(ui.pickerNode.open, false);
+    ui.pickerNode.open = true;
+    ui.pickerNode.dispatchEvent(new Event('toggle'));
+    assert.equal(ui.elements.get('choices').style.width, '352px');
+    ui.otherGroup.handlers.get('mouseenter')();
+    assert.equal(ui.pickerNode.open, false);
+    ui.pickerNode.open = true;
+    ui.documentHandlers.get('pointerdown')({ target: ui.pickerNode });
+    assert.equal(ui.pickerNode.open, true);
+    ui.documentHandlers.get('pointerdown')({ target: ui.otherGroup });
+    assert.equal(ui.pickerNode.open, false);
+    ui.pickerNode.open = true;
+    ui.windowHandlers.get('resize')();
+    assert.equal(ui.pickerNode.open, false);
+});
+
+test('inline type controls cap the combined basket and lock during checkout', async () => {
+    const ui = render({ basket: true, result: { success: true, data: { payment_status: 'pending', reference: 'basket' } },
+        tickets: [{ name: 'Delegate', price: '100', id: '1' }, { name: 'Student', price: '50', id: '2' }] });
+    const [delegate, student] = ui.basketFields;
+    delegate.value = '19';
+    delegate.dispatchEvent(new Event('input'));
+    student.value = '3';
+    student.dispatchEvent(new Event('input'));
+    assert.equal(student.value, '1');
+    assert.equal(ui.elements.get('plus-1').disabled, true);
+    assert.equal(ui.elements.get('plus-2').disabled, true);
+    await ui.submit();
+    assert.equal(delegate.readOnly, true);
+    assert.equal(student.readOnly, true);
+    assert.equal(ui.elements.get('minus-1').disabled, true);
+});
+
+test('quantity buttons update total once per click, respect 1–20, and reject fractional input', () => {
+    const ui = render({ single: true, quantity: true, tickets: [{ name: 'Delegate', price: '1250', id: '9' }] });
+    const field = ui.elements.get('cer-ticket-quantity');
+    const minus = ui.elements.get('cer-quantity-minus');
+    const plus = ui.elements.get('cer-quantity-plus');
+    assert.equal(minus.disabled, true);
+    plus.handlers.get('click')();
+    assert.equal(field.value, '2');
+    assert.equal(ui.amount.value, '2500.00');
+    for (let i = 0; i < 30; i++) plus.handlers.get('click')();
+    assert.equal(field.value, '20');
+    assert.equal(plus.disabled, true);
+    assert.equal(ui.amount.value, '25000.00');
+    assert.equal(field.handlerCounts.input, 1, 'Summary refresh must never add duplicate listeners.');
+    minus.handlers.get('click')();
+    assert.equal(field.value, '19');
+    assert.equal(ui.amount.value, '23750.00');
+    field.value = '1.5';
+    field.handlers.get('input')();
+    assert.equal(ui.button.disabled, true);
+});
+
+test('group submission keeps quantity controls locked while payment confirmation is pending', async () => {
+    const ui = render({ single: true, quantity: true, result: { success: true, data: { reference: 'fixture', status: 'pending' } } });
+    const field = ui.elements.get('cer-ticket-quantity');
+    field.value = '3';
+    field.handlers.get('input')();
+    await ui.submit();
+    assert.equal(field.readOnly, true);
+    assert.equal(ui.elements.get('cer-quantity-plus').disabled, true);
+    assert.equal(ui.elements.get('cer-quantity-minus').disabled, true);
+});
 
 test('a sold-out single ticket keeps its name in the ticket information summary', () => {
     const ui = render({
@@ -140,13 +308,13 @@ test('duplicate no-cost registration displays the server guidance', async () => 
 });
 
 for (const price of ['', '0', null]) {
-    test(`single ticket with ${JSON.stringify(price)} price auto-selects without payment UI`, async () => {
+    test(`single ticket with ${JSON.stringify(price)} price registers without payment while preserving method preference`, async () => {
         const ui = render({ single: true, tickets: [{ name: 'Delegate', price, id: '9' }], method: 'card' });
         assert.equal(ui.ticketId.value, '9');
         assert.equal(ui.amount.value, '0.00');
         assert.equal(ui.form.dataset.paymentRequired, 'false');
         assert.equal(ui.button.textContent, 'Register');
-        assert.equal(ui.elements.get('payment_method_hidden').value, 'mpesa');
+        assert.equal(ui.elements.get('payment_method_hidden').value, 'card');
         assert.equal(ui.elements.get('cer-full-name').required, true);
         assert.match(ui.message.innerHTML, /No payment is required/);
         assert.equal(ui.button.disabled, false);
@@ -180,7 +348,7 @@ test('mixed tickets alternate payment UI, contact fields and idle copy with sele
     assert.match(ui.message.innerHTML, /No payment is required/);
     ui.select(0);
     assert.equal(ui.form.dataset.paymentRequired, 'true');
-    assert.equal(ui.button.textContent, 'Register & Pay');
+    assert.equal(ui.button.textContent, 'Pay with Card');
     assert.equal(ui.amount.value, '100.00');
     assert.match(ui.message.innerHTML, /secure gateway/);
 });
