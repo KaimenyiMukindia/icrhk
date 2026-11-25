@@ -1215,8 +1215,8 @@ if ( ! empty( $errors ) ) {
 				<p><?php echo 'page_content' === $content_field ? esc_html__( 'Ordered content sections displayed after registration and payment, before FAQs. Body supports safe HTML.', 'custom-event-registration' ) : esc_html__( 'Ordered content cards displayed immediately before Speakers. Body supports safe HTML.', 'custom-event-registration' ); ?></p>
 				<?php cer_render_content_repeater( $content_field, cer_event_content_rows( (object) $event_data, $content_field ) ); ?>
 			</div>
-			<?php endforeach; ?>
 		</div>
+		<?php endforeach; ?>
 
 		<div class="cer-panel" data-cer-tab="setup" data-cer-item-type="tickets" style="margin-top: 24px;">
 			<div class="cer-panel-header">

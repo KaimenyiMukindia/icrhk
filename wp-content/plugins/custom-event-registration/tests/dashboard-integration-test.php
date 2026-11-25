@@ -477,6 +477,8 @@ try {
 	libxml_clear_errors();
 	libxml_use_internal_errors( $previous );
 	$admin_xpath = new DOMXPath( $admin_document );
+	cer_test_assert( 1 === $admin_xpath->query( '//form[@id="cer-event-form"]/div[@class="cer-admin-actions"]' )->length, 'Save Event actions must remain direct form children, outside all section panels.' );
+	cer_test_assert( 0 === $admin_xpath->query( '//*[@data-cer-content-section]//*[@data-cer-content-section or @data-cer-tab or @class="cer-admin-actions"]' )->length, 'Content panels must be siblings and must not contain other sections or global form actions.' );
 	cer_test_assert( 1 === $admin_xpath->query( '//*[@data-cer-page-content]//div[@class="cer-panel-header-actions"]/button[@data-section-id="page-content" and contains(@class,"cer-section-link-btn")]' )->length, 'Page Content must use the existing Section Link control targeting the entire frontend section.' );
 	cer_test_assert( 1 === $admin_xpath->query( '//*[@data-cer-page-content]//div[@class="cer-panel-header-actions"]//input[@name="show_page_content"]' )->length, 'Page Content must pair Section Link and Visible in the existing section action group.' );
 	cer_test_assert( 1 === $admin_xpath->query( '//*[@data-cer-hero-content]//button[@data-section-id="hero-content" and contains(@class,"cer-section-link-btn")]' )->length && 1 === $admin_xpath->query( '//*[@data-cer-hero-content]//input[@name="show_hero_content"]' )->length, 'Hero Content must have its own Section Link and Visible controls.' );
