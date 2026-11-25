@@ -23,6 +23,8 @@ function cer_event_content_columns(): array {
 		'hero_details' => 'LONGTEXT NULL',
 		'page_content' => 'LONGTEXT NULL',
 		'show_page_content' => 'TINYINT(1) NOT NULL DEFAULT 1',
+		'hero_content' => 'LONGTEXT NULL',
+		'show_hero_content' => 'TINYINT(1) NOT NULL DEFAULT 1',
 		'hero_summary_heading' => 'VARCHAR(255) NULL',
 		'speakers_intro' => 'LONGTEXT NULL',
 	);
@@ -38,7 +40,7 @@ function cer_event_section_eyebrow( $event, string $section ): string {
 }
 
 function cer_ensure_event_content_schema(): void {
-	if ( '2' === get_option( 'cer_event_content_schema', '' ) ) {
+	if ( '3' === get_option( 'cer_event_content_schema', '' ) ) {
 		return;
 	}
 	global $wpdb;
@@ -50,7 +52,7 @@ function cer_ensure_event_content_schema(): void {
 			return;
 		}
 	}
-	update_option( 'cer_event_content_schema', '2', false );
+	update_option( 'cer_event_content_schema', '3', false );
 }
 
 function cer_parse_event_content_rows( $rows, bool $hero = false ) {
@@ -123,6 +125,33 @@ function cer_render_section_copy_fields( string $section, array $event_data ): v
 		echo '</div>';
 	}
 	echo '</div>';
+}
+
+function cer_render_event_content_section( $event, string $field, string $label ): void {
+	$rows = cer_event_content_rows( $event, $field );
+	$visibility = 'show_' . $field;
+	if ( empty( $rows ) || ( isset( $event->{$visibility} ) && ! $event->{$visibility} ) ) {
+		return;
+	}
+	$id = str_replace( '_', '-', $field );
+	?>
+	<section class="cer-kamgc-page-content<?php echo 'hero_content' === $field ? ' cer-kamgc-hero-content' : ''; ?>" id="<?php echo esc_attr( $id ); ?>" aria-label="<?php echo esc_attr( $label ); ?>">
+		<div class="cer-kamgc-card cer-kamgc-speakers-card cer-content-surface">
+			<span class="cer-kamgc-blobs" aria-hidden="true"><i></i><i></i><i></i></span>
+			<div class="cer-page-content-grid">
+				<?php foreach ( $rows as $index => $row ) : ?>
+					<article class="cer-kamgc-card" id="<?php echo esc_attr( $id . '-' . ( $index + 1 ) ); ?>">
+						<div class="cer-page-content-heading">
+							<h2><?php echo esc_html( $row['header'] ); ?></h2>
+							<?php if ( '' !== $row['subtitle'] ) : ?><p><?php echo esc_html( $row['subtitle'] ); ?></p><?php endif; ?>
+						</div>
+						<div class="cer-page-content-body"><?php echo wp_kses_post( wpautop( $row['body'] ) ); ?></div>
+					</article>
+				<?php endforeach; ?>
+			</div>
+		</div>
+	</section>
+	<?php
 }
 
 function cer_render_content_repeater_row( string $type, $index, array $row ): void {

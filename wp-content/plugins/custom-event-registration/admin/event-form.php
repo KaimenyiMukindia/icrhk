@@ -226,7 +226,7 @@ foreach ( $item_section_tabs as $item_type => $event_tab ) {
 }
 
 foreach ( cer_event_content_columns() as $field => $definition ) {
-	$default_event[ $field ] = $event->{$field} ?? ( 'show_page_content' === $field ? 1 : null );
+	$default_event[ $field ] = $event->{$field} ?? ( in_array( $field, array( 'show_page_content', 'show_hero_content' ), true ) ? 1 : null );
 }
 foreach ( cer_event_content_sections() as $section => $copy_defaults ) {
 	if ( null === $default_event[ $section . '_eyebrow' ] ) {
@@ -236,9 +236,9 @@ foreach ( cer_event_content_sections() as $section => $copy_defaults ) {
 
 if ( isset( $_POST['cer_event_save'] ) && check_admin_referer( 'cer_event_form', 'cer_event_nonce' ) ) {
 	foreach ( cer_event_content_columns() as $field => $definition ) {
-		if ( 'show_page_content' === $field ) {
+		if ( in_array( $field, array( 'show_page_content', 'show_hero_content' ), true ) ) {
 			$default_event[ $field ] = empty( $_POST[ $field ] ) ? 0 : 1;
-		} elseif ( in_array( $field, array( 'hero_details', 'page_content' ), true ) ) {
+		} elseif ( in_array( $field, array( 'hero_details', 'page_content', 'hero_content' ), true ) ) {
 			if ( isset( $_POST[ $field . '_present' ] ) ) {
 				$rows = cer_parse_event_content_rows( wp_unslash( $_POST[ $field ] ?? array() ), 'hero_details' === $field );
 				if ( is_wp_error( $rows ) ) {
@@ -1204,15 +1204,18 @@ if ( ! empty( $errors ) ) {
 
 		</div>
 
-		<div class="cer-panel" data-cer-tab="content" data-cer-page-content>
-			<div class="cer-panel-header"><h2><?php esc_html_e( 'Page Content', 'custom-event-registration' ); ?></h2><div class="cer-panel-header-actions">
-				<button type="button" class="button button-small cer-section-link-btn" data-section-id="page-content"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
-				<label class="cer-toggle cer-toggle-compact" for="show-page-content"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-page-content" type="checkbox" name="show_page_content" value="1" <?php checked( (int) $event_data['show_page_content'], 1 ); ?> /></label>
+		<?php foreach ( array( 'page_content' => __( 'Page Content', 'custom-event-registration' ), 'hero_content' => __( 'Hero Content', 'custom-event-registration' ) ) as $content_field => $content_label ) : ?>
+		<?php $content_anchor = str_replace( '_', '-', $content_field ); ?>
+		<div class="cer-panel" data-cer-tab="content" data-cer-content-section="<?php echo esc_attr( $content_field ); ?>" <?php echo 'page_content' === $content_field ? 'data-cer-page-content' : 'data-cer-hero-content'; ?>>
+			<div class="cer-panel-header"><h2><?php echo esc_html( $content_label ); ?></h2><div class="cer-panel-header-actions">
+				<button type="button" class="button button-small cer-section-link-btn" data-section-id="<?php echo esc_attr( $content_anchor ); ?>"><?php esc_html_e( 'Section Link', 'custom-event-registration' ); ?></button>
+				<label class="cer-toggle cer-toggle-compact" for="show-<?php echo esc_attr( $content_anchor ); ?>"><span><?php esc_html_e( 'Visible', 'custom-event-registration' ); ?></span><input id="show-<?php echo esc_attr( $content_anchor ); ?>" type="checkbox" name="show_<?php echo esc_attr( $content_field ); ?>" value="1" <?php checked( (int) $event_data[ 'show_' . $content_field ], 1 ); ?> /></label>
 			</div></div>
 			<div class="cer-panel-body">
-				<p><?php esc_html_e( 'Ordered content sections displayed after registration and payment, before FAQs. Body supports safe HTML.', 'custom-event-registration' ); ?></p>
-				<?php cer_render_content_repeater( 'page_content', cer_event_content_rows( (object) $event_data, 'page_content' ) ); ?>
+				<p><?php echo 'page_content' === $content_field ? esc_html__( 'Ordered content sections displayed after registration and payment, before FAQs. Body supports safe HTML.', 'custom-event-registration' ) : esc_html__( 'Ordered content cards displayed immediately before Speakers. Body supports safe HTML.', 'custom-event-registration' ); ?></p>
+				<?php cer_render_content_repeater( $content_field, cer_event_content_rows( (object) $event_data, $content_field ) ); ?>
 			</div>
+			<?php endforeach; ?>
 		</div>
 
 		<div class="cer-panel" data-cer-tab="setup" data-cer-item-type="tickets" style="margin-top: 24px;">

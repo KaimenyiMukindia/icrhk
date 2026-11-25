@@ -8717,10 +8717,10 @@ body .cer-kamgc-page .cer-kamgc-summary-box:has(#cer-summary-amount) {
 
 body .cer-kamgc-page .cer-kamgc-page-content {
     order: 8;
-    padding: var(--cl-pad-block) var(--cl-pad-inline);
-    border-radius: var(--cl-radius);
-    background: var(--cl-blue);
-    box-shadow: 0 22px 60px rgba(0, 86, 136, .35);
+}
+
+body .cer-kamgc-page .cer-kamgc-hero-content {
+    order: 2;
 }
 
 .cer-page-content-grid {

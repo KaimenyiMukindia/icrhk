@@ -510,7 +510,8 @@
         partners: 'name',
         faqs: 'question',
         hero_details: 'label',
-        page_content: 'header'
+        page_content: 'header',
+        hero_content: 'header'
     };
     function initializeRepeaterTabs($container, preferredIndex) {
         var type = $container.data('repeater');
@@ -878,7 +879,7 @@
             var $tab = $('<button type="button" class="cer-item-tab" role="tab"></button>')
                 .attr({id: id + '-tab', 'aria-controls': id})
                 .text($panel.find('.cer-panel-header h2').first().text());
-            if ($panel.is('[data-cer-page-content]')) {
+            if ($panel.is('[data-cer-content-section]')) {
                 $panel.find('.cer-panel-header-actions').first().addClass('cer-section-visibility').prependTo($panel.find('.cer-panel-body').first());
             }
             $tabs.append($tab);

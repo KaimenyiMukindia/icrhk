@@ -247,8 +247,12 @@ try {
 	cer_test_query( "ALTER TABLE `{$prefix}evt_events` DROP COLUMN `show_page_content`" );
 	update_option( 'cer_event_content_schema', '1' );
 	cer_ensure_event_content_schema();
-	cer_test_assert( '2' === get_option( 'cer_event_content_schema' ), 'Content schema migration must complete on an existing event table.' );
+	cer_test_assert( '3' === get_option( 'cer_event_content_schema' ), 'Content schema migration must complete on an existing event table.' );
 	cer_test_assert( cer_column_exists( $prefix . 'evt_events', 'show_page_content' ), 'Existing version-one content storage must gain the visibility column.' );
+	cer_test_query( "ALTER TABLE `{$prefix}evt_events` DROP COLUMN `hero_content`, DROP COLUMN `show_hero_content`" );
+	update_option( 'cer_event_content_schema', '2' );
+	cer_ensure_event_content_schema();
+	cer_test_assert( '3' === get_option( 'cer_event_content_schema' ) && cer_column_exists( $prefix . 'evt_events', 'hero_content' ) && cer_column_exists( $prefix . 'evt_events', 'show_hero_content' ), 'Version-two content storage must gain Hero Content and its visibility.' );
 	$wpdb->queries = array();
 	cer_maybe_ensure_event_schema();
 	$schema_checks = array_filter( $wpdb->queries, static function ( $query ) {
@@ -381,6 +385,10 @@ try {
 		array( 'header' => 'Travel information', 'subtitle' => 'Getting here', 'body' => "<p>Bring your ticket.</p><ul><li>First instruction</li></ul>" ),
 		array( 'header' => 'Access information', 'subtitle' => 'On arrival', 'body' => '<p><a href="https://example.test/guide">Read the guide</a></p>' ),
 	);
+	$post['hero_content'] = array(
+		array( 'header' => 'Welcome information', 'subtitle' => 'Before the speakers', 'body' => '<p>Welcome.</p><ul><li>Hero instruction</li></ul>' ),
+		array( 'header' => 'Conference context', 'subtitle' => 'Read more', 'body' => '<p><a href="https://example.test/context">Context</a></p>' ),
+	);
 	foreach ( cer_event_content_sections() as $section => $defaults ) {
 		$post[ $section . '_heading' ] = 'Fixture ' . $section;
 		$post[ $section . '_eyebrow' ] = 'Eyebrow ' . $section;
@@ -408,6 +416,7 @@ try {
 	cer_test_assert( ! empty( $saved_form['objectives'][0]['id'] ), 'New item IDs were not returned after saving.' );
 	$saved_event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ) );
 	cer_test_assert( $post['hero_details'] === cer_event_content_rows( $saved_event, 'hero_details' ) && $post['page_content'] === cer_event_content_rows( $saved_event, 'page_content' ), 'Hero and page content rows must survive a real save and reload in order.' );
+	cer_test_assert( $post['hero_content'] === cer_event_content_rows( $saved_event, 'hero_content' ), 'Hero Content must use the existing repeater save/reload behavior.' );
 	cer_test_assert( 'Legacy convenor' === $saved_event->hero_convened_by && 'Legacy information' === $saved_event->event_info_heading && '<p>Legacy body</p>' === $saved_event->event_info_paragraph_1 && 'Legacy audience' === $saved_event->target_audience, 'Removing obsolete controls must preserve their stored copy.' );
 	cer_test_assert( false === strpos( $result['data']['html'], 'name="event_info_heading"' ) && false === strpos( $result['data']['html'], 'name="show_event_information"' ), 'The redundant Event Information controls must be removed.' );
 	foreach ( cer_event_content_sections() as $section => $defaults ) {
@@ -470,8 +479,11 @@ try {
 	$admin_xpath = new DOMXPath( $admin_document );
 	cer_test_assert( 1 === $admin_xpath->query( '//*[@data-cer-page-content]//div[@class="cer-panel-header-actions"]/button[@data-section-id="page-content" and contains(@class,"cer-section-link-btn")]' )->length, 'Page Content must use the existing Section Link control targeting the entire frontend section.' );
 	cer_test_assert( 1 === $admin_xpath->query( '//*[@data-cer-page-content]//div[@class="cer-panel-header-actions"]//input[@name="show_page_content"]' )->length, 'Page Content must pair Section Link and Visible in the existing section action group.' );
+	cer_test_assert( 1 === $admin_xpath->query( '//*[@data-cer-hero-content]//button[@data-section-id="hero-content" and contains(@class,"cer-section-link-btn")]' )->length && 1 === $admin_xpath->query( '//*[@data-cer-hero-content]//input[@name="show_hero_content"]' )->length, 'Hero Content must have its own Section Link and Visible controls.' );
 	cer_test_assert( 1 === $content_xpath->query( '//div[@class="cer-kamgc-actions"]/div[contains(@class,"cer-share-bar")]' )->length, 'Existing share controls must be inside the hero CTA row.' );
-	cer_test_assert( 2 === $content_xpath->query( '//section[@id="page-content"]/div[@class="cer-page-content-grid"]/article' )->length, 'Page content rows must share one grid section.' );
+	cer_test_assert( 2 === $content_xpath->query( '//section[@id="page-content"]//div[@class="cer-page-content-grid"]/article' )->length && 2 === $content_xpath->query( '//section[@id="hero-content"]//div[@class="cer-page-content-grid"]/article' )->length, 'Both content sections must use the same card grid.' );
+	cer_test_assert( strpos( $content_markup, 'id="hero-content"' ) < strpos( $content_markup, 'id="speakers"' ) && false !== strpos( $content_markup, '<li>Hero instruction</li>' ), 'Hero Content must render formatted rows before Speakers.' );
+	cer_test_assert( 2 === $content_xpath->query( '//section[@id="page-content" or @id="hero-content"]/div[contains(@class,"cer-kamgc-speakers-card")]/span[@class="cer-kamgc-blobs"]' )->length, 'Both content sections must reuse the Speakers background including its decorative layer.' );
 	cer_test_assert( 1 === $content_xpath->query( '//div[contains(@class,"cer-kamgc-summary-total")]/div[contains(@class,"cer-kamgc-security")]' )->length, 'Secure Payment must share the total row.' );
 	cer_test_assert( false === strpos( $content_markup, 'Legacy summary intro' ) && false === strpos( $result['data']['html'], 'name="summary_note"' ), 'Editable summary intro must not appear in the summary, status notification or admin controls.' );
 	foreach ( cer_event_content_sections() as $section => $defaults ) {
@@ -487,7 +499,16 @@ try {
 	ob_start();
 	cer_render_event_registration_page();
 	$hidden_markup = ob_get_clean();
-	cer_test_assert( false === strpos( $hidden_markup, 'id="page-content"' ) && false === strpos( $hidden_markup, 'id="page-content-1"' ) && false === strpos( $hidden_markup, 'cer-page-content-grid' ) && false !== strpos( $hidden_markup, 'id="cer-form-message"' ), 'The visibility toggle must omit the entire Page Content section and cards, without hiding system notifications.' );
+	cer_test_assert( false === strpos( $hidden_markup, 'id="page-content"' ) && false === strpos( $hidden_markup, 'id="page-content-1"' ) && false !== strpos( $hidden_markup, 'id="hero-content"' ) && false !== strpos( $hidden_markup, 'id="cer-form-message"' ), 'The Page Content toggle must omit its entire section without hiding Hero Content or system notifications.' );
+	$hidden_hero = $saved_form;
+	unset( $hidden_hero['show_hero_content'] );
+	cer_test_assert( cer_test_save_form( $hidden_hero )['success'], 'Hiding Hero Content must save.' );
+	$_GET = array( 'event_id' => $event_a );
+	ob_start();
+	cer_render_event_registration_page();
+	$hidden_hero_markup = ob_get_clean();
+	cer_test_assert( false === strpos( $hidden_hero_markup, 'id="hero-content"' ) && false === strpos( $hidden_hero_markup, 'id="hero-content-1"' ) && false !== strpos( $hidden_hero_markup, 'id="page-content"' ) && false !== strpos( $hidden_hero_markup, 'id="speakers"' ), 'Hero Content visibility must hide only its entire section, independently of Page Content and Speakers.' );
+	cer_test_assert( $saved_event->hero_content === $wpdb->get_var( $wpdb->prepare( "SELECT hero_content FROM {$prefix}evt_events WHERE id = %d", $event_a ) ), 'Hiding Hero Content must preserve its rows.' );
 	cer_test_assert( cer_test_save_form( $saved_form )['success'], 'Showing Page Content again must save.' );
 	$event_after_unchanged = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ), ARRAY_A );
 	foreach ( $content_fixture_ids as $table => $id ) {
@@ -505,6 +526,7 @@ try {
 	foreach ( array( array( array( 'body' => 'Missing header' ) ), array( array( 'header' => str_repeat( 'x', 256 ) ) ) ) as $invalid_rows ) {
 		$invalid_post = $saved_form;
 		$invalid_post['page_content'] = $invalid_rows;
+		$invalid_post['hero_content'] = $invalid_rows;
 		$invalid_post['event_title'] = 'Must not save';
 		$invalid_save = cer_test_save_form( $invalid_post );
 		$unchanged_event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ), ARRAY_A );
@@ -515,10 +537,11 @@ try {
 	$remove_content = $saved_form;
 	$remove_content['page_content'] = array();
 	$remove_content['hero_details'] = array();
+	$remove_content['hero_content'] = array();
 	$remove_content_result = cer_test_save_form( $remove_content );
 	cer_test_assert( $remove_content_result['success'], 'Removing all content rows must save.' );
 	$empty_content_event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$prefix}evt_events WHERE id = %d", $event_a ) );
-	cer_test_assert( '[]' === $empty_content_event->page_content && '[]' === $empty_content_event->hero_details, 'Removed rows must remain removed after reload.' );
+	cer_test_assert( '[]' === $empty_content_event->page_content && '[]' === $empty_content_event->hero_details && '[]' === $empty_content_event->hero_content, 'Removed rows must remain removed after reload.' );
 	cer_test_assert( cer_test_save_form( $saved_form )['success'], 'Restoring saved content rows must succeed.' );
 
 	$invalid = $saved_form;

@@ -1908,7 +1908,7 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
 }
 
 [data-hero-details] .cer-repeater,
-[data-cer-page-content] .cer-repeater {
+[data-cer-content-section] .cer-repeater {
     min-width: 0;
     width: 100%;
 }
@@ -1974,11 +1974,11 @@ body:has(.cer-event-page) .page-title.page-bread-cumb {
     margin: 0;
 }
 
-.cer-admin-shell :is([data-hero-details], [data-cer-page-content]) .cer-repeater-row > .cer-field:not(:has(textarea)) {
+.cer-admin-shell :is([data-hero-details], [data-cer-content-section]) .cer-repeater-row > .cer-field:not(:has(textarea)) {
     grid-column: auto;
 }
 
-.cer-admin-shell [data-cer-page-content] .cer-add-row {
+.cer-admin-shell [data-cer-content-section] .cer-add-row {
     margin-top: 10px;
 }
 

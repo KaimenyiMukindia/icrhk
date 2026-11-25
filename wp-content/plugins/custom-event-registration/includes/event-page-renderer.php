@@ -21,7 +21,6 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 
 		$hero_badge_text = cer_event_page_copy_value( $current_event, 'hero_badge_text', 'Event Registration' );
 		$hero_details = cer_event_content_rows( $current_event, 'hero_details' );
-		$page_content = cer_event_content_rows( $current_event, 'page_content' );
 		$hero_features = cer_event_page_split_lines( cer_event_page_copy_value( $current_event, 'hero_features', '' ) );
 		$registration_heading = cer_event_page_copy_value( $current_event, 'registration_heading', 'Secure Your Place' );
 		$registration_intro = cer_event_page_copy_value( $current_event, 'registration_intro', 'Complete your registration details below.' );
@@ -319,6 +318,8 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 								</section>
 							<?php endif; ?>
 
+							<?php cer_render_event_content_section( $current_event, 'hero_content', __( 'Hero Content', 'custom-event-registration' ) ); ?>
+
 							<?php if ( $show_speakers && ! empty( $event_speakers ) ) : ?>
 								<section class="cer-kamgc-speakers" id="speakers">
 									<div class="cer-kamgc-card cer-kamgc-speakers-card">
@@ -385,21 +386,7 @@ if ( ! function_exists( 'cer_render_event_registration_page' ) ) {
 								</div>
 							</section>
 
-							<?php if ( ! empty( $page_content ) && ( ! isset( $current_event->show_page_content ) || $current_event->show_page_content ) ) : ?>
-							<section class="cer-kamgc-page-content" id="page-content" aria-label="<?php esc_attr_e( 'Event information', 'custom-event-registration' ); ?>">
-								<div class="cer-page-content-grid">
-								<?php foreach ( $page_content as $content_index => $content_row ) : ?>
-									<article class="cer-kamgc-card" id="page-content-<?php echo (int) $content_index + 1; ?>">
-										<div class="cer-page-content-heading">
-											<h2><?php echo esc_html( $content_row['header'] ); ?></h2>
-											<?php if ( '' !== $content_row['subtitle'] ) : ?><p><?php echo esc_html( $content_row['subtitle'] ); ?></p><?php endif; ?>
-										</div>
-										<div class="cer-page-content-body"><?php echo wp_kses_post( wpautop( $content_row['body'] ) ); ?></div>
-									</article>
-								<?php endforeach; ?>
-								</div>
-							</section>
-							<?php endif; ?>
+							<?php cer_render_event_content_section( $current_event, 'page_content', __( 'Event information', 'custom-event-registration' ) ); ?>
 
 							<?php if ( $show_faq && ! empty( $event_faqs ) ) : ?>
 								<section class="cer-kamgc-faq" id="faq">
